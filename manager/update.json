@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.6",
-  "displayVersion": "V3.4 Fix6",
-  "sourceRef": "5afc6893b785adf5c023d457794a16b57cb92ef7",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/5afc6893b785adf5c023d457794a16b57cb92ef7/manager/packages/FreeCam_Manager_V3.4_Fix6_Source.zip",
-  "sourceSha256": "893b853c1db4f83c94078304fddb30df9889e7af3c78c1b7ceb5fcf6b1f7156f",
-  "publishedAt": "2026-09-13T10:08:01.874499Z",
-  "notes": "修复 GitHub Contents API 包装解析与线上版本状态显示；优化右上角窗口控制按钮。"
+  "version": "3.4.7",
+  "displayVersion": "V3.4 Fix7",
+  "sourceRef": "b325f65d5b2d88fac1597f07576d212d47b6bc65",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/b325f65d5b2d88fac1597f07576d212d47b6bc65/manager/packages/FreeCam_Manager_V3.4_Fix7_Source.zip",
+  "sourceSha256": "b4454f38fc2e8d983a7564cc80d2ce528e2e2d3d89a718d00128aad4349d38bf",
+  "publishedAt": "2026-09-13T10:51:04.495495Z",
+  "notes": "修复软件更新检查连点/并发导致频率限制：改用 Raw 清单 + cache-bust/no-cache，并增加全局串行与 3 秒冷却；窗口控制按钮改为更接近 Win11 原生比例的矢量图标。"
 }
