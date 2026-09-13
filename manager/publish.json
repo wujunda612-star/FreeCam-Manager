@@ -3,13 +3,13 @@
   "version": "3.4.7",
   "displayVersion": "V3.4 Fix7",
   "packageName": "FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "sourceSha256": "d7e7c01d1f0f9191633bf2c0526be9188c60d30c8b6de40a52c3dbda98c1e466",
+  "sourceSha256": "7357bcbc9b36fb55746d813d96461af8e5150b649ac8f5110389cc611b589679",
   "basePackageName": "FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "patchFile": "manager/incoming/v3.4.7/fix7-rev1-to-rev2.patch.gz.b85",
-  "patchEncoding": "base85",
+  "patchFile": "manager/incoming/v3.4.7/fix7-rev2-to-rev3.patch.gz.b64",
+  "patchEncoding": "base64",
   "patchCompression": "gzip",
-  "patchSha256": "9c402179761a8fddc2b6f47ba7b6a750ffbb02ca06c05ad6434f5950a2214796",
-  "sourceTreeSha256": "87b2a5fadbcf9436e4f21a9f49bd5edb8870cedc9c81e30ee6a479c1803bcbc2",
-  "notes": "Fix7 在线包修订：更新器改为由当前 Manager 内置释放并执行，不再依赖目标源码包内 updater；同时修复 Windows PowerShell 5.1 对旧 updater 中文 UTF-8 脚本的解析失败。原 Fix7 的更新检查防连点/并发与 Win11 窗口按钮改动保持不变。",
-  "publishRevision": 5
+  "patchSha256": "a41e1d71f20e61ad599393b92afa7e39c0e00a8b63ccccb06629107308359445",
+  "sourceTreeSha256": "95ddc5064258d3a5e41547be63be55d1be4683e2483aea0a47050a7a65bd56e4",
+  "notes": "Fix7 在线包修订 rev3：修复 EmbeddedManagerUpdater.cs 缺失 System.IO 命名空间导致 Windows WPF publish 失败（CS0103: Directory / Path / File）。更新检查防连点、Win11 窗口按钮与自带 updater 架构保持不变。",
+  "publishRevision": 6
 }
