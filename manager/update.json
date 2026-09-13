@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": "3.4.0",
+  "displayVersion": "V3.4",
+  "sourceRef": "",
+  "sourceArchiveUrl": "",
+  "sourceSha256": "",
+  "publishedAt": "2026-09-13T15:50:00+08:00",
+  "notes": "V3.4 establishes the self-update baseline, system theme following, and centered startup. Future releases will publish a pinned source package and SHA256."
+}
