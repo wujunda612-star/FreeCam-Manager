@@ -3,7 +3,6 @@ name: Publish Manager Update
 on:
   push:
     paths:
-      - 'manager/packages/*_Source.zip'
       - 'manager/publish.json'
   workflow_dispatch:
 
@@ -28,7 +27,65 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
-      - name: Validate package and publish manifest
+      - name: Rebuild and validate source package
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, os, subprocess
+          from pathlib import Path
+
+          cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
+          package = Path('manager/packages') / cfg['packageName']
+          expected = cfg['sourceSha256'].lower()
+          parts = [Path(p) for p in cfg.get('sourceParts', [])]
+
+          if not package.exists() or hashlib.sha256(package.read_bytes()).hexdigest() != expected:
+              if not parts:
+                  raise SystemExit(f'package missing or invalid and no sourceParts supplied: {package}')
+              missing = [str(p) for p in parts if not p.exists()]
+              if missing:
+                  raise SystemExit(f'missing source parts: {missing}')
+              encoded = ''.join(p.read_text(encoding='ascii').strip() for p in parts)
+              try:
+                  data = base64.b64decode(encoded, validate=True)
+              except Exception as exc:
+                  raise SystemExit(f'base64 reconstruction failed: {exc}')
+              package.parent.mkdir(parents=True, exist_ok=True)
+              package.write_bytes(data)
+
+          actual = hashlib.sha256(package.read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'SHA256 mismatch: expected={expected} actual={actual}')
+
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
+              env.write(f'PACKAGE_PATH={package.as_posix()}\n')
+          print(f'validated {package} sha256={actual} size={package.stat().st_size}')
+          PY
+
+      - name: Commit reconstructed package
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$PACKAGE_PATH"
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
+          for part in cfg.get('sourceParts', []):
+              p = Path(part)
+              if p.exists():
+                  subprocess.run(['git', 'rm', '-f', '--', str(p)], check=True)
+          PY
+          if git diff --cached --quiet; then
+            echo 'Source package already committed.'
+          else
+            git commit -m "Publish ${PACKAGE_PATH##*/} [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi
+
+      - name: Generate update manifest
         shell: bash
         run: |
           python - <<'PY'
@@ -38,13 +95,10 @@ jobs:
           repo = 'wujunda612-star/FreeCam-Manager'
           cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
           package = Path('manager/packages') / cfg['packageName']
-          if not package.exists():
-              raise SystemExit(f'missing package: {package}')
-
-          actual = hashlib.sha256(package.read_bytes()).hexdigest()
           expected = cfg['sourceSha256'].lower()
+          actual = hashlib.sha256(package.read_bytes()).hexdigest()
           if actual != expected:
-              raise SystemExit(f'SHA256 mismatch: expected={expected} actual={actual}')
+              raise SystemExit(f'SHA256 mismatch after commit: expected={expected} actual={actual}')
 
           package_commit = subprocess.check_output(
               ['git', 'log', '-n', '1', '--format=%H', '--', str(package)],
@@ -77,5 +131,6 @@ jobs:
             echo 'Manifest already current.'
           else
             git commit -m 'Publish Manager update manifest [skip ci]'
+            git pull --rebase origin main
             git push origin main
           fi
