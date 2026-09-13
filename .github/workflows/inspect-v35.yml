@@ -20,30 +20,21 @@ jobs:
           rm -rf /tmp/v35
           mkdir -p /tmp/v35
           unzip -q manager/packages/FreeCam_Manager_V3.5_Source.zip -d /tmp/v35
-      - name: Inspect context menu styles and separator usages
+      - name: Inspect build scripts
         shell: bash
         run: |
-          echo '=== Controls.xaml menu section ==='
-          sed -n '385,442p' /tmp/v35/src-wpf/FreeCamManager/Styles/Controls.xaml
-          echo '=== All Separator usages ==='
-          grep -RIn -C 8 '<Separator' /tmp/v35/src-wpf/FreeCamManager || true
-      - name: Inspect home summary cards and icon resources
+          echo '=== build files ==='
+          find /tmp/v35/src-wpf -maxdepth 1 -type f | sort
+          echo '=== Start_Build_v3.cmd ==='
+          cat /tmp/v35/src-wpf/Start_Build_v3.cmd || true
+          echo '=== Build_v3_On_Windows.ps1 ==='
+          cat /tmp/v35/src-wpf/Build_v3_On_Windows.ps1 || true
+      - name: Inspect regression test harness
         shell: bash
         run: |
-          echo '=== HomeView.xaml ==='
-          sed -n '1,180p' /tmp/v35/src-wpf/FreeCamManager/Views/HomeView.xaml
-          echo '=== Referenced icon resources ==='
-          grep -RIn -C 2 -E 'IconShield|IconBranch|IconInbox|IconSearch|IconStable|IconDevelop|IconTest' /tmp/v35/src-wpf/FreeCamManager/Styles /tmp/v35/src-wpf/FreeCamManager/App.xaml || true
-      - name: Inspect single instance implementation
-        shell: bash
-        run: |
-          echo '=== SingleInstanceService.cs ==='
-          cat /tmp/v35/src-wpf/FreeCamManager/Services/SingleInstanceService.cs
-          echo '=== App startup single-instance calls ==='
-          grep -n -C 8 -E 'SingleInstance|BringPrimaryWindowToFront|OnStartup|OnExit' /tmp/v35/src-wpf/FreeCamManager/App.xaml.cs || true
-      - name: Inspect version and validators
-        shell: bash
-        run: |
-          grep -RIn -C 3 -E '<Version>|AssemblyVersion|FileVersion' /tmp/v35/src-wpf/*.props /tmp/v35/src-wpf/*/*.csproj 2>/dev/null || true
-          echo '=== validate-v35.py ==='
-          cat /tmp/v35/src-wpf/validate-v35.py
+          echo '=== Program registrations ==='
+          sed -n '1,120p' /tmp/v35/src-wpf/FreeCamManager.Tests/Program.cs
+          echo '=== V3.5 test methods ==='
+          grep -n -A 90 -B 12 -E 'V35SettingsAndContextMenuContract|V35UpdateCleanup|V3.5 settings and context menu contract|V3.5 update cleanup' /tmp/v35/src-wpf/FreeCamManager.Tests/Program.cs || true
+          echo '=== Program tail ==='
+          tail -120 /tmp/v35/src-wpf/FreeCamManager.Tests/Program.cs
