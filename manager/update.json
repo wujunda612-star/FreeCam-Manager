@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.0",
-  "displayVersion": "V3.4",
-  "sourceRef": "",
-  "sourceArchiveUrl": "",
-  "sourceSha256": "",
-  "publishedAt": "2026-09-13T15:50:00+08:00",
-  "notes": "V3.4 establishes the self-update baseline, system theme following, and centered startup. Future releases will publish a pinned source package and SHA256."
+  "version": "3.4.3",
+  "displayVersion": "V3.4 Fix3",
+  "sourceRef": "fdaa35dcd10f0a45cc34638992c2a1dc452b61aa",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/fdaa35dcd10f0a45cc34638992c2a1dc452b61aa/manager/packages/FreeCam_Manager_V3.4_Fix3_Source.zip",
+  "sourceSha256": "dbd97db1d0c159ce5a191f8a77b8d33592abad9353f485e5aeb9fc57d132651f",
+  "publishedAt": "2026-09-13T08:39:54Z",
+  "notes": "阶段列去重：分类继续显示类型，阶段只显示编号与 Fix；这是 V3.4 首次用于实测的一键源码更新。"
 }
