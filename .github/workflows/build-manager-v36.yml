@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/build-manager-v36.yml'
       - '.github/scripts/build_manager_v36.py'
+      - '.github/scripts/stage_manager_v36.py'
   workflow_dispatch:
 
 permissions:
@@ -113,7 +114,7 @@ jobs:
 
       - name: Generate verified V3.6 patch and publish metadata
         shell: bash
-        run: python .github/scripts/build_manager_v36.py stage --source-root /tmp/v36 --repo-root .
+        run: python .github/scripts/stage_manager_v36.py --source-root /tmp/v36 --repo-root .
 
       - name: Commit candidate patch metadata to feature branch
         shell: bash
