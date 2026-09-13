@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.6",
-  "displayVersion": "V3.4 Fix6",
-  "packageName": "FreeCam_Manager_V3.4_Fix6_Source.zip",
-  "sourceSha256": "893b853c1db4f83c94078304fddb30df9889e7af3c78c1b7ceb5fcf6b1f7156f",
-  "basePackageName": "FreeCam_Manager_V3.4_Fix4_Source.zip",
-  "patchFile": "manager/incoming/v3.4.6/fix4-to-fix6.patch.gz.b85",
-  "patchEncoding": "base85",
+  "version": "3.4.7",
+  "displayVersion": "V3.4 Fix7",
+  "packageName": "FreeCam_Manager_V3.4_Fix7_Source.zip",
+  "sourceSha256": "b4454f38fc2e8d983a7564cc80d2ce528e2e2d3d89a718d00128aad4349d38bf",
+  "basePackageName": "FreeCam_Manager_V3.4_Fix6_Source.zip",
+  "patchFile": "manager/incoming/v3.4.7/fix6-to-fix7.patch.gz.b64",
+  "patchEncoding": "base64",
   "patchCompression": "gzip",
-  "patchSha256": "9b416aa8da2c24ba59399b2515d5c899461a069167ca8de0e6b0d726fc43059f",
-  "sourceTreeSha256": "2ee6fa25d64f4f0dfae46809033adf16e91a1bf14ae4a466ac23537ed36609fe",
-  "notes": "修复 GitHub Contents API 包装解析与线上版本状态显示；优化右上角窗口控制按钮。",
-  "publishRevision": 3
+  "patchSha256": "8b26053fbc00dcf527cbb190be6139263d6cb7fb55d658a729638a50cd56c470",
+  "sourceTreeSha256": "38165923b011eadfa7357210b45bc771b5742a15a97041ea4ad85dd11de2fcf1",
+  "notes": "修复软件更新检查连点/并发导致频率限制：改用 Raw 清单 + cache-bust/no-cache，并增加全局串行与 3 秒冷却；窗口控制按钮改为更接近 Win11 原生比例的矢量图标。",
+  "publishRevision": 4
 }
