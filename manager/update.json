@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.0",
-  "displayVersion": "V3.4",
-  "sourceRef": "",
-  "sourceArchiveUrl": "",
-  "sourceSha256": "",
-  "publishedAt": "2026-09-13T16:58:00+08:00",
-  "notes": "Fix3 在线源码包已下架：旧发布链截断二进制 ZIP。等待 V3.4 Fix4 经 GitHub 工作流校验后重新发布。"
+  "version": "3.4.4",
+  "displayVersion": "V3.4 Fix4",
+  "sourceRef": "3391da47a850dc80e71ad0ec47973af39190870d",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/3391da47a850dc80e71ad0ec47973af39190870d/manager/packages/FreeCam_Manager_V3.4_Fix4_Source.zip",
+  "sourceSha256": "927c9f404b628779aee2b7efd92f0bef369768ba41b475984acf144e429ef28a",
+  "publishedAt": "2026-09-13T09:17:48.179529Z",
+  "notes": "修复更新包发布被截断；下载/SHA/解压阶段失败会生成 UPDATE_STAGE_ERROR.txt 与 UPDATE_STATUS.json。"
 }
