@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import base64, hashlib, json, os, subprocess
+          import base64, hashlib, json, os
           from pathlib import Path
 
           cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
@@ -46,10 +46,16 @@ jobs:
               if missing:
                   raise SystemExit(f'missing source parts: {missing}')
               encoded = ''.join(p.read_text(encoding='ascii').strip() for p in parts)
+              encoding = cfg.get('sourceEncoding', 'base64').lower()
               try:
-                  data = base64.b64decode(encoded, validate=True)
+                  if encoding == 'base85':
+                      data = base64.b85decode(encoded.encode('ascii'))
+                  elif encoding == 'base64':
+                      data = base64.b64decode(encoded, validate=True)
+                  else:
+                      raise ValueError(f'unsupported sourceEncoding: {encoding}')
               except Exception as exc:
-                  raise SystemExit(f'base64 reconstruction failed: {exc}')
+                  raise SystemExit(f'source reconstruction failed: {exc}')
               package.parent.mkdir(parents=True, exist_ok=True)
               package.write_bytes(data)
 
