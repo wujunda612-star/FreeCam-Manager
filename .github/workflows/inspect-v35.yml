@@ -20,31 +20,27 @@ jobs:
           rm -rf /tmp/v35
           mkdir -p /tmp/v35
           unzip -q manager/packages/FreeCam_Manager_V3.5_Source.zip -d /tmp/v35
-          echo '=== TOP LEVEL ==='
-          find /tmp/v35 -maxdepth 3 -type f | sort | head -120
-      - name: Inspect context menu styles
+      - name: Inspect context menu styles and separator usages
         shell: bash
         run: |
-          echo '=== Controls.xaml matches ==='
-          grep -n -C 18 -E 'ContextMenu|Separator|MenuBorder|HorizontalContentAlignment|IsItemsHost' /tmp/v35/src-wpf/FreeCamManager/Styles/Controls.xaml || true
-      - name: Locate directory controls and icons
+          echo '=== Controls.xaml menu section ==='
+          sed -n '385,442p' /tmp/v35/src-wpf/FreeCamManager/Styles/Controls.xaml
+          echo '=== All Separator usages ==='
+          grep -RIn -C 8 '<Separator' /tmp/v35/src-wpf/FreeCamManager || true
+      - name: Inspect settings directory icons
         shell: bash
         run: |
-          echo '=== Directory label matches ==='
-          grep -RIn -C 12 -E 'FreeCam 根目录|00_Downloa|Stable Backup|Logs' /tmp/v35/src-wpf/FreeCamManager /tmp/v35/src-wpf/FreeCamManager.Core || true
-          echo '=== Icon-ish matches near Settings ==='
-          grep -RIn -C 8 -E 'Geometry|Path Data|Icon|Folder|Cross|Target|Browse' /tmp/v35/src-wpf/FreeCamManager/Views/SettingsView.xaml || true
-      - name: Inspect app startup and project version
+          sed -n '35,90p' /tmp/v35/src-wpf/FreeCamManager/Views/SettingsView.xaml
+      - name: Inspect single instance implementation
         shell: bash
         run: |
-          echo '=== App.xaml.cs ==='
-          sed -n '1,260p' /tmp/v35/src-wpf/FreeCamManager/App.xaml.cs
-          echo '=== csproj version ==='
+          echo '=== SingleInstanceService.cs ==='
+          cat /tmp/v35/src-wpf/FreeCamManager/Services/SingleInstanceService.cs
+          echo '=== App startup single-instance calls ==='
+          grep -n -C 8 -E 'SingleInstance|BringPrimaryWindowToFront|OnStartup|OnExit' /tmp/v35/src-wpf/FreeCamManager/App.xaml.cs || true
+      - name: Inspect version and validators
+        shell: bash
+        run: |
           grep -RIn -C 3 -E '<Version>|AssemblyVersion|FileVersion' /tmp/v35/src-wpf/*.props /tmp/v35/src-wpf/*/*.csproj 2>/dev/null || true
-      - name: Inspect tests and validators
-        shell: bash
-        run: |
-          echo '=== Tests relevant matches ==='
-          grep -n -C 12 -E 'V3.5|ContextMenu|Separator|single|instance|Settings' /tmp/v35/src-wpf/FreeCamManager.Tests/Program.cs || true
-          echo '=== Validators ==='
-          ls -la /tmp/v35/src-wpf/validate-*.py 2>/dev/null || true
+          echo '=== validate-v35.py ==='
+          cat /tmp/v35/src-wpf/validate-v35.py
