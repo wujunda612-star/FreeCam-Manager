@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.7",
-  "displayVersion": "V3.4 Fix7",
-  "sourceRef": "046d793284ba65cdfd3ae14ae859a936782898d1",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/046d793284ba65cdfd3ae14ae859a936782898d1/manager/packages/FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "sourceSha256": "7357bcbc9b36fb55746d813d96461af8e5150b649ac8f5110389cc611b589679",
-  "publishedAt": "2026-09-13T12:03:52.296378Z",
-  "notes": "Fix7 在线包修订 rev3：修复 EmbeddedManagerUpdater.cs 缺失 System.IO 命名空间导致 Windows WPF publish 失败（CS0103: Directory / Path / File）。更新检查防连点、Win11 窗口按钮与自带 updater 架构保持不变。"
+  "version": "3.5.0",
+  "displayVersion": "V3.5",
+  "sourceRef": "142b233679203347a0642cb51f148edec8bc11c9",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/142b233679203347a0642cb51f148edec8bc11c9/manager/packages/FreeCam_Manager_V3.5_Source.zip",
+  "sourceSha256": "e531a9ffa9cb5b0714b259f25fdf7995ae0a17eec4b9485575feb9d681458e31",
+  "publishedAt": "2026-09-13T12:35:28.690117Z",
+  "notes": "右键菜单横向填充与分隔线显示修复；移除设置页工作区规则卡片；更新成功并启动新版本后自动清理 Updates 临时源码/ZIP，仅保留更新诊断日志。"
 }
