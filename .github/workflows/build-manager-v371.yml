@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/build-manager-v371.yml'
       - '.github/scripts/build_manager_v371.py'
+      - '.github/scripts/build_manager_v371_recovery.py'
       - '.github/scripts/stage_manager_v371.py'
   workflow_dispatch:
 
@@ -26,11 +27,13 @@ jobs:
           mkdir -p /tmp/v371
           unzip -q manager/packages/FreeCam_Manager_V3.7_Source.zip -d /tmp/v371
 
-      - name: Add V3.7 Fix1 test first
+      - name: Add V3.7 Fix1 tests first
         shell: bash
-        run: python .github/scripts/build_manager_v371.py add-tests --source-root /tmp/v371
+        run: |
+          python .github/scripts/build_manager_v371.py add-tests --source-root /tmp/v371
+          python .github/scripts/build_manager_v371_recovery.py add-tests --source-root /tmp/v371
 
-      - name: RED - prove refresh regression fails on untouched V3.7 production source
+      - name: RED - prove Fix1 regressions fail on untouched V3.7 production source
         shell: bash
         run: |
           cd /tmp/v371/src-wpf
@@ -40,19 +43,29 @@ jobs:
           dotnet FreeCamManager.Tests/bin/Release/net8.0/FreeCamManager.Tests.dll > /tmp/v371-red-tests.txt 2>&1
           test_rc=$?
           python validate-v371.py > /tmp/v371-red-validator.txt 2>&1
-          validator_rc=$?
+          manual_validator_rc=$?
+          python validate-v371-recovery.py > /tmp/v371-red-recovery-validator.txt 2>&1
+          recovery_validator_rc=$?
           set -e
           cat /tmp/v371-red-tests.txt
           cat /tmp/v371-red-validator.txt
+          cat /tmp/v371-red-recovery-validator.txt
           test "$test_rc" -ne 0
-          test "$validator_rc" -ne 0
+          test "$manual_validator_rc" -ne 0
+          test "$recovery_validator_rc" -ne 0
           grep -q 'FAIL V3.7 Fix1 background refresh preserves manual conclusion interaction' /tmp/v371-red-tests.txt
-          grep -q 'Development refresh must reuse/reorder existing row view models' /tmp/v371-red-validator.txt
+          grep -q 'FAIL V3.7 Fix1 corrupted library restores from valid backup' /tmp/v371-red-tests.txt
+          grep -q 'FAIL V3.7 Fix1 safe save keeps last-known-good backup' /tmp/v371-red-tests.txt
+          grep -q 'FAIL V3.7 Fix1 root reconciliation rebuilds managed library without moving files' /tmp/v371-red-tests.txt
+          grep -q 'startup corrupt-library recovery contract is missing' /tmp/v371-red-recovery-validator.txt
+          grep -q 'LibraryRebuildService is missing' /tmp/v371-red-recovery-validator.txt
           echo 'RED verified.'
 
       - name: Apply minimal V3.7 Fix1 production changes
         shell: bash
-        run: python .github/scripts/build_manager_v371.py apply-production --source-root /tmp/v371
+        run: |
+          python .github/scripts/build_manager_v371.py apply-production --source-root /tmp/v371
+          python .github/scripts/build_manager_v371_recovery.py apply-production --source-root /tmp/v371
 
       - name: GREEN - validators and compatibility tests
         shell: bash
@@ -63,6 +76,7 @@ jobs:
           python validate-v36.py
           python validate-v37.py
           python validate-v371.py
+          python validate-v371-recovery.py
           dotnet build FreeCamManager.Tests/FreeCamManager.Tests.csproj -c Release -v:minimal
           dotnet FreeCamManager.Tests/bin/Release/net8.0/FreeCamManager.Tests.dll
 
