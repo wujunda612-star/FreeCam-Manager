@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.7.0",
-  "displayVersion": "V3.7",
-  "sourceRef": "8983f237717b6a2fc96b201d2a1c5ac43299b99b",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/8983f237717b6a2fc96b201d2a1c5ac43299b99b/manager/packages/FreeCam_Manager_V3.7_Source.zip",
-  "sourceSha256": "e313afc2ca1f97eba43bf8aed5e15a969317f6e29fa9fbc9b6dc6ab45bdac65e",
-  "publishedAt": "2026-09-13T15:53:18.617336Z",
-  "notes": "优化 Result 选择逻辑：匹配的 Result ZIP 优先于先出现的单独日志，已测试但仍指向日志的记录会继续扫描并自动升级到 ZIP；拖拽和单击时都会按当前文件重新解析。系统状态显示“已测试”时，单击可直接在资源管理器定位当前 Result / 日志，同时保留拖拽发送。"
+  "version": "3.7.1",
+  "displayVersion": "V3.7 Fix1",
+  "sourceRef": "06f321c5b0024105e5a259d91a6f84ce03f32be2",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/06f321c5b0024105e5a259d91a6f84ce03f32be2/manager/packages/FreeCam_Manager_V3.7_Fix1_Source.zip",
+  "sourceSha256": "fbcb7f2787b0f37c7ed6d9930a4e11fb2731a76caffc0e111ceb963f19ed0a8b",
+  "publishedAt": "2026-09-13T16:57:47.668285Z",
+  "notes": "修复后台刷新打断人工结论选择；新增版本库灾难恢复：启动及手动刷新可原地扫描现有 10_Stable / 20_Feature / 30_Experiment / 40_Result / 80_Archive / 90_Unknown 并重建索引，不移动现有文件，同时重新关联 01_Testing 与 Result。library.json 损坏时优先从 .bak 恢复；无可用备份时保留损坏副本并从 FreeCam 根目录重建。保存版本库时先写临时文件、落盘并校验 JSON，再替换主文件并保留上一份有效 .bak。"
 }
