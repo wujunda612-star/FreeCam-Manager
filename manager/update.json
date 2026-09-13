@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.5.0",
-  "displayVersion": "V3.5",
-  "sourceRef": "142b233679203347a0642cb51f148edec8bc11c9",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/142b233679203347a0642cb51f148edec8bc11c9/manager/packages/FreeCam_Manager_V3.5_Source.zip",
-  "sourceSha256": "e531a9ffa9cb5b0714b259f25fdf7995ae0a17eec4b9485575feb9d681458e31",
-  "publishedAt": "2026-09-13T12:35:28.690117Z",
-  "notes": "右键菜单横向填充与分隔线显示修复；移除设置页工作区规则卡片；更新成功并启动新版本后自动清理 Updates 临时源码/ZIP，仅保留更新诊断日志。"
+  "version": "3.6.0",
+  "displayVersion": "V3.6",
+  "sourceRef": "584c8cfce8d60c9b0961ceccee597536c15001b1",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/584c8cfce8d60c9b0961ceccee597536c15001b1/manager/packages/FreeCam_Manager_V3.6_Source.zip",
+  "sourceSha256": "e1b7b4fe177d040dee1a8e269def1d1e61ff83c1a52e7f946a659e6a261a9974",
+  "publishedAt": "2026-09-13T13:37:39.417066Z",
+  "notes": "修复右键菜单分隔线未实际接管 WPF 菜单专用样式的问题；统一首页四个状态卡片图标的尺寸、缩放、线宽与对齐；保留并回归验证单实例运行与重复启动唤醒。"
 }
