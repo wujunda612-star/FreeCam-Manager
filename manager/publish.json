@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.7",
-  "displayVersion": "V3.4 Fix7",
-  "packageName": "FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "sourceSha256": "7357bcbc9b36fb55746d813d96461af8e5150b649ac8f5110389cc611b589679",
+  "version": "3.5.0",
+  "displayVersion": "V3.5",
+  "packageName": "FreeCam_Manager_V3.5_Source.zip",
+  "sourceSha256": "e531a9ffa9cb5b0714b259f25fdf7995ae0a17eec4b9485575feb9d681458e31",
   "basePackageName": "FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "patchFile": "manager/incoming/v3.4.7/fix7-rev2-to-rev3.patch.gz.b64",
-  "patchEncoding": "base64",
+  "patchFile": "manager/incoming/v3.5.0/fix7-rev3-to-v35.patch.gz.b85",
+  "patchEncoding": "base85",
   "patchCompression": "gzip",
-  "patchSha256": "a41e1d71f20e61ad599393b92afa7e39c0e00a8b63ccccb06629107308359445",
-  "sourceTreeSha256": "95ddc5064258d3a5e41547be63be55d1be4683e2483aea0a47050a7a65bd56e4",
-  "notes": "Fix7 在线包修订 rev3：修复 EmbeddedManagerUpdater.cs 缺失 System.IO 命名空间导致 Windows WPF publish 失败（CS0103: Directory / Path / File）。更新检查防连点、Win11 窗口按钮与自带 updater 架构保持不变。",
-  "publishRevision": 6
+  "patchSha256": "770e5b1c0ccea438c04e2870c5922b279f8152f694d0a05ea1702704e4abe8c7",
+  "sourceTreeSha256": "1ded04bd2208a43a66715e73fc4ea722ef34746ab16797cc1c77daf8cfea76c5",
+  "notes": "右键菜单横向填充与分隔线显示修复；移除设置页工作区规则卡片；更新成功并启动新版本后自动清理 Updates 临时源码/ZIP，仅保留更新诊断日志。",
+  "publishRevision": 1
 }
