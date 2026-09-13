@@ -1,0 +1,56 @@
+name: Inspect Manager V3.7 Recovery
+
+on:
+  push:
+    branches:
+      - fix/manager-v3.7-fix1-manual-refresh
+    paths:
+      - '.github/workflows/inspect-v371-recovery.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/manager-v3.7-fix1-manual-refresh
+      - name: Extract V3.7 source and inspect recovery paths
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+          pkg = Path('manager/packages/FreeCam_Manager_V3.7_Source.zip')
+          out = Path('/tmp/v37-recovery')
+          with zipfile.ZipFile(pkg) as z:
+              z.extractall(out)
+          wanted = [
+              'src-wpf/FreeCamManager.Core/Services/LibraryService.cs',
+              'src-wpf/FreeCamManager.Core/Services/InboxWatcherService.cs',
+              'src-wpf/FreeCamManager.Core/Services/OrganizerService.cs',
+              'src-wpf/FreeCamManager.Core/Services/ManifestService.cs',
+              'src-wpf/FreeCamManager.Core/Services/ClassificationService.cs',
+              'src-wpf/FreeCamManager.Core/Models/Artifact.cs',
+              'src-wpf/FreeCamManager/App.xaml.cs',
+              'src-wpf/FreeCamManager/ViewModels/MainWindowViewModel.cs',
+              'src-wpf/FreeCamManager/ViewModels/DevelopmentViewModel.cs',
+              'src-wpf/FreeCamManager/ViewModels/ArtifactRowViewModel.cs',
+              'src-wpf/FreeCamManager/ViewModels/SettingsViewModel.cs',
+              'src-wpf/FreeCamManager/Views/SettingsView.xaml',
+              'src-wpf/FreeCamManager.Tests/Program.cs',
+          ]
+          chunks=[]
+          for rel in wanted:
+              p=out/rel
+              chunks.append(f'\n===== {rel} =====\n')
+              chunks.append(p.read_text(encoding='utf-8') if p.exists() else '<MISSING>\n')
+          Path('manager/v371-recovery-inspect.txt').write_text(''.join(chunks), encoding='utf-8')
+      - name: Commit inspection snapshot
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add manager/v371-recovery-inspect.txt
+          git commit -m 'chore: inspect V3.7 recovery paths [skip ci]' || exit 0
+          git push origin HEAD:fix/manager-v3.7-fix1-manual-refresh
