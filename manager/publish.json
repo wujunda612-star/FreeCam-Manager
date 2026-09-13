@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "version": "3.4.4",
+  "displayVersion": "V3.4 Fix4",
+  "packageName": "FreeCam_Manager_V3.4_Fix4_Source.zip",
+  "sourceSha256": "927c9f404b628779aee2b7efd92f0bef369768ba41b475984acf144e429ef28a",
+  "notes": "修复更新包发布被截断；下载/SHA/解压阶段失败会生成 UPDATE_STAGE_ERROR.txt 与 UPDATE_STATUS.json。"
+}
