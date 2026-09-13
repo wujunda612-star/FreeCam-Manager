@@ -1,0 +1,50 @@
+name: Inspect V3.5 Source
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-v35.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract V3.5 source
+        shell: bash
+        run: |
+          rm -rf /tmp/v35
+          mkdir -p /tmp/v35
+          unzip -q manager/packages/FreeCam_Manager_V3.5_Source.zip -d /tmp/v35
+          echo '=== TOP LEVEL ==='
+          find /tmp/v35 -maxdepth 3 -type f | sort | head -120
+      - name: Inspect context menu styles
+        shell: bash
+        run: |
+          echo '=== Controls.xaml matches ==='
+          grep -n -C 18 -E 'ContextMenu|Separator|MenuBorder|HorizontalContentAlignment|IsItemsHost' /tmp/v35/src-wpf/FreeCamManager/Styles/Controls.xaml || true
+      - name: Locate directory controls and icons
+        shell: bash
+        run: |
+          echo '=== Directory label matches ==='
+          grep -RIn -C 12 -E 'FreeCam 根目录|00_Downloa|Stable Backup|Logs' /tmp/v35/src-wpf/FreeCamManager /tmp/v35/src-wpf/FreeCamManager.Core || true
+          echo '=== Icon-ish matches near Settings ==='
+          grep -RIn -C 8 -E 'Geometry|Path Data|Icon|Folder|Cross|Target|Browse' /tmp/v35/src-wpf/FreeCamManager/Views/SettingsView.xaml || true
+      - name: Inspect app startup and project version
+        shell: bash
+        run: |
+          echo '=== App.xaml.cs ==='
+          sed -n '1,260p' /tmp/v35/src-wpf/FreeCamManager/App.xaml.cs
+          echo '=== csproj version ==='
+          grep -RIn -C 3 -E '<Version>|AssemblyVersion|FileVersion' /tmp/v35/src-wpf/*.props /tmp/v35/src-wpf/*/*.csproj 2>/dev/null || true
+      - name: Inspect tests and validators
+        shell: bash
+        run: |
+          echo '=== Tests relevant matches ==='
+          grep -n -C 12 -E 'V3.5|ContextMenu|Separator|single|instance|Settings' /tmp/v35/src-wpf/FreeCamManager.Tests/Program.cs || true
+          echo '=== Validators ==='
+          ls -la /tmp/v35/src-wpf/validate-*.py 2>/dev/null || true
