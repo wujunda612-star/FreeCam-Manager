@@ -1,0 +1,128 @@
+name: Build Manager V3.7 Fix1 Candidate
+
+on:
+  push:
+    branches:
+      - fix/manager-v3.7-fix1-manual-refresh
+    paths:
+      - '.github/workflows/build-manager-v371.yml'
+      - '.github/scripts/build_manager_v371.py'
+      - '.github/scripts/stage_manager_v371.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract V3.7 base
+        shell: bash
+        run: |
+          rm -rf /tmp/v371
+          mkdir -p /tmp/v371
+          unzip -q manager/packages/FreeCam_Manager_V3.7_Source.zip -d /tmp/v371
+
+      - name: Add V3.7 Fix1 test first
+        shell: bash
+        run: python .github/scripts/build_manager_v371.py add-tests --source-root /tmp/v371
+
+      - name: RED - prove refresh regression fails on untouched V3.7 production source
+        shell: bash
+        run: |
+          cd /tmp/v371/src-wpf
+          dotnet restore FreeCamManager.Tests/FreeCamManager.Tests.csproj
+          dotnet build FreeCamManager.Tests/FreeCamManager.Tests.csproj -c Release --no-restore -v:minimal
+          set +e
+          dotnet FreeCamManager.Tests/bin/Release/net8.0/FreeCamManager.Tests.dll > /tmp/v371-red-tests.txt 2>&1
+          test_rc=$?
+          python validate-v371.py > /tmp/v371-red-validator.txt 2>&1
+          validator_rc=$?
+          set -e
+          cat /tmp/v371-red-tests.txt
+          cat /tmp/v371-red-validator.txt
+          test "$test_rc" -ne 0
+          test "$validator_rc" -ne 0
+          grep -q 'FAIL V3.7 Fix1 background refresh preserves manual conclusion interaction' /tmp/v371-red-tests.txt
+          grep -q 'Development refresh must reuse/reorder existing row view models' /tmp/v371-red-validator.txt
+          echo 'RED verified.'
+
+      - name: Apply minimal V3.7 Fix1 production changes
+        shell: bash
+        run: python .github/scripts/build_manager_v371.py apply-production --source-root /tmp/v371
+
+      - name: GREEN - validators and compatibility tests
+        shell: bash
+        run: |
+          cd /tmp/v371/src-wpf
+          python validate-v34-fix7-updater.py
+          python validate-v35.py
+          python validate-v36.py
+          python validate-v37.py
+          python validate-v371.py
+          dotnet build FreeCamManager.Tests/FreeCamManager.Tests.csproj -c Release -v:minimal
+          dotnet FreeCamManager.Tests/bin/Release/net8.0/FreeCamManager.Tests.dll
+
+      - name: Clean generated build folders
+        shell: bash
+        run: python .github/scripts/build_manager_v371.py clean --source-root /tmp/v371
+
+      - name: Upload clean V3.7 Fix1 source candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: manager-v371-source
+          path: /tmp/v371/
+          include-hidden-files: true
+          retention-days: 1
+
+  windows-build:
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: manager-v371-source
+          path: source
+
+      - name: Real Windows WPF build and publish
+        shell: powershell
+        run: |
+          Set-Location source\src-wpf
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build_v3_On_Windows.ps1 -OutDir BuildOutput -NoLaunch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content .\BuildOutput\BUILD_RESULT.txt
+          if (-not (Test-Path .\BuildOutput\FreeCam_Manager.exe)) { throw 'FreeCam_Manager.exe was not produced' }
+          $exe = Get-Item .\BuildOutput\FreeCam_Manager.exe
+          $sha = (Get-FileHash .\BuildOutput\FreeCam_Manager.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "WINDOWS_WPF_PUBLISH_OK size=$($exe.Length) sha256=$sha"
+
+  stage-candidate:
+    needs: [prepare, windows-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/manager-v3.7-fix1-manual-refresh
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: manager-v371-source
+          path: /tmp/v371
+
+      - name: Generate verified V3.7 Fix1 patch and publish metadata
+        shell: bash
+        run: python .github/scripts/stage_manager_v371.py --source-root /tmp/v371 --repo-root .
+
+      - name: Commit candidate patch metadata to fix branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manager/incoming/v3.7.1/v37-to-v371.patch.gz.b85 manager/publish-v371.candidate.json
+          git commit -m 'build: stage Manager V3.7 Fix1 candidate [skip ci]' || exit 0
+          git pull --rebase origin fix/manager-v3.7-fix1-manual-refresh
+          git push origin HEAD:fix/manager-v3.7-fix1-manual-refresh
