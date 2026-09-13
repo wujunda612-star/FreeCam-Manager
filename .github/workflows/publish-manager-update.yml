@@ -21,11 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Sync latest main
+        shell: bash
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
       - name: Validate package and publish manifest
         shell: bash
         run: |
           python - <<'PY'
-          import hashlib, json, os, subprocess
+          import hashlib, json, subprocess
           from pathlib import Path
 
           repo = 'wujunda612-star/FreeCam-Manager'
@@ -70,5 +76,5 @@ jobs:
             echo 'Manifest already current.'
           else
             git commit -m 'Publish Manager update manifest [skip ci]'
-            git push
+            git push origin main
           fi
