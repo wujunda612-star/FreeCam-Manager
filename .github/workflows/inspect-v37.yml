@@ -1,0 +1,45 @@
+name: Inspect Manager V3.7
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.7-code
+    paths:
+      - '.github/workflows/inspect-v37.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.7-code
+      - name: Extract V3.6 source and inspect Result flow
+        shell: python
+        run: |
+          import re, zipfile
+          from pathlib import Path
+          pkg = Path('manager/packages/FreeCam_Manager_V3.6_Source.zip')
+          outdir = Path('/tmp/v36')
+          with zipfile.ZipFile(pkg) as z:
+              z.extractall(outdir)
+          needles = re.compile(r'ResultPath|Resolve.*Result|Drag|DoDragDrop|已测试|Tested|Evidence|Open.*Log|Explorer|SelectFile|Process\.Start', re.I)
+          chunks=[]
+          for p in sorted(outdir.rglob('*')):
+              if not p.is_file() or p.suffix.lower() not in {'.cs','.xaml','.py'}:
+                  continue
+              try: txt=p.read_text(encoding='utf-8')
+              except Exception: continue
+              if needles.search(txt):
+                  chunks.append('\n===== '+p.relative_to(outdir).as_posix()+' =====\n'+txt)
+          Path('manager/v37-inspect.txt').write_text(''.join(chunks), encoding='utf-8')
+      - name: Commit inspection snapshot
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add manager/v37-inspect.txt
+          git commit -m "chore: inspect v3.6 result flow" || exit 0
+          git push
