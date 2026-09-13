@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": "3.7.0",
+  "displayVersion": "V3.7",
+  "packageName": "FreeCam_Manager_V3.7_Source.zip",
+  "sourceSha256": "e313afc2ca1f97eba43bf8aed5e15a969317f6e29fa9fbc9b6dc6ab45bdac65e",
+  "basePackageName": "FreeCam_Manager_V3.6_Source.zip",
+  "patchFile": "manager/incoming/v3.7.0/v36-to-v37.patch.gz.b85",
+  "patchEncoding": "base85",
+  "patchCompression": "gzip",
+  "patchSha256": "1334cb78425626c27237258aa2a339fc80843b6fc73af54ff93eabc3cfa94c87",
+  "sourceTreeSha256": "bb3017b21be6cd3df8d8a301635ea2d84a7a15b5e55cdb9ff44116492cf5dbd3",
+  "notes": "优化 Result 选择逻辑：匹配的 Result ZIP 优先于先出现的单独日志，已测试但仍指向日志的记录会继续扫描并自动升级到 ZIP；拖拽和单击时都会按当前文件重新解析。系统状态显示“已测试”时，单击可直接在资源管理器定位当前 Result / 日志，同时保留拖拽发送。",
+  "publishRevision": 1
+}
