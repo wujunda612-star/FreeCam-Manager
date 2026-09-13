@@ -27,10 +27,13 @@ jobs:
           sed -n '385,442p' /tmp/v35/src-wpf/FreeCamManager/Styles/Controls.xaml
           echo '=== All Separator usages ==='
           grep -RIn -C 8 '<Separator' /tmp/v35/src-wpf/FreeCamManager || true
-      - name: Inspect settings directory icons
+      - name: Inspect home summary cards and icon resources
         shell: bash
         run: |
-          sed -n '35,90p' /tmp/v35/src-wpf/FreeCamManager/Views/SettingsView.xaml
+          echo '=== HomeView.xaml ==='
+          sed -n '1,180p' /tmp/v35/src-wpf/FreeCamManager/Views/HomeView.xaml
+          echo '=== Referenced icon resources ==='
+          grep -RIn -C 2 -E 'IconShield|IconBranch|IconInbox|IconSearch|IconStable|IconDevelop|IconTest' /tmp/v35/src-wpf/FreeCamManager/Styles /tmp/v35/src-wpf/FreeCamManager/App.xaml || true
       - name: Inspect single instance implementation
         shell: bash
         run: |
