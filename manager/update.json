@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.6.0",
-  "displayVersion": "V3.6",
-  "sourceRef": "584c8cfce8d60c9b0961ceccee597536c15001b1",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/584c8cfce8d60c9b0961ceccee597536c15001b1/manager/packages/FreeCam_Manager_V3.6_Source.zip",
-  "sourceSha256": "e1b7b4fe177d040dee1a8e269def1d1e61ff83c1a52e7f946a659e6a261a9974",
-  "publishedAt": "2026-09-13T13:37:39.417066Z",
-  "notes": "修复右键菜单分隔线未实际接管 WPF 菜单专用样式的问题；统一首页四个状态卡片图标的尺寸、缩放、线宽与对齐；保留并回归验证单实例运行与重复启动唤醒。"
+  "version": "3.7.0",
+  "displayVersion": "V3.7",
+  "sourceRef": "8983f237717b6a2fc96b201d2a1c5ac43299b99b",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/8983f237717b6a2fc96b201d2a1c5ac43299b99b/manager/packages/FreeCam_Manager_V3.7_Source.zip",
+  "sourceSha256": "e313afc2ca1f97eba43bf8aed5e15a969317f6e29fa9fbc9b6dc6ab45bdac65e",
+  "publishedAt": "2026-09-13T15:53:18.617336Z",
+  "notes": "优化 Result 选择逻辑：匹配的 Result ZIP 优先于先出现的单独日志，已测试但仍指向日志的记录会继续扫描并自动升级到 ZIP；拖拽和单击时都会按当前文件重新解析。系统状态显示“已测试”时，单击可直接在资源管理器定位当前 Result / 日志，同时保留拖拽发送。"
 }
