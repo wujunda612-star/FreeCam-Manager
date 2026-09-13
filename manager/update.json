@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "version": "3.4.7",
   "displayVersion": "V3.4 Fix7",
-  "sourceRef": "b325f65d5b2d88fac1597f07576d212d47b6bc65",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/b325f65d5b2d88fac1597f07576d212d47b6bc65/manager/packages/FreeCam_Manager_V3.4_Fix7_Source.zip",
-  "sourceSha256": "b4454f38fc2e8d983a7564cc80d2ce528e2e2d3d89a718d00128aad4349d38bf",
-  "publishedAt": "2026-09-13T10:51:04.495495Z",
-  "notes": "修复软件更新检查连点/并发导致频率限制：改用 Raw 清单 + cache-bust/no-cache，并增加全局串行与 3 秒冷却；窗口控制按钮改为更接近 Win11 原生比例的矢量图标。"
+  "sourceRef": "f8936556f5a8ec49c9c363afa5d9178cb4099968",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/f8936556f5a8ec49c9c363afa5d9178cb4099968/manager/packages/FreeCam_Manager_V3.4_Fix7_Source.zip",
+  "sourceSha256": "d7e7c01d1f0f9191633bf2c0526be9188c60d30c8b6de40a52c3dbda98c1e466",
+  "publishedAt": "2026-09-13T11:54:46.005902Z",
+  "notes": "Fix7 在线包修订：更新器改为由当前 Manager 内置释放并执行，不再依赖目标源码包内 updater；同时修复 Windows PowerShell 5.1 对旧 updater 中文 UTF-8 脚本的解析失败。原 Fix7 的更新检查防连点/并发与 Win11 窗口按钮改动保持不变。"
 }
