@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.3",
-  "displayVersion": "V3.4 Fix3",
-  "sourceRef": "fdaa35dcd10f0a45cc34638992c2a1dc452b61aa",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/fdaa35dcd10f0a45cc34638992c2a1dc452b61aa/manager/packages/FreeCam_Manager_V3.4_Fix3_Source.zip",
-  "sourceSha256": "dbd97db1d0c159ce5a191f8a77b8d33592abad9353f485e5aeb9fc57d132651f",
-  "publishedAt": "2026-09-13T08:39:54Z",
-  "notes": "阶段列去重：分类继续显示类型，阶段只显示编号与 Fix；这是 V3.4 首次用于实测的一键源码更新。"
+  "version": "3.4.0",
+  "displayVersion": "V3.4",
+  "sourceRef": "",
+  "sourceArchiveUrl": "",
+  "sourceSha256": "",
+  "publishedAt": "2026-09-13T16:58:00+08:00",
+  "notes": "Fix3 在线源码包已下架：旧发布链截断二进制 ZIP。等待 V3.4 Fix4 经 GitHub 工作流校验后重新发布。"
 }
