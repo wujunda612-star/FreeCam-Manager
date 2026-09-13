@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'manager/packages/*_Source.zip'
+      - 'manager/publish.json'
   workflow_dispatch:
 
 permissions:
