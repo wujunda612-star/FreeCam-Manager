@@ -1,0 +1,74 @@
+name: Publish Manager Update
+
+on:
+  push:
+    paths:
+      - 'manager/packages/*_Source.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-manager-update
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate package and publish manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+
+          repo = 'wujunda612-star/FreeCam-Manager'
+          cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
+          package = Path('manager/packages') / cfg['packageName']
+          if not package.exists():
+              raise SystemExit(f'missing package: {package}')
+
+          actual = hashlib.sha256(package.read_bytes()).hexdigest()
+          expected = cfg['sourceSha256'].lower()
+          if actual != expected:
+              raise SystemExit(f'SHA256 mismatch: expected={expected} actual={actual}')
+
+          package_commit = subprocess.check_output(
+              ['git', 'log', '-n', '1', '--format=%H', '--', str(package)],
+              text=True
+          ).strip()
+          if len(package_commit) != 40:
+              raise SystemExit('could not resolve package commit')
+
+          manifest = {
+              'schemaVersion': 1,
+              'version': cfg['version'],
+              'displayVersion': cfg['displayVersion'],
+              'sourceRef': package_commit,
+              'sourceArchiveUrl': f'https://raw.githubusercontent.com/{repo}/{package_commit}/{package.as_posix()}',
+              'sourceSha256': expected,
+              'publishedAt': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat().replace('+00:00','Z'),
+              'notes': cfg.get('notes','')
+          }
+          Path('manager/update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit update manifest
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manager/update.json
+          if git diff --cached --quiet; then
+            echo 'Manifest already current.'
+          else
+            git commit -m 'Publish Manager update manifest [skip ci]'
+            git push
+          fi
