@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": "3.7.1",
+  "displayVersion": "V3.7 Fix1",
+  "packageName": "FreeCam_Manager_V3.7_Fix1_Source.zip",
+  "sourceSha256": "28efe9257f1c79e3ca6a3d1eed6912869633f69fa93d27832eff807c01ba613d",
+  "basePackageName": "FreeCam_Manager_V3.7_Source.zip",
+  "patchFile": "manager/incoming/v3.7.1/v37-to-v371.patch.gz.b85",
+  "patchEncoding": "base85",
+  "patchCompression": "gzip",
+  "patchSha256": "5451c1751605337903de2fc3bd87f2cc47673598de72dffcfb01452e46d38bac",
+  "sourceTreeSha256": "59bb2cff4a642e5b2e6a20beefbbe87e8a16e218daf0792ae2c36d229061768c",
+  "notes": "修复开发列表后台刷新打断人工结论选择的问题：后台扫描不再清空并重建整张列表，而是按文件路径原位更新、移动或增删现有行，避免正在操作的人工结论选择器被销毁/重置。",
+  "publishRevision": 1
+}
