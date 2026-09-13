@@ -1,9 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "3.4.4",
-  "displayVersion": "V3.4 Fix4",
-  "packageName": "FreeCam_Manager_V3.4_Fix4_Source.zip",
-  "sourceSha256": "927c9f404b628779aee2b7efd92f0bef369768ba41b475984acf144e429ef28a",
-  "notes": "修复更新包发布被截断；下载/SHA/解压阶段失败会生成 UPDATE_STAGE_ERROR.txt 与 UPDATE_STATUS.json。",
-  "publishRevision": 2
+  "version": "3.4.6",
+  "displayVersion": "V3.4 Fix6",
+  "packageName": "FreeCam_Manager_V3.4_Fix6_Source.zip",
+  "sourceSha256": "893b853c1db4f83c94078304fddb30df9889e7af3c78c1b7ceb5fcf6b1f7156f",
+  "basePackageName": "FreeCam_Manager_V3.4_Fix4_Source.zip",
+  "patchFile": "manager/incoming/v3.4.6/fix4-to-fix6.patch.gz.b85",
+  "patchEncoding": "base85",
+  "patchCompression": "gzip",
+  "patchSha256": "9b416aa8da2c24ba59399b2515d5c899461a069167ca8de0e6b0d726fc43059f",
+  "sourceTreeSha256": "2ee6fa25d64f4f0dfae46809033adf16e91a1bf14ae4a466ac23537ed36609fe",
+  "notes": "修复 GitHub Contents API 包装解析与线上版本状态显示；优化右上角窗口控制按钮。",
+  "publishRevision": 3
 }
