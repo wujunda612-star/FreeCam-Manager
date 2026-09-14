@@ -1,0 +1,162 @@
+diff --git a/src-wpf/BUILD_MANIFEST.json b/src-wpf/BUILD_MANIFEST.json
+index 67f473b..087c5ff 100644
+--- a/src-wpf/BUILD_MANIFEST.json
++++ b/src-wpf/BUILD_MANIFEST.json
+@@ -1,15 +1,15 @@
+ {
+   "SchemaVersion": 3,
+   "Project": "FreeCam_Manager",
+-  "Version": "V3.8",
+-  "BuildName": "FreeCam_Manager_V3.8",
++  "Version": "V3.8 Fix1",
++  "BuildName": "FreeCam_Manager_V3.8_Fix1",
+   "Base": "FreeCam_Manager_V3.7_Fix1",
+   "Branch": "main",
+   "Feature": "SQLite Primary Library + Crash Recovery",
+   "BuildType": "Stable",
+   "ArtifactType": "Runtime+FullSource",
+-  "Stage": "Release",
+-  "BuildId": "MANAGER-V38-STABLE-20260914",
++  "Stage": "Release Fix1",
++  "BuildId": "MANAGER-V38-FIX1-STABLE-20260914",
+   "Commit": "PUBLISH-WORKFLOW (see manager/update.json sourceRef)",
+   "ReleaseState": "Stable",
+   "Modules": [
+@@ -24,7 +24,8 @@
+     "normal InboxWatcher/Organizer/Stable/Testing/Result workflows",
+     "V3.7 manager self-update pipeline",
+     "successful-update cleanup",
+-    "path-rebase duplicate-target collision merge"
++    "path-rebase duplicate-target collision merge",
++    "formal updater build regression contract synced from RC2.1"
+   ],
+   "Verification": [
+     "Reliability Lab Test1.1: unit 17/17, destructive 18/18",
+@@ -32,7 +33,8 @@
+     "SQLite Migration Test1: 7/7",
+     "SQLite Migration Test2.1: 14/14 + WPF persistence confirmed",
+     "SQLite Migration Test3: 15/15 + sandbox workflows 7/7",
+-    "RC2.1: core regression 59/59, SQLite 21/21, runtime quick_check PASS"
++    "RC2.1: core regression 59/59, SQLite 21/21, runtime quick_check PASS",
++    "V3.8 Fix1: formal FreeCamManager.Tests includes SQLite startup compatibility + path-collision regression"
+   ],
+   "RemotePublish": true
+ }
+diff --git a/src-wpf/FreeCamManager.Tests/Program.cs b/src-wpf/FreeCamManager.Tests/Program.cs
+index 1f0d21d..ef2d1bc 100644
+--- a/src-wpf/FreeCamManager.Tests/Program.cs
++++ b/src-wpf/FreeCamManager.Tests/Program.cs
+@@ -30,6 +30,7 @@ internal static class Program
+         await Run("Stable manifest schema and candidate repair", StableManifestSchemaAndCandidateRepair);
+         await Run("Stable freeze requires runtime/source and auto-generates SHA256", StableFreezeMinimumMaterials);
+         await Run("Moved FreeCam root rebases stale artifact paths", MovedRootRebasesStalePaths);
++        await Run("V3.8 path rebase merges duplicate target safely", V38PathRebaseMergesDuplicateTargetSafely);
+         await Run("SHA256", Sha256Test);
+         await Run("Safe Testing extraction", SafeExtraction);
+         await Run("One-click test workspace prepares and discovers launcher", OneClickTestWorkspace);
+@@ -463,6 +464,66 @@ internal static class Program
+         Assert(stable.All(x => x.Path.StartsWith(Path.Combine(newRoot, "10_Stable", "R40.4.0"), StringComparison.OrdinalIgnoreCase)), "Stable freeze used stale root after rebase");
+     }
+ 
++    private static async Task V38PathRebaseMergesDuplicateTargetSafely()
++    {
++        var dir = TempDir();
++        var oldRoot = Path.Combine(dir, "old-root");
++        var newRoot = Path.Combine(dir, "new-root");
++        var relative = Path.Combine("20_Feature", "FeatureA", "FeatureA_Test1.zip");
++        var target = Path.Combine(newRoot, relative);
++        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
++        await File.WriteAllTextAsync(target, "same physical artifact");
++
++        var stale = new Artifact
++        {
++            Path = Path.Combine(oldRoot, relative),
++            RelativePath = relative,
++            Name = Path.GetFileName(target),
++            BuildId = "B-STALE",
++            ManualStatus = "",
++            Rating = 5,
++            Protected = true,
++            Notes = "legacy-note",
++            Tags = ["legacy-tag"]
++        };
++        var current = new Artifact
++        {
++            Path = target,
++            RelativePath = relative,
++            Name = Path.GetFileName(target),
++            BuildId = "B-CURRENT",
++            ManualStatus = "通过",
++            Rating = 2,
++            Notes = "current-note",
++            Tags = ["current-tag"]
++        };
++
++        IReadOnlyList<Artifact>? persisted = null;
++        var library = LibraryService.CreatePersistent([stale, current], (snapshot, _) =>
++        {
++            var duplicate = snapshot
++                .GroupBy(x => Path.GetFullPath(x.Path), StringComparer.OrdinalIgnoreCase)
++                .FirstOrDefault(x => x.Count() > 1);
++            if (duplicate is not null)
++                throw new InvalidDataException($"duplicate path reached persistence: {duplicate.Key}");
++            persisted = snapshot.Select(x => x.Clone()).ToList();
++            return Task.CompletedTask;
++        });
++
++        var repaired = await new PathRebaseService().RepairLibraryPathsAsync(library, newRoot);
++        Assert(repaired >= 1, "stale duplicate path was not rebased");
++        var items = library.Snapshot();
++        Assert(items.Count == 1, $"path collision must merge to one artifact, got {items.Count}");
++        var merged = items.Single();
++        Assert(string.Equals(Path.GetFullPath(merged.Path), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase), "merged artifact did not keep the authoritative target path");
++        Assert(merged.ManualStatus == "通过", "current-path manual conclusion must survive collision merge");
++        Assert(merged.Rating == 5, "higher rating from stale metadata must not be lost");
++        Assert(merged.Protected, "lock/protection metadata from stale record must not be lost");
++        Assert(merged.Tags.Contains("legacy-tag") && merged.Tags.Contains("current-tag"), "tags from both records must be preserved");
++        Assert(merged.Notes.Contains("legacy-note", StringComparison.Ordinal) && merged.Notes.Contains("current-note", StringComparison.Ordinal), "notes from both records must be preserved");
++        Assert(persisted is { Count: 1 }, "persistent snapshot must contain exactly one artifact for the physical path");
++    }
++
+     private static async Task Sha256Test()
+     {
+         var dir = TempDir();
+@@ -1679,9 +1740,12 @@ internal static class Program
+         var watcher = File.ReadAllText(Path.Combine(sourceRoot, "..", "FreeCamManager.Core", "Services", "InboxWatcherService.cs"));
+         var library = File.ReadAllText(Path.Combine(sourceRoot, "..", "FreeCamManager.Core", "Services", "LibraryService.cs"));
+ 
+-        Assert(app.Contains("System.Text.Json.JsonException", StringComparison.Ordinal)
+-            && app.Contains("LibraryService.CreateEmpty(AppPaths.LibraryFile)", StringComparison.Ordinal),
+-            "startup must survive a corrupt library and create a writable empty index");
++        var legacyJsonStartup = app.Contains("System.Text.Json.JsonException", StringComparison.Ordinal)
++            && app.Contains("LibraryService.CreateEmpty(AppPaths.LibraryFile)", StringComparison.Ordinal);
++        var sqliteStartup = app.Contains("ProductionManagerSqliteLibrarySession.OpenAsync", StringComparison.Ordinal)
++            && app.Contains("LibraryService.CreatePersistent", StringComparison.Ordinal);
++        Assert(legacyJsonStartup || sqliteStartup,
++            "startup must wire either the V3.7 JSON recovery path or the V3.8 SQLite recovery path");
+         Assert(app.Contains("LibraryRebuildService", StringComparison.Ordinal)
+             && app.Contains("ReconcileAsync(settings.RootDir", StringComparison.Ordinal),
+             "startup must reconcile already-classified files from the configured FreeCam root");
+diff --git a/src-wpf/FreeCamManager/FreeCamManager.csproj b/src-wpf/FreeCamManager/FreeCamManager.csproj
+index 9ed22f8..ede6736 100644
+--- a/src-wpf/FreeCamManager/FreeCamManager.csproj
++++ b/src-wpf/FreeCamManager/FreeCamManager.csproj
+@@ -8,7 +8,7 @@
+     <Nullable>enable</Nullable>
+     <LangVersion>12.0</LangVersion>
+     <AssemblyName>FreeCam_Manager</AssemblyName>
+-    <Version>3.8.0</Version>
++    <Version>3.8.1</Version>
+     <RootNamespace>FreeCamManager</RootNamespace>
+     <ApplicationManifest>app.manifest</ApplicationManifest>
+     <ApplicationIcon>Assets\FreeCamManager.ico</ApplicationIcon>
+diff --git a/src-wpf/V38_README.txt b/src-wpf/V38_README.txt
+index 71b0282..282cba9 100644
+--- a/src-wpf/V38_README.txt
++++ b/src-wpf/V38_README.txt
+@@ -1,4 +1,4 @@
+-FreeCam Manager V3.8
++﻿FreeCam Manager V3.8 Fix1
+ 
+ 核心变化：
+ - 版本库主存储从 library.json 迁移为 SQLite（library.db）。
