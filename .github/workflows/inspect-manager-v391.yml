@@ -1,0 +1,30 @@
+name: Inspect Manager V3.9.1 Layout
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.1-ui-row
+    paths:
+      - .github/workflows/inspect-manager-v391.yml
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect SettingsView layout from V3.9 source package
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+          zpath = Path('manager/packages/FreeCam_Manager_V3.9_Source.zip')
+          with zipfile.ZipFile(zpath) as z:
+              name = 'src-wpf/FreeCamManager/Views/SettingsView.xaml'
+              text = z.read(name).decode('utf-8-sig')
+          lines = text.splitlines()
+          hits = [i for i, line in enumerate(lines) if '显示与行为' in line or 'SettingsRowThemeDiscard' in line or 'SettingsRowTerms' in line]
+          if not hits:
+              raise SystemExit('target settings layout markers not found')
+          start = max(0, min(hits) - 20)
+          end = min(len(lines), max(hits) + 120)
+          print('\n'.join(f'{i+1:04d}: {lines[i]}' for i in range(start, end)))
