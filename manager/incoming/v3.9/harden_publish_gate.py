@@ -24,34 +24,12 @@ gate = r'''jobs:
           $ErrorActionPreference = 'Stop'
           $cfg = Get-Content -Raw -LiteralPath 'manager/publish.json' | ConvertFrom-Json
           $package = Join-Path 'manager/packages' $cfg.packageName
-          if (-not (Test-Path -LiteralPath $package)) { throw "Final source package is not staged: $package" }
-
-          $actualSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
-          $expectedSha = ([string]$cfg.sourceSha256).ToLowerInvariant()
-          if ($actualSha -ne $expectedSha) { throw "Final package SHA256 mismatch: expected=$expectedSha actual=$actualSha" }
-
-          $work = Join-Path $PWD 'release-gate-source'
-          if (Test-Path $work) { Remove-Item -Recurse -Force $work }
-          Expand-Archive -LiteralPath $package -DestinationPath $work -Force
-          $src = Join-Path $work 'src-wpf'
-          foreach ($required in @('Build_v3_On_Windows.ps1','Apply_Manager_Update.ps1','FreeCamManager.sln')) {
-            if (-not (Test-Path -LiteralPath (Join-Path $src $required))) { throw "Updater-required source path missing: src-wpf/$required" }
-          }
-
-          $project = Join-Path $src 'FreeCamManager\FreeCamManager.csproj'
-          if (-not (Test-Path -LiteralPath $project)) { throw 'FreeCamManager.csproj missing from final package.' }
-          [xml]$projectXml = Get-Content -Raw -LiteralPath $project
-          $projectVersion = [string]$projectXml.Project.PropertyGroup.Version | Select-Object -First 1
-          if ($projectVersion -ne [string]$cfg.version) { throw "Project version mismatch: publish=$($cfg.version) package=$projectVersion" }
-
-          & (Join-Path $src 'Build_v3_On_Windows.ps1') -NoLaunch -OutDir 'BuildOutput_ReleaseGate'
-          if ($LASTEXITCODE -ne 0) { throw "Final package updater build failed: $LASTEXITCODE" }
-          $resultPath = Join-Path $src 'BuildOutput_ReleaseGate\BUILD_RESULT.txt'
-          if (-not (Test-Path -LiteralPath $resultPath)) { throw 'BUILD_RESULT.txt missing after release-gate build.' }
-          $result = Get-Content -Raw -LiteralPath $resultPath
-          if ($result -notmatch 'Tests:\s*\d+ passed,\s*0 failed') { throw 'Final package regression suite did not report zero failures.' }
-          if (-not (Test-Path -LiteralPath (Join-Path $src 'BuildOutput_ReleaseGate\FreeCam_Manager.exe'))) { throw 'Final package did not produce FreeCam_Manager.exe.' }
-          Write-Host "FINAL_PACKAGE_RELEASE_GATE_PASS version=$($cfg.version) sha256=$actualSha"
+          & '.\manager\release\Validate_Manager_Source_Package.ps1' `
+            -PackagePath $package `
+            -ExpectedSha256 ([string]$cfg.sourceSha256) `
+            -ExpectedVersion ([string]$cfg.version) `
+            -WorkDirectory (Join-Path $PWD 'release-gate-source')
+          if ($LASTEXITCODE -ne 0) { throw "Final package release gate failed: $LASTEXITCODE" }
 
   publish:
     needs: release-gate
