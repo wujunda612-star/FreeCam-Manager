@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "version": "3.8.0",
   "displayVersion": "V3.8",
-  "sourceRef": "3beb0d2b66bd4657c9349779c4863b2ba26834c0",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/3beb0d2b66bd4657c9349779c4863b2ba26834c0/manager/packages/FreeCam_Manager_V3.8_Source.zip",
-  "sourceSha256": "21c3ca32393e50baf31ab668c4066e2db17db7acc10e684ed439cdfcd99dad46",
-  "publishedAt": "2026-09-14T09:38:01.304209Z",
+  "sourceRef": "7a927684ee915098d3b970802c9e8607da726437",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/7a927684ee915098d3b970802c9e8607da726437/manager/packages/FreeCam_Manager_V3.8_Source.zip",
+  "sourceSha256": "da0c8de6903dd2ba14de45cd8971b8736ce3bab4647165788d39f2b02fe7af52",
+  "publishedAt": "2026-09-14T10:04:20.740668Z",
   "notes": "V3.8 将 Manager 版本库主存储迁移到 SQLite：首次启动从 V3.7 library.json/.bak 安全迁移并保留旧数据；使用事务/WAL、最近 10 代已校验 SQLite 备份和 SQLiteRecovery/library-latest.json 灾难恢复导出；主库损坏时按 SQLite 备份、Recovery JSON、旧 JSON 逐级恢复，并提供显式 V3.7 回退工具。保留现有 Watcher / Organizer / Stable / 01_Testing / Result / 自动更新工作流，并修复旧路径重定位时多条记录合流到同一物理文件引发的 UNIQUE(path) 冲突，碰撞时安全合并人工结论、星级、备注、锁定、测试状态等元数据。"
 }
