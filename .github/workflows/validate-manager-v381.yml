@@ -20,18 +20,19 @@ jobs:
           $work = Join-Path $PWD 'v381-source'
           if (Test-Path $work) { Remove-Item -Recurse -Force $work }
           Expand-Archive -LiteralPath 'manager/packages/FreeCam_Manager_V3.8_Source.zip' -DestinationPath $work -Force
-          git apply --whitespace=nowarn 'manager/incoming/v3.8.1/fix1.patch'
+          $patch = (Resolve-Path 'manager/incoming/v3.8.1/fix1.patch').Path
+          git apply --whitespace=nowarn --unsafe-paths --directory=v381-source $patch
           if ($LASTEXITCODE -ne 0) { throw "git apply failed: $LASTEXITCODE" }
-          if (-not (Test-Path (Join-Path $PWD 'src-wpf'))) {
-            throw 'patched src-wpf tree not materialized at repository root'
+          if (-not (Test-Path (Join-Path $work 'src-wpf\Build_v3_On_Windows.ps1'))) {
+            throw 'patched src-wpf build entrypoint missing'
           }
       - name: Build through real updater entrypoint
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          & '.\src-wpf\Build_v3_On_Windows.ps1' -NoLaunch -OutDir 'BuildOutput_CI'
+          & '.\v381-source\src-wpf\Build_v3_On_Windows.ps1' -NoLaunch -OutDir 'BuildOutput_CI'
           if ($LASTEXITCODE -ne 0) { throw "Build_v3_On_Windows.ps1 failed: $LASTEXITCODE" }
-          $result = Get-Content -Raw -LiteralPath '.\src-wpf\BuildOutput_CI\BUILD_RESULT.txt'
+          $result = Get-Content -Raw -LiteralPath '.\v381-source\src-wpf\BuildOutput_CI\BUILD_RESULT.txt'
           if ($result -notmatch 'Tests:\s*59 passed,\s*0 failed') { throw 'Expected 59/59 core regression result not found.' }
-          if (-not (Test-Path '.\src-wpf\BuildOutput_CI\FreeCam_Manager.exe')) { throw 'Expected FreeCam_Manager.exe not produced.' }
+          if (-not (Test-Path '.\v381-source\src-wpf\BuildOutput_CI\FreeCam_Manager.exe')) { throw 'Expected FreeCam_Manager.exe not produced.' }
           Write-Host 'V3.8 Fix1 updater build validation PASS.'
