@@ -7,11 +7,27 @@ on:
     paths:
       - .github/workflows/validate-manager-v392-tdd.yml
       - manager/incoming/v3.9.2/test_v392_contract.py
+      - manager/incoming/v3.9.2/apply_v392.py
 
 jobs:
   contract:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run V3.9.2 contract against V3.9.1 baseline (RED expected)
-        run: python manager/incoming/v3.9.2/test_v392_contract.py manager/packages/FreeCam_Manager_V3.9.1_Source.zip
+      - name: Build V3.9.2 candidate from V3.9.1 baseline
+        shell: python
+        run: |
+          from pathlib import Path
+          import shutil, subprocess, sys, zipfile
+          base = Path('manager/packages/FreeCam_Manager_V3.9.1_Source.zip')
+          stage = Path('_v392_contract')
+          out = Path('manager/packages/FreeCam_Manager_V3.9.2_Source.zip')
+          if stage.exists(): shutil.rmtree(stage)
+          stage.mkdir()
+          with zipfile.ZipFile(base) as zf: zf.extractall(stage)
+          subprocess.run([sys.executable, 'manager/incoming/v3.9.2/apply_v392.py', str(stage / 'src-wpf')], check=True)
+          with zipfile.ZipFile(out, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for path in sorted((stage / 'src-wpf').rglob('*')):
+                  if path.is_file(): zf.write(path, path.relative_to(stage).as_posix())
+      - name: Run V3.9.2 contract (GREEN)
+        run: python manager/incoming/v3.9.2/test_v392_contract.py manager/packages/FreeCam_Manager_V3.9.2_Source.zip
