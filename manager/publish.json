@@ -1,10 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "3.8.0",
-  "displayVersion": "V3.8",
-  "packageName": "FreeCam_Manager_V3.8_Source.zip",
-  "sourceSha256": "da0c8de6903dd2ba14de45cd8971b8736ce3bab4647165788d39f2b02fe7af52",
-  "notes": "V3.8 将 Manager 版本库主存储迁移到 SQLite：首次启动从 V3.7 library.json/.bak 安全迁移并保留旧数据；使用事务/WAL、最近 10 代已校验 SQLite 备份和 SQLiteRecovery/library-latest.json 灾难恢复导出；主库损坏时按 SQLite 备份、Recovery JSON、旧 JSON 逐级恢复，并提供显式 V3.7 回退工具。保留现有 Watcher / Organizer / Stable / 01_Testing / Result / 自动更新工作流，并修复旧路径重定位时多条记录合流到同一物理文件引发的 UNIQUE(path) 冲突，碰撞时安全合并人工结论、星级、备注、锁定、测试状态等元数据。",
-  "publishRevision": 4,
-  "archivePrefix": "src-wpf"
+  "version": "3.8.1",
+  "displayVersion": "V3.8 Fix1",
+  "packageName": "FreeCam_Manager_V3.8_Fix1_Source.zip",
+  "sourceSha256": "93dba1208030f7b1887f69b74244edf0a221a7b11e6ddfce1a40142be1b68831",
+  "notes": "V3.8 Fix1 修复 V3.7 Fix1 -> V3.8 自动更新构建失败：正式源码包的 FreeCamManager.Tests 此前仍使用 V3.7 JSON 启动恢复契约，导致 SQLite 架构在 updater 本地构建时第 58 项测试误判失败。Fix1 将正式测试契约同步到已验证的 RC2.1 版本，并纳入路径重定位重复目标合并回归；SQLite 生产逻辑不变。",
+  "publishRevision": 1
 }
