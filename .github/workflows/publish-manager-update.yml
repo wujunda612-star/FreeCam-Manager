@@ -14,7 +14,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  release-gate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate final online source package on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cfg = Get-Content -Raw -LiteralPath 'manager/publish.json' | ConvertFrom-Json
+          $package = Join-Path 'manager/packages' $cfg.packageName
+          & '.\manager\release\Validate_Manager_Source_Package.ps1' `
+            -PackagePath $package `
+            -ExpectedSha256 ([string]$cfg.sourceSha256) `
+            -ExpectedVersion ([string]$cfg.version) `
+            -WorkDirectory (Join-Path $PWD 'release-gate-source')
+          if ($LASTEXITCODE -ne 0) { throw "Final package release gate failed: $LASTEXITCODE" }
+
   publish:
+    needs: release-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
