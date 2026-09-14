@@ -1,0 +1,10 @@
+{
+  "version": "3.9.2",
+  "displayVersion": "V3.9.2",
+  "packageName": "FreeCam_Manager_V3.9.2_Source.zip",
+  "sourceSha256": "90fabcd310ff539a16c13da350acdd93004bef24d2d0d60187527f114d9e1183",
+  "size": 232143,
+  "base": "V3.9.1",
+  "branch": "feature/manager-v3.9.2-settings-grid",
+  "generatedAt": "2026-09-14T16:35:28.107651Z"
+}
