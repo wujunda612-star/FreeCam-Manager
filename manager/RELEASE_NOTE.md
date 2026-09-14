@@ -1,11 +1,12 @@
-# FreeCam 可视化管理器 V3.4
+# FreeCam 可视化管理器 V3.8
 
-V3.4 建立 Manager 软件更新基线，并新增系统主题跟随与启动居中。
+V3.8 将 Manager 的版本库主存储从 `library.json` 迁移到 SQLite，并保留现有文件工作流与软件更新机制。
 
-- 软件更新：启动后台检查 + 每 30 分钟检查 + 手动检查；发现新版本后可一键下载源码、校验 SHA256、本机编译，成功后替换并重启，失败保留旧版。
-- 主题：跟随系统 / 深色模式 / 浅色模式；跟随系统时响应 Windows 深浅色变化。
-- 窗口：正常启动默认居中。
-- 运行文件名从 V3.4 起固定为 `FreeCam_Manager.exe`。
-- 中文术语继续使用仓库根目录 `version.json` / `FilenameTerms.json`。
-
-V3.4 本身作为更新机制的基线版本，当前清单不需要下载自身源码包；从下一次发布开始，`manager/update.json` 会携带固定 Git commit 的源码包地址与 SHA256。
+- 首次启动会从 V3.7 的 `library.json` / `.bak` 安全迁移到 `library.db`，旧 JSON 不会被删除。
+- SQLite 写入使用事务 / WAL；保留最近 10 代已校验数据库备份。
+- 持续导出 `SQLiteRecovery/library-latest.json` 作为独立灾难恢复副本。
+- 主数据库异常时按 SQLite 备份 → Recovery JSON → 旧 JSON 的顺序恢复；所有来源都不可用时仍可创建可写新库并继续启动。
+- 提供显式 V3.7 回退工具，可将最新 SQLite 状态原子写回 legacy JSON；回退后重新进入 V3.8 会以最新 legacy 数据重新迁移，避免旧 SQLite 代际复活。
+- 保留 Watcher、Organizer、Stable、`01_Testing`、Result 关联、Archive、版本库重建及 Manager 自动更新工作流。
+- 修复旧路径重定位时多条索引记录合流到同一物理文件导致的 SQLite `UNIQUE(path)` 冲突；碰撞时安全合并人工结论、星级、备注、锁定、测试状态等元数据。
+- SQLite 架构已完成故障注入、600 轮耐久压力、真实 JSON 迁移、WPF 重启持久化、完整文件工作流沙盒回归及 RC 实机验证。
