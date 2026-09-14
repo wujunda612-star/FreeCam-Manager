@@ -1,0 +1,10 @@
+{
+  "version": "3.9.1",
+  "displayVersion": "V3.9.1",
+  "packageName": "FreeCam_Manager_V3.9.1_Source.zip",
+  "sourceSha256": "fc38279ffcc172dbddda1b552f93fa1b92eb92521aa93393e2da4701e4cc65f3",
+  "size": 231855,
+  "base": "V3.9",
+  "branch": "feature/manager-v3.9.1-ui-row",
+  "generatedAt": "2026-09-14T14:07:24.796265Z"
+}
