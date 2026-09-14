@@ -1,15 +1,22 @@
 {
   "schemaVersion": 1,
-  "version": "3.7.1",
-  "displayVersion": "V3.7 Fix1",
-  "packageName": "FreeCam_Manager_V3.7_Fix1_Source.zip",
-  "sourceSha256": "fbcb7f2787b0f37c7ed6d9930a4e11fb2731a76caffc0e111ceb963f19ed0a8b",
-  "basePackageName": "FreeCam_Manager_V3.7_Source.zip",
-  "patchFile": "manager/incoming/v3.7.1/v37-to-v371.patch.gz.b85",
+  "version": "3.8.0",
+  "displayVersion": "V3.8",
+  "packageName": "FreeCam_Manager_V3.8_Source.zip",
+  "sourceSha256": "5427fbac707bdf0238220753cf39edf61d114448e4aab46d51f7ddcd50a4a5cb",
+  "basePackageName": "FreeCam_Manager_V3.7_Fix1_Source.zip",
+  "patchParts": [
+    "manager/incoming/v3.8/part-00.b85",
+    "manager/incoming/v3.8/part-01.b85",
+    "manager/incoming/v3.8/part-02.b85",
+    "manager/incoming/v3.8/part-03.b85",
+    "manager/incoming/v3.8/part-04.b85",
+    "manager/incoming/v3.8/part-05.b85"
+  ],
   "patchEncoding": "base85",
   "patchCompression": "gzip",
-  "patchSha256": "391c0369eb0bba6e803e0e3ac9b091221d6a95b0e61bd4fa8e931a117f0b295c",
-  "sourceTreeSha256": "f894d9ab045c4ab3dedbc9554c10140756338201366408a54e38bf246485a740",
-  "notes": "修复后台刷新打断人工结论选择；新增版本库灾难恢复：启动及手动刷新可原地扫描现有 10_Stable / 20_Feature / 30_Experiment / 40_Result / 80_Archive / 90_Unknown 并重建索引，不移动现有文件，同时重新关联 01_Testing 与 Result。library.json 损坏时优先从 .bak 恢复；无可用备份时保留损坏副本并从 FreeCam 根目录重建。保存版本库时先写临时文件、落盘并校验 JSON，再替换主文件并保留上一份有效 .bak。",
+  "patchSha256": "38f04e1ef2d3a7ca3ccacaa759485a907713053364dbde4d10a644a917df55f4",
+  "sourceTreeSha256": "69a5472e22fc1da7e82369ab8596a602b34590e87c0c6259e9c9aaf290721c9d",
+  "notes": "V3.8 将 Manager 版本库主存储迁移到 SQLite：首次启动从 V3.7 library.json/.bak 安全迁移并保留旧数据；使用事务/WAL、最近 10 代已校验 SQLite 备份和 SQLiteRecovery/library-latest.json 灾难恢复导出；主库损坏时按 SQLite 备份、Recovery JSON、旧 JSON 逐级恢复，并提供显式 V3.7 回退工具。保留现有 Watcher / Organizer / Stable / 01_Testing / Result / 自动更新工作流，并修复旧路径重定位时多条记录合流到同一物理文件引发的 UNIQUE(path) 冲突，碰撞时安全合并人工结论、星级、备注、锁定、测试状态等元数据。",
   "publishRevision": 1
 }
