@@ -5,6 +5,6 @@
   "sourceRef": "3c7ec0162b6a27243bd21e564ba9be2d51773c48",
   "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/3c7ec0162b6a27243bd21e564ba9be2d51773c48/manager/packages/FreeCam_Manager_V3.9.1_Source.zip",
   "sourceSha256": "fc38279ffcc172dbddda1b552f93fa1b92eb92521aa93393e2da4701e4cc65f3",
-  "publishedAt": "2026-09-14T14:11:12.638016Z",
+  "publishedAt": "2026-09-14T14:12:34.743834Z",
   "notes": "V3.9.1 调整设置页“显示与行为”：界面主题、已废弃自动删除、隐藏 FreeCam_ 文件名前缀、显示文件名中文别名、功能中文显示、阶段中文显示六项改为横向一行排列；其余 V3.9 功能保持不变。"
 }
