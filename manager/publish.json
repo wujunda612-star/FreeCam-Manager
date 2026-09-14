@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "3.8.1",
-  "displayVersion": "V3.8 Fix1",
-  "packageName": "FreeCam_Manager_V3.8_Fix1_Source.zip",
-  "sourceSha256": "93dba1208030f7b1887f69b74244edf0a221a7b11e6ddfce1a40142be1b68831",
-  "notes": "V3.8 Fix1 修复 V3.7 Fix1 -> V3.8 自动更新构建失败：正式源码包的 FreeCamManager.Tests 此前仍使用 V3.7 JSON 启动恢复契约，导致 SQLite 架构在 updater 本地构建时第 58 项测试误判失败。Fix1 将正式测试契约同步到已验证的 RC2.1 版本，并纳入路径重定位重复目标合并回归；SQLite 生产逻辑不变。",
-  "publishRevision": 2
+  "version": "3.9.0",
+  "displayVersion": "V3.9",
+  "packageName": "FreeCam_Manager_V3.9_Source.zip",
+  "sourceSha256": "0168172c849dbb26f3bb703814c52a42d5b6ac96e3f96b9d1d7f4c39af366377",
+  "notes": "V3.9 优化版本列表和自动分类：移除独立锁列，锁定/取消锁定移入右键菜单，5 星自动锁定且降星不自动解锁；星级强调色改为主题蓝；设置页显示与行为重新整理为左右两列；新增 FreeCam_Manager_* -> 50_Manager（管理器）与 WW底层索引_/WW底层索引库_ -> 60_索引库（索引库）高优先级自动分类，并纳入重建/整理；发布链新增最终源码包 Windows 门禁，只有最终 ZIP 的 SHA、updater 目录契约、回归测试、WPF publish 与 EXE 产出全部通过后才允许发布更新清单。",
+  "publishRevision": 1
 }
