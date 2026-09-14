@@ -19,6 +19,7 @@ jobs:
         with:
           ref: feature/manager-v3.9.1-ui-row
 
+      # Build the exact source ZIP that will be validated and later published.
       - name: Build final V3.9.1 source ZIP from V3.9 baseline
         shell: python
         run: |
