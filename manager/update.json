@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.1",
-  "displayVersion": "V3.9.1",
-  "sourceRef": "3c7ec0162b6a27243bd21e564ba9be2d51773c48",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/3c7ec0162b6a27243bd21e564ba9be2d51773c48/manager/packages/FreeCam_Manager_V3.9.1_Source.zip",
-  "sourceSha256": "fc38279ffcc172dbddda1b552f93fa1b92eb92521aa93393e2da4701e4cc65f3",
-  "publishedAt": "2026-09-14T14:12:34.743834Z",
-  "notes": "V3.9.1 调整设置页“显示与行为”：界面主题、已废弃自动删除、隐藏 FreeCam_ 文件名前缀、显示文件名中文别名、功能中文显示、阶段中文显示六项改为横向一行排列；其余 V3.9 功能保持不变。"
+  "version": "3.9.2",
+  "displayVersion": "V3.9.2",
+  "sourceRef": "d911fce5a40a58fe9daa779493599746327077a0",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/d911fce5a40a58fe9daa779493599746327077a0/manager/packages/FreeCam_Manager_V3.9.2_Source.zip",
+  "sourceSha256": "90fabcd310ff539a16c13da350acdd93004bef24d2d0d60187527f114d9e1183",
+  "publishedAt": "2026-09-14T16:38:04.802386Z",
+  "notes": "V3.9.2：设置页“显示与行为”改为两横行、每行三项；历史页重复文件右键新增“删除此副本”，仅删除当前重复副本及其索引记录，不删除原始版本、测试目录或 Result/日志；开发中页面保持原有行为不变。"
 }
