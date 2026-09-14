@@ -66,17 +66,26 @@ jobs:
           if not current_ok:
               base_name = cfg.get('basePackageName')
               patch_name = cfg.get('patchFile')
-              if not base_name or not patch_name:
+              patch_parts = cfg.get('patchParts') or []
+              if not base_name or (not patch_name and not patch_parts):
                   raise SystemExit(f'package missing/invalid and patch reconstruction is not configured: {package}')
 
               base_package = Path('manager/packages') / base_name
-              patch_file = Path(patch_name)
               if not base_package.exists():
                   raise SystemExit(f'missing base package: {base_package}')
-              if not patch_file.exists():
-                  raise SystemExit(f'missing patch file: {patch_file}')
 
-              encoded = patch_file.read_text(encoding='ascii').strip()
+              if patch_parts:
+                  part_paths = [Path(name) for name in patch_parts]
+                  missing_parts = [str(path) for path in part_paths if not path.exists()]
+                  if missing_parts:
+                      raise SystemExit(f'missing patch parts: {missing_parts}')
+                  encoded = ''.join(path.read_text(encoding='ascii').strip() for path in part_paths)
+              else:
+                  patch_file = Path(patch_name)
+                  if not patch_file.exists():
+                      raise SystemExit(f'missing patch file: {patch_file}')
+                  encoded = patch_file.read_text(encoding='ascii').strip()
+
               encoding = cfg.get('patchEncoding', 'base85').lower()
               if encoding == 'base85':
                   compressed = base64.b85decode(encoded.encode('ascii'))
@@ -125,8 +134,10 @@ jobs:
 
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
               env.write(f'PACKAGE_PATH={package.as_posix()}\n')
+              patch_parts = cfg.get('patchParts') or []
               patch_name = cfg.get('patchFile', '')
-              env.write(f'PATCH_PATH={patch_name}\n')
+              patch_paths = patch_parts if patch_parts else ([patch_name] if patch_name else [])
+              env.write(f"PATCH_PATHS={':'.join(patch_paths)}\n")
           print(f'validated {package} sha256={actual_zip} size={package.stat().st_size}')
           PY
 
@@ -136,9 +147,12 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$PACKAGE_PATH"
-          if [ -n "$PATCH_PATH" ] && [ -f "$PATCH_PATH" ]; then
-            git rm -f -- "$PATCH_PATH"
-          fi
+          IFS=':' read -ra patch_paths <<< "${PATCH_PATHS:-}"
+          for patch_path in "${patch_paths[@]}"; do
+            if [ -n "$patch_path" ] && [ -f "$patch_path" ]; then
+              git rm -f -- "$patch_path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo 'Source package already committed.'
           else
