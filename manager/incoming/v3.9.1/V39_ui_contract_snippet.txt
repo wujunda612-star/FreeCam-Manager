@@ -1,0 +1,25 @@
+1663:         Assert(row.Contains("clamped == 5", StringComparison.Ordinal) && row.Contains("已标记 5 星并锁定保护", StringComparison.Ordinal),
+1664:             "setting 5 stars must also lock the artifact");
+1665:         Assert(row.Contains("ProtectionMenuText", StringComparison.Ordinal) && row.Contains("ToggleProtectionCommand", StringComparison.Ordinal),
+1666:             "row view model must expose context-menu protection state and command");
+1667: 
+1668:         Assert(dark.Contains("x:Key=\"StarActiveBrush\" Color=\"#5B8DEF\"", StringComparison.Ordinal),
+1669:             "dark theme active star color must match AccentBrush blue");
+1670:         Assert(light.Contains("x:Key=\"StarActiveBrush\" Color=\"#3F73D8\"", StringComparison.Ordinal),
+1671:             "light theme active star color must match AccentBrush blue");
+1672: 
+1673:         Assert(settings.Contains("x:Name=\"SettingsPrimaryColumn\"", StringComparison.Ordinal)
+1674:             && settings.Contains("x:Name=\"SettingsAliasColumn\"", StringComparison.Ordinal),
+1675:             "display-and-behavior settings must be organized as two explicit vertical columns");
+1676:         var primaryStart = settings.IndexOf("x:Name=\"SettingsPrimaryColumn\"", StringComparison.Ordinal);
+1677:         var aliasStart = settings.IndexOf("x:Name=\"SettingsAliasColumn\"", StringComparison.Ordinal);
+1678:         Assert(primaryStart >= 0 && aliasStart > primaryStart, "settings column markers are missing or out of order");
+1679:         var primary = settings[primaryStart..aliasStart];
+1680:         var aliases = settings[aliasStart..];
+1681:         Assert(primary.Contains("界面主题", StringComparison.Ordinal) && primary.Contains("已废弃自动删除", StringComparison.Ordinal)
+1682:             && primary.Contains("隐藏 FreeCam_ 文件名前缀", StringComparison.Ordinal),
+1683:             "left settings column must contain theme, auto-delete, and hide-prefix controls");
+1684:         Assert(aliases.Contains("显示文件名中文别名", StringComparison.Ordinal) && aliases.Contains("功能中文显示", StringComparison.Ordinal)
+1685:             && aliases.Contains("阶段中文显示", StringComparison.Ordinal),
+1686:             "right settings column must contain all three Chinese display controls");
+1687: 
