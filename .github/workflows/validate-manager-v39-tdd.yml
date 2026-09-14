@@ -28,7 +28,9 @@ jobs:
             Expand-Archive -LiteralPath $candidate -DestinationPath $work -Force
           } else {
             Expand-Archive -LiteralPath 'manager/packages/FreeCam_Manager_V3.8_Fix1_Source.zip' -DestinationPath $work -Force
-            python 'manager/incoming/v3.9/inject_v39_tests.py' (Join-Path $work 'src-wpf')
+            $src = Join-Path $work 'src-wpf'
+            python 'manager/incoming/v3.9/inject_v39_tests.py' $src
+            python 'manager/incoming/v3.9/apply_v39.py' $src
           }
           if (-not (Test-Path (Join-Path $work 'src-wpf\FreeCamManager.Tests\Program.cs'))) { throw 'test source missing' }
       - name: Run core regression
