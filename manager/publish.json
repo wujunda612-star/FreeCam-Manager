@@ -3,21 +3,8 @@
   "version": "3.8.0",
   "displayVersion": "V3.8",
   "packageName": "FreeCam_Manager_V3.8_Source.zip",
-  "sourceSha256": "21c3ca32393e50baf31ab668c4066e2db17db7acc10e684ed439cdfcd99dad46",
-  "basePackageName": "FreeCam_Manager_V3.7_Fix1_Source.zip",
-  "baseSubdir": "src-wpf",
-  "patchParts": [
-    "manager/incoming/v3.8/part-00.b85",
-    "manager/incoming/v3.8/part-01.b85",
-    "manager/incoming/v3.8/part-02.b85",
-    "manager/incoming/v3.8/part-03.b85",
-    "manager/incoming/v3.8/part-04.b85",
-    "manager/incoming/v3.8/part-05.b85"
-  ],
-  "patchEncoding": "base85",
-  "patchCompression": "gzip",
-  "patchSha256": "38f04e1ef2d3a7ca3ccacaa759485a907713053364dbde4d10a644a917df55f4",
-  "sourceTreeSha256": "6c40a2a4146bffd466bf28947e4c9e9863ccfb0c70d2e3c6abdaf7956e64ca09",
+  "sourceSha256": "da0c8de6903dd2ba14de45cd8971b8736ce3bab4647165788d39f2b02fe7af52",
   "notes": "V3.8 将 Manager 版本库主存储迁移到 SQLite：首次启动从 V3.7 library.json/.bak 安全迁移并保留旧数据；使用事务/WAL、最近 10 代已校验 SQLite 备份和 SQLiteRecovery/library-latest.json 灾难恢复导出；主库损坏时按 SQLite 备份、Recovery JSON、旧 JSON 逐级恢复，并提供显式 V3.7 回退工具。保留现有 Watcher / Organizer / Stable / 01_Testing / Result / 自动更新工作流，并修复旧路径重定位时多条记录合流到同一物理文件引发的 UNIQUE(path) 冲突，碰撞时安全合并人工结论、星级、备注、锁定、测试状态等元数据。",
-  "publishRevision": 3
+  "publishRevision": 4,
+  "archivePrefix": "src-wpf"
 }
