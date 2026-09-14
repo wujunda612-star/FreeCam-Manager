@@ -5,5 +5,5 @@
   "packageName": "FreeCam_Manager_V3.9.2_Source.zip",
   "sourceSha256": "90fabcd310ff539a16c13da350acdd93004bef24d2d0d60187527f114d9e1183",
   "notes": "V3.9.2：设置页“显示与行为”改为两横行、每行三项；历史页重复文件右键新增“删除此副本”，仅删除当前重复副本及其索引记录，不删除原始版本、测试目录或 Result/日志；开发中页面保持原有行为不变。",
-  "publishRevision": 4
+  "publishRevision": 5
 }
