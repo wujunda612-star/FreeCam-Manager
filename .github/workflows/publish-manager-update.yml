@@ -31,12 +31,13 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import base64, gzip, hashlib, json, os, shutil, subprocess, tempfile, zipfile
+          import base64, gzip, hashlib, json, os, subprocess, tempfile, zipfile
           from pathlib import Path
 
           cfg = json.loads(Path('manager/publish.json').read_text(encoding='utf-8'))
           package = Path('manager/packages') / cfg['packageName']
           expected_zip = cfg['sourceSha256'].lower()
+          cleanup_paths = []
 
           def sha256_bytes(data):
               return hashlib.sha256(data).hexdigest()
@@ -64,74 +65,93 @@ jobs:
 
           current_ok = package.exists() and sha256_bytes(package.read_bytes()) == expected_zip
           if not current_ok:
-              base_name = cfg.get('basePackageName')
-              patch_name = cfg.get('patchFile')
-              patch_parts = cfg.get('patchParts') or []
-              if not base_name or (not patch_name and not patch_parts):
-                  raise SystemExit(f'package missing/invalid and patch reconstruction is not configured: {package}')
-
-              base_package = Path('manager/packages') / base_name
-              if not base_package.exists():
-                  raise SystemExit(f'missing base package: {base_package}')
-
-              if patch_parts:
-                  part_paths = [Path(name) for name in patch_parts]
+              archive_parts = cfg.get('sourceArchiveParts') or []
+              if archive_parts:
+                  part_paths = [Path(name) for name in archive_parts]
                   missing_parts = [str(path) for path in part_paths if not path.exists()]
                   if missing_parts:
-                      raise SystemExit(f'missing patch parts: {missing_parts}')
+                      raise SystemExit(f'missing source archive parts: {missing_parts}')
                   encoded = ''.join(path.read_text(encoding='ascii').strip() for path in part_paths)
+                  archive_encoding = cfg.get('sourceArchiveEncoding', 'base85').lower()
+                  if archive_encoding == 'base85':
+                      package_bytes = base64.b85decode(encoded.encode('ascii'))
+                  elif archive_encoding == 'base64':
+                      package_bytes = base64.b64decode(encoded, validate=True)
+                  else:
+                      raise SystemExit(f'unsupported sourceArchiveEncoding: {archive_encoding}')
+                  actual = sha256_bytes(package_bytes)
+                  if actual != expected_zip:
+                      raise SystemExit(f'source archive SHA256 mismatch: expected={expected_zip} actual={actual}')
+                  package.parent.mkdir(parents=True, exist_ok=True)
+                  package.write_bytes(package_bytes)
+                  cleanup_paths.extend(str(path) for path in part_paths)
               else:
-                  patch_file = Path(patch_name)
-                  if not patch_file.exists():
-                      raise SystemExit(f'missing patch file: {patch_file}')
-                  encoded = patch_file.read_text(encoding='ascii').strip()
+                  base_name = cfg.get('basePackageName')
+                  patch_name = cfg.get('patchFile')
+                  patch_parts = cfg.get('patchParts') or []
+                  if not base_name or (not patch_name and not patch_parts):
+                      raise SystemExit(f'package missing/invalid and no reconstruction source is configured: {package}')
 
-              encoding = cfg.get('patchEncoding', 'base85').lower()
-              if encoding == 'base85':
-                  compressed = base64.b85decode(encoded.encode('ascii'))
-              elif encoding == 'base64':
-                  compressed = base64.b64decode(encoded, validate=True)
-              else:
-                  raise SystemExit(f'unsupported patchEncoding: {encoding}')
+                  base_package = Path('manager/packages') / base_name
+                  if not base_package.exists():
+                      raise SystemExit(f'missing base package: {base_package}')
 
-              compression = cfg.get('patchCompression', 'gzip').lower()
-              if compression == 'gzip':
-                  patch_bytes = gzip.decompress(compressed)
-              elif compression == 'none':
-                  patch_bytes = compressed
-              else:
-                  raise SystemExit(f'unsupported patchCompression: {compression}')
+                  if patch_parts:
+                      part_paths = [Path(name) for name in patch_parts]
+                      missing_parts = [str(path) for path in part_paths if not path.exists()]
+                      if missing_parts:
+                          raise SystemExit(f'missing patch parts: {missing_parts}')
+                      encoded = ''.join(path.read_text(encoding='ascii').strip() for path in part_paths)
+                      cleanup_paths.extend(str(path) for path in part_paths)
+                  else:
+                      patch_file = Path(patch_name)
+                      if not patch_file.exists():
+                          raise SystemExit(f'missing patch file: {patch_file}')
+                      encoded = patch_file.read_text(encoding='ascii').strip()
+                      cleanup_paths.append(str(patch_file))
 
-              expected_patch = cfg.get('patchSha256', '').lower()
-              actual_patch = sha256_bytes(patch_bytes)
-              if expected_patch and actual_patch != expected_patch:
-                  raise SystemExit(f'patch SHA256 mismatch: expected={expected_patch} actual={actual_patch}')
+                  encoding = cfg.get('patchEncoding', 'base85').lower()
+                  if encoding == 'base85':
+                      compressed = base64.b85decode(encoded.encode('ascii'))
+                  elif encoding == 'base64':
+                      compressed = base64.b64decode(encoded, validate=True)
+                  else:
+                      raise SystemExit(f'unsupported patchEncoding: {encoding}')
 
-              with tempfile.TemporaryDirectory() as temp:
-                  work = Path(temp) / 'source'
-                  work.mkdir(parents=True)
-                  with zipfile.ZipFile(base_package, 'r') as zf:
-                      zf.extractall(work)
+                  compression = cfg.get('patchCompression', 'gzip').lower()
+                  if compression == 'gzip':
+                      patch_bytes = gzip.decompress(compressed)
+                  elif compression == 'none':
+                      patch_bytes = compressed
+                  else:
+                      raise SystemExit(f'unsupported patchCompression: {compression}')
 
-                  base_subdir = str(cfg.get('baseSubdir', '') or '').strip().strip('/\\')
-                  source_root = work / base_subdir if base_subdir else work
-                  if not source_root.is_dir():
-                      raise SystemExit(f'configured baseSubdir does not exist after extraction: {source_root}')
+                  expected_patch = cfg.get('patchSha256', '').lower()
+                  actual_patch = sha256_bytes(patch_bytes)
+                  if expected_patch and actual_patch != expected_patch:
+                      raise SystemExit(f'patch SHA256 mismatch: expected={expected_patch} actual={actual_patch}')
 
-                  patch_path = Path(temp) / 'update.patch'
-                  patch_path.write_bytes(patch_bytes)
-                  subprocess.run(
-                      ['git', 'apply', '-p0', '--unsafe-paths', str(patch_path)],
-                      cwd=source_root,
-                      check=True,
-                  )
+                  with tempfile.TemporaryDirectory() as temp:
+                      work = Path(temp) / 'source'
+                      work.mkdir(parents=True)
+                      with zipfile.ZipFile(base_package, 'r') as zf:
+                          zf.extractall(work)
 
-                  expected_tree = cfg.get('sourceTreeSha256', '').lower()
-                  actual_tree = tree_hash(source_root)
-                  if expected_tree and actual_tree != expected_tree:
-                      raise SystemExit(f'source tree SHA256 mismatch: expected={expected_tree} actual={actual_tree}')
+                      base_subdir = str(cfg.get('baseSubdir', '') or '').strip().strip('/\\')
+                      source_root = work / base_subdir if base_subdir else work
+                      if not source_root.is_dir():
+                          raise SystemExit(f'configured baseSubdir does not exist after extraction: {source_root}')
 
-                  write_deterministic_zip(source_root, package)
+                      patch_path = Path(temp) / 'update.patch'
+                      patch_path.write_bytes(patch_bytes)
+                      subprocess.run(['git', 'apply', '-p0', '--unsafe-paths', str(patch_path)], cwd=source_root, check=True)
+
+                      expected_tree = cfg.get('sourceTreeSha256', '').lower()
+                      actual_tree = tree_hash(source_root)
+                      if expected_tree and actual_tree != expected_tree:
+                          raise SystemExit(f'source tree SHA256 mismatch: expected={expected_tree} actual={actual_tree}')
+
+                      write_deterministic_zip(source_root, package)
 
           actual_zip = sha256_bytes(package.read_bytes())
           if actual_zip != expected_zip:
@@ -139,10 +159,7 @@ jobs:
 
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
               env.write(f'PACKAGE_PATH={package.as_posix()}\n')
-              patch_parts = cfg.get('patchParts') or []
-              patch_name = cfg.get('patchFile', '')
-              patch_paths = patch_parts if patch_parts else ([patch_name] if patch_name else [])
-              env.write(f"PATCH_PATHS={':'.join(patch_paths)}\n")
+              env.write(f"CLEANUP_PATHS={':'.join(cleanup_paths)}\n")
           print(f'validated {package} sha256={actual_zip} size={package.stat().st_size}')
           PY
 
@@ -152,10 +169,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$PACKAGE_PATH"
-          IFS=':' read -ra patch_paths <<< "${PATCH_PATHS:-}"
-          for patch_path in "${patch_paths[@]}"; do
-            if [ -n "$patch_path" ] && [ -f "$patch_path" ]; then
-              git rm -f -- "$patch_path"
+          IFS=':' read -ra cleanup_paths <<< "${CLEANUP_PATHS:-}"
+          for cleanup_path in "${cleanup_paths[@]}"; do
+            if [ -n "$cleanup_path" ] && [ -f "$cleanup_path" ]; then
+              git rm -f -- "$cleanup_path"
             fi
           done
           if git diff --cached --quiet; then
@@ -181,10 +198,7 @@ jobs:
           if actual != expected:
               raise SystemExit(f'SHA256 mismatch after commit: expected={expected} actual={actual}')
 
-          package_commit = subprocess.check_output(
-              ['git', 'log', '-n', '1', '--format=%H', '--', str(package)],
-              text=True
-          ).strip()
+          package_commit = subprocess.check_output(['git', 'log', '-n', '1', '--format=%H', '--', str(package)], text=True).strip()
           if len(package_commit) != 40:
               raise SystemExit('could not resolve package commit')
 
