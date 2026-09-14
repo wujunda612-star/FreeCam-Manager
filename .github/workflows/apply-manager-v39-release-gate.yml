@@ -1,0 +1,34 @@
+name: Apply Manager V3.9 Release Gate
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9-ui-classification
+    paths:
+      - '.github/workflows/apply-manager-v39-release-gate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Harden publisher
+        run: python manager/incoming/v3.9/harden_publish_gate.py
+      - name: Commit publisher gate
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/publish-manager-update.yml
+          if git diff --cached --quiet; then
+            echo 'Publisher gate already current.'
+          else
+            git commit -m 'build: require Windows final-package gate before Manager publish'
+            git pull --rebase origin feature/manager-v3.9-ui-classification
+            git push origin HEAD:feature/manager-v3.9-ui-classification
+          fi
