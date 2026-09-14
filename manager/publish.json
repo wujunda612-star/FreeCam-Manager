@@ -5,5 +5,5 @@
   "packageName": "FreeCam_Manager_V3.8_Fix1_Source.zip",
   "sourceSha256": "93dba1208030f7b1887f69b74244edf0a221a7b11e6ddfce1a40142be1b68831",
   "notes": "V3.8 Fix1 修复 V3.7 Fix1 -> V3.8 自动更新构建失败：正式源码包的 FreeCamManager.Tests 此前仍使用 V3.7 JSON 启动恢复契约，导致 SQLite 架构在 updater 本地构建时第 58 项测试误判失败。Fix1 将正式测试契约同步到已验证的 RC2.1 版本，并纳入路径重定位重复目标合并回归；SQLite 生产逻辑不变。",
-  "publishRevision": 1
+  "publishRevision": 2
 }
