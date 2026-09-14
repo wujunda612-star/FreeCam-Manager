@@ -9,6 +9,7 @@ run_anchor = '        await Run("V3.8 path rebase merges duplicate target safely
 run_lines = (
     '        await Run("V3.9 Manager and index library classification", V39ManagerAndIndexLibraryClassification);\n'
     '        await Run("V3.9 UI protection and settings contract", V39UiProtectionAndSettingsContract);\n'
+    '        await Run("V3.9 five-star rating locks without auto-unlock", V39FiveStarLocksWithoutAutoUnlock);\n'
 )
 if 'V3.9 Manager and index library classification' not in text:
     if run_anchor not in text:
@@ -38,6 +39,21 @@ methods = r'''    private static Task V39ManagerAndIndexLibraryClassification()
         }
         Assert(classification.CategoryLabel(new Artifact { Category = "IndexLibrary" }) == "索引库", "IndexLibrary category label missing");
         return Task.CompletedTask;
+    }
+
+    private static async Task V39FiveStarLocksWithoutAutoUnlock()
+    {
+        var dir = TempDir();
+        var file = Path.Combine(dir, "library.json");
+        var artifactPath = Path.Combine(dir, "FreeCam_R40.4.0_Test.zip");
+        var library = await LibraryService.LoadAsync(file);
+        library.Upsert(new Artifact { Path = artifactPath, Name = Path.GetFileName(artifactPath), Rating = 0, Protected = false });
+
+        Assert(library.SetRating(artifactPath, 5), "five-star rating update should find the artifact");
+        Assert(library.ByPath(artifactPath)?.Protected == true, "five-star rating must lock the artifact");
+
+        Assert(library.SetRating(artifactPath, 4), "rating downgrade should find the artifact");
+        Assert(library.ByPath(artifactPath)?.Protected == true, "rating below five must not auto-unlock an already protected artifact");
     }
 
     private static Task V39UiProtectionAndSettingsContract()
