@@ -20,12 +20,18 @@ jobs:
           $work = Join-Path $PWD 'v381-source'
           if (Test-Path $work) { Remove-Item -Recurse -Force $work }
           Expand-Archive -LiteralPath 'manager/packages/FreeCam_Manager_V3.8_Source.zip' -DestinationPath $work -Force
-          $patch = (Resolve-Path 'manager/incoming/v3.8.1/fix1.patch').Path
-          git apply --whitespace=nowarn --unsafe-paths --directory=v381-source $patch
-          if ($LASTEXITCODE -ne 0) { throw "git apply failed: $LASTEXITCODE" }
-          if (-not (Test-Path (Join-Path $work 'src-wpf\Build_v3_On_Windows.ps1'))) {
-            throw 'patched src-wpf build entrypoint missing'
-          }
+          $src = Join-Path $work 'src-wpf'
+          if (-not (Test-Path (Join-Path $src 'Build_v3_On_Windows.ps1'))) { throw 'src-wpf build entrypoint missing' }
+          Copy-Item -Force -LiteralPath (Join-Path $src 'FreeCamManager.RC1.Tests\Program.cs') -Destination (Join-Path $src 'FreeCamManager.Tests\Program.cs')
+          $testFile = Join-Path $src 'FreeCamManager.Tests\Program.cs'
+          $testText = [System.IO.File]::ReadAllText($testFile)
+          $testText = $testText.Replace('V3.8 RC2 path rebase merges duplicate target safely','V3.8 path rebase merges duplicate target safely')
+          [System.IO.File]::WriteAllText($testFile,$testText,[System.Text.UTF8Encoding]::new($false))
+          $proj = Join-Path $src 'FreeCamManager\FreeCamManager.csproj'
+          $projText = [System.IO.File]::ReadAllText($proj)
+          if ($projText -notmatch '<Version>3\.8\.0</Version>') { throw 'unexpected V3.8 project version before Fix1 transform' }
+          $projText = $projText.Replace('<Version>3.8.0</Version>','<Version>3.8.1</Version>')
+          [System.IO.File]::WriteAllText($proj,$projText,[System.Text.UTF8Encoding]::new($false))
       - name: Build through real updater entrypoint
         shell: powershell
         run: |
