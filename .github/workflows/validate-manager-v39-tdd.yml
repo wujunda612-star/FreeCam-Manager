@@ -1,0 +1,38 @@
+name: Validate Manager V3.9 TDD
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9-ui-classification
+    paths:
+      - '.github/workflows/validate-manager-v39-tdd.yml'
+      - 'manager/incoming/v3.9/**'
+      - 'manager/packages/FreeCam_Manager_V3.9_Source.zip'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare source under test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $work = Join-Path $PWD 'v39-source'
+          if (Test-Path $work) { Remove-Item -Recurse -Force $work }
+          $candidate = 'manager/packages/FreeCam_Manager_V3.9_Source.zip'
+          if (Test-Path $candidate) {
+            Expand-Archive -LiteralPath $candidate -DestinationPath $work -Force
+          } else {
+            Expand-Archive -LiteralPath 'manager/packages/FreeCam_Manager_V3.8_Fix1_Source.zip' -DestinationPath $work -Force
+            python 'manager/incoming/v3.9/inject_v39_tests.py' (Join-Path $work 'src-wpf')
+          }
+          if (-not (Test-Path (Join-Path $work 'src-wpf\FreeCamManager.Tests\Program.cs'))) { throw 'test source missing' }
+      - name: Run core regression
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project '.\v39-source\src-wpf\FreeCamManager.Tests\FreeCamManager.Tests.csproj' -c Release
