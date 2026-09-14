@@ -1,0 +1,126 @@
+<UserControl x:Class="FreeCamManager.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:FreeCamManager.Controls"
+             Focusable="True" PreviewKeyDown="Root_PreviewKeyDown">
+    <UserControl.Resources>
+        <Style x:Key="InvisibleColumnResizeThumbStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Cursor" Value="SizeWE"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Grid Background="Transparent">
+                            <Border x:Name="DragGuide" Width="1" HorizontalAlignment="Right" Background="Transparent"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="DragGuide" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <Grid Grid.IsSharedSizeScope="True">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel><TextBlock Text="历史 / 搜索" Style="{StaticResource PageTitleStyle}"/><TextBlock Text="搜索所有版本、备注和历史归档" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0"/></StackPanel>
+                <Button Grid.Column="1" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RefreshCommand}"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconRefresh}" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.35" Width="15" Height="15"/><TextBlock Text="刷新" Margin="7,0,0,0"/></StackPanel></Button>
+            </Grid>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="112"/><ColumnDefinition Width="10"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
+                <controls:CompactPickerControl Grid.Column="1" Height="34" ItemsSource="{Binding SortOptions}" SelectedValue="{Binding SortMode, Mode=TwoWay}"/>
+                <Border Grid.Column="3" Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Height="34">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition/></Grid.ColumnDefinitions><Path Data="{StaticResource IconSearch}" Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.35" Width="14" Height="14" HorizontalAlignment="Center"/><TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextPrimaryBrush}" CaretBrush="{DynamicResource TextPrimaryBrush}" Padding="0,7,8,6" FontSize="12.5" ToolTip="搜索版本、功能、阶段或备注"/></Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="2" Style="{StaticResource PanelCardStyle}" Padding="8">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <Grid x:Name="HistoryHeaderGrid" Margin="10,0,10,0" SizeChanged="HeaderGrid_SizeChanged">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding FileColumnWidth}" MinWidth="180" SharedSizeGroup="HistoryFile"/><ColumnDefinition Width="94"/><ColumnDefinition Width="86"/><ColumnDefinition Width="{Binding FeatureColumnWidth}" MinWidth="60" SharedSizeGroup="HistoryFeature"/><ColumnDefinition Width="{Binding StageColumnWidth}" MinWidth="52" SharedSizeGroup="HistoryStage"/>
+                        <ColumnDefinition Width="86"/><ColumnDefinition Width="108"/><ColumnDefinition Width="24"/><ColumnDefinition Width="82"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid><TextBlock Text="文件" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/><Thumb Style="{StaticResource InvisibleColumnResizeThumbStyle}" DragDelta="FileColumnThumb_DragDelta" DragCompleted="ColumnThumb_DragCompleted"/></Grid>
+                    <TextBlock Grid.Column="1" Text="分类" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                    <TextBlock Grid.Column="2" Text="Base（基线）" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                    <Grid Grid.Column="3"><TextBlock Text="功能" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/><Thumb Style="{StaticResource InvisibleColumnResizeThumbStyle}" DragDelta="FeatureColumnThumb_DragDelta" DragCompleted="ColumnThumb_DragCompleted"/></Grid>
+                    <Grid Grid.Column="4"><TextBlock Text="阶段" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/><Thumb Style="{StaticResource InvisibleColumnResizeThumbStyle}" DragDelta="StageColumnThumb_DragDelta" DragCompleted="ColumnThumb_DragCompleted"/></Grid>
+                    <TextBlock Grid.Column="5" Text="系统状态" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                    <TextBlock Grid.Column="6" Text="人工结论" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                    <TextBlock Grid.Column="7" Text="星级" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                    <TextBlock Grid.Column="8" Text="时间" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                </Grid>
+
+                <ListView x:Name="HistoryList" Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                          Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          PreviewMouseRightButtonDown="List_PreviewMouseRightButtonDown">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,1"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <Border x:Name="Row" Background="{TemplateBinding Background}" CornerRadius="7" Padding="10,4" MinHeight="38"><ContentPresenter/></Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource HoverBrush}"/></Trigger>
+                                            <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource SelectionBrush}"/></Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" MinWidth="180" SharedSizeGroup="HistoryFile"/><ColumnDefinition Width="94"/><ColumnDefinition Width="86"/><ColumnDefinition Width="60" MinWidth="60" SharedSizeGroup="HistoryFeature"/><ColumnDefinition Width="52" MinWidth="52" SharedSizeGroup="HistoryStage"/>
+                                    <ColumnDefinition Width="86"/><ColumnDefinition Width="108"/><ColumnDefinition Width="24"/><ColumnDefinition Width="82"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" Margin="0,0,6,0" ToolTip="{Binding FileNameToolTip}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding CategoryLabel}" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Base}" Foreground="{DynamicResource TextMutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="3" Text="{Binding DisplayFeature}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" ToolTip="{Binding FeatureToolTip}"/>
+                                <TextBlock Grid.Column="4" Text="{Binding DisplayStage}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" ToolTip="{Binding StageToolTip}"/>
+                                <controls:StatusBadge Grid.Column="5" Text="{Binding TestStatus}" VerticalAlignment="Center"/>
+                                <controls:CompactPickerControl Grid.Column="6" Height="28" Margin="0,0,6,0" DimUnmarked="True" ItemsSource="{Binding ConclusionOptions}" SelectedValue="{Binding ManualStatus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <controls:StarRatingControl Grid.Column="7" Value="{Binding Rating, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="8" Text="{Binding TimeDisplay}" Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <ListView.ContextMenu>
+                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                            <MenuItem Header="打开所在位置" Command="{Binding SelectedRow.OpenLocationCommand}"/>
+                            <Separator/><MenuItem Header="编辑备注" Command="{Binding SelectedRow.EditNotesCommand}"/>
+                            <MenuItem Header="{Binding SelectedRow.ProtectionMenuText}" Command="{Binding SelectedRow.ToggleProtectionCommand}"/>
+                            <Separator/><MenuItem Header="移到历史归档" Command="{Binding SelectedRow.ArchiveCommand}"/><MenuItem Header="删除文件" Command="{Binding SelectedRow.DeleteCommand}" Foreground="{DynamicResource DangerBrush}"/>
+                        </ContextMenu>
+                    </ListView.ContextMenu>
+                </ListView>
+
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Items.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <Path Data="{StaticResource IconHistory}" Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.2" Width="28" Height="28" HorizontalAlignment="Center"/>
+                    <TextBlock Text="没有找到匹配的历史版本" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
