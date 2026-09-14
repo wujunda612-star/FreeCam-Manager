@@ -1,0 +1,64 @@
+name: Inspect Manager V3.9.2 History
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.2-settings-grid
+    paths:
+      - .github/workflows/inspect-manager-v392-history.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.2-settings-grid
+
+      - name: Inspect history and duplicate handling in V3.9.1 source
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+
+          package = Path('manager/packages/FreeCam_Manager_V3.9.1_Source.zip')
+          terms = ['History', '历史', 'Duplicate', 'duplicate', '重复', 'Delete', '删除', 'IsProtected', 'Protected']
+          out = []
+          with zipfile.ZipFile(package) as zf:
+              for name in zf.namelist():
+                  if not name.endswith(('.cs', '.xaml')):
+                      continue
+                  try:
+                      text = zf.read(name).decode('utf-8-sig')
+                  except Exception:
+                      continue
+                  lines = text.splitlines()
+                  hits = [i for i, line in enumerate(lines) if any(term in line for term in terms)]
+                  if not hits:
+                      continue
+                  out.append(f'===== {name} =====')
+                  ranges = []
+                  for i in hits:
+                      a, b = max(0, i-8), min(len(lines), i+9)
+                      if ranges and a <= ranges[-1][1]:
+                          ranges[-1] = (ranges[-1][0], max(ranges[-1][1], b))
+                      else:
+                          ranges.append((a,b))
+                  for a,b in ranges[:12]:
+                      out.extend(f'{n+1:05d}: {lines[n]}' for n in range(a,b))
+                      out.append('')
+          target = Path('manager/incoming/v3.9.2/history_inspect.txt')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text('\n'.join(out[:5000]) + '\n', encoding='utf-8')
+
+      - name: Commit inspection report
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.2/history_inspect.txt
+          git commit -m "chore: capture V3.9.1 history duplicate handling" || exit 0
+          git push
