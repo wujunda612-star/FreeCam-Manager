@@ -113,20 +113,25 @@ jobs:
                   with zipfile.ZipFile(base_package, 'r') as zf:
                       zf.extractall(work)
 
+                  base_subdir = str(cfg.get('baseSubdir', '') or '').strip().strip('/\\')
+                  source_root = work / base_subdir if base_subdir else work
+                  if not source_root.is_dir():
+                      raise SystemExit(f'configured baseSubdir does not exist after extraction: {source_root}')
+
                   patch_path = Path(temp) / 'update.patch'
                   patch_path.write_bytes(patch_bytes)
                   subprocess.run(
                       ['git', 'apply', '-p0', '--unsafe-paths', str(patch_path)],
-                      cwd=work,
+                      cwd=source_root,
                       check=True,
                   )
 
                   expected_tree = cfg.get('sourceTreeSha256', '').lower()
-                  actual_tree = tree_hash(work)
+                  actual_tree = tree_hash(source_root)
                   if expected_tree and actual_tree != expected_tree:
                       raise SystemExit(f'source tree SHA256 mismatch: expected={expected_tree} actual={actual_tree}')
 
-                  write_deterministic_zip(work, package)
+                  write_deterministic_zip(source_root, package)
 
           actual_zip = sha256_bytes(package.read_bytes())
           if actual_zip != expected_zip:
