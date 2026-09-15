@@ -1,0 +1,18 @@
+name: Validate Manager V3.9.3 TDD
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.3-ui-polish
+    paths:
+      - .github/workflows/validate-manager-v393-tdd.yml
+      - manager/incoming/v3.9.3/test_v393_contract.py
+      - manager/incoming/v3.9.3/apply_v393.py
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run V3.9.3 contract against V3.9.2 baseline
+        run: python manager/incoming/v3.9.3/test_v393_contract.py manager/packages/FreeCam_Manager_V3.9.2_Source.zip
