@@ -24,8 +24,8 @@ jobs:
           from pathlib import Path
           pkg = Path('manager/packages/FreeCam_Manager_V3.9.2_Source.zip')
           with zipfile.ZipFile(pkg) as zf:
-              hv = zf.read('FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
-              vm = zf.read('FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
+              hv = zf.read('src-wpf/FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
+              vm = zf.read('src-wpf/FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
           out=[]
           for title,text,terms in [
               ('HistoryView.xaml',hv,['删除此副本','ColumnDefinition Width="24"','ColumnDefinition Width="82"','星级','时间']),
