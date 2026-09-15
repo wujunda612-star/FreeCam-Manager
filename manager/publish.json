@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.3",
-  "displayVersion": "V3.9.3",
-  "packageName": "FreeCam_Manager_V3.9.3_Source.zip",
-  "sourceSha256": "86ac417d7ef28a9469e58924206b25f92acaf710b7073c6430e3ebf800937a85",
-  "notes": "V3.9.3：历史页右键“删除此副本”与其他菜单项统一左对齐；历史列表星级列加宽 16px，拉开星级与时间间距；其他 V3.9.2 功能保持不变。",
-  "publishRevision": 6
+  "version": "3.9.4",
+  "displayVersion": "V3.9.4",
+  "packageName": "FreeCam_Manager_V3.9.4_Source.zip",
+  "sourceSha256": "8d929f90cdd9879a6b978723acd7ed85ec7d574df170a7b3b07698439a664192",
+  "notes": "V3.9.4：启动性能诊断版；不改变现有启动流程，只记录冷启动各阶段耗时。每次启动会在 Manager 数据目录的 Logs 下追加 STARTUP_TIMING.log，用于定位系统重启后首次启动窗口出现较慢的具体阶段。",
+  "publishRevision": 7
 }
