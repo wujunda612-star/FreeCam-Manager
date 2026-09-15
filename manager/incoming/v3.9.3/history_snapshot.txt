@@ -1,3 +1,6 @@
+===== PACKAGE =====
+BUILD_MANIFEST.json=False
+version_392=True
 ===== HistoryView.xaml =====
 00048:                 <Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 00049:                 <Grid x:Name="HistoryHeaderGrid" Margin="10,0,10,0" SizeChanged="HeaderGrid_SizeChanged">
@@ -53,3 +56,18 @@
 00059:     public void AdjustFileColumnWidth(double delta)
 
 00060:     {
+
+===== APPLY =====
+returncode=1
+stdout=
+stderr=Traceback (most recent call last):
+  File "/home/runner/work/FreeCam-Manager/FreeCam-Manager/manager/incoming/v3.9.3/apply_v393.py", line 53, in <module>
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'manager/incoming/v3.9.3/_debug/BUILD_MANIFEST.json'
