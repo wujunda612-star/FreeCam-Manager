@@ -4,9 +4,9 @@ import sys, zipfile, re
 package = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('manager/packages/FreeCam_Manager_V3.9.2_Source.zip')
 
 with zipfile.ZipFile(package) as zf:
-    history = zf.read('FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
-    history_vm = zf.read('FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
-    csproj = zf.read('FreeCamManager/FreeCamManager.csproj').decode('utf-8-sig')
+    history = zf.read('src-wpf/FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
+    history_vm = zf.read('src-wpf/FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
+    csproj = zf.read('src-wpf/FreeCamManager/FreeCamManager.csproj').decode('utf-8-sig')
 
 errors = []
 
