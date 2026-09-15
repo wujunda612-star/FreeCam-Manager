@@ -1,0 +1,18 @@
+name: Validate Manager V3.9.4 TDD
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.4-startup-diagnostics
+    paths:
+      - .github/workflows/validate-manager-v394-tdd.yml
+      - manager/incoming/v3.9.4/test_v394_startup_diagnostics.py
+      - manager/incoming/v3.9.4/apply_v394.py
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run V3.9.4 diagnostics contract against V3.9.3 baseline (RED expected)
+        run: python manager/incoming/v3.9.4/test_v394_startup_diagnostics.py manager/packages/FreeCam_Manager_V3.9.3_Source.zip
