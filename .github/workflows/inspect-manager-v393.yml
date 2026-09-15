@@ -17,16 +17,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/manager-v3.9.3-ui-polish
-      - name: Capture V3.9.2 history source
+      - name: Capture V3.9.2 history source and apply diagnostics
         shell: python
         run: |
-          import zipfile
+          import zipfile, shutil, subprocess, sys
           from pathlib import Path
           pkg = Path('manager/packages/FreeCam_Manager_V3.9.2_Source.zip')
           with zipfile.ZipFile(pkg) as zf:
+              names = zf.namelist()
               hv = zf.read('src-wpf/FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
               vm = zf.read('src-wpf/FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
+              cs = zf.read('src-wpf/FreeCamManager/FreeCamManager.csproj').decode('utf-8-sig')
           out=[]
+          out.append('===== PACKAGE =====')
+          out.append('BUILD_MANIFEST.json=' + str('BUILD_MANIFEST.json' in names))
+          out.append('version_392=' + str('<Version>3.9.2</Version>' in cs))
           for title,text,terms in [
               ('HistoryView.xaml',hv,['删除此副本','ColumnDefinition Width="24"','ColumnDefinition Width="82"','星级','时间']),
               ('HistoryViewModel.cs',vm,['fixedColumns'])]:
@@ -42,6 +47,15 @@ jobs:
                       if n not in seen:
                           out.append(f'{n+1:05d}: {lines[n]}'); seen.add(n)
                   out.append('')
+          root=Path('manager/incoming/v3.9.3/_debug')
+          if root.exists(): shutil.rmtree(root)
+          root.mkdir(parents=True)
+          with zipfile.ZipFile(pkg) as zf: zf.extractall(root)
+          cp=subprocess.run([sys.executable,'manager/incoming/v3.9.3/apply_v393.py',str(root)],text=True,capture_output=True)
+          out.append('===== APPLY =====')
+          out.append('returncode='+str(cp.returncode))
+          out.append('stdout='+cp.stdout)
+          out.append('stderr='+cp.stderr)
           target=Path('manager/incoming/v3.9.3/history_snapshot.txt')
           target.parent.mkdir(parents=True,exist_ok=True)
           target.write_text('\n'.join(out),encoding='utf-8')
@@ -51,5 +65,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manager/incoming/v3.9.3/history_snapshot.txt
-          git commit -m "chore: capture V3.9.2 history layout" || exit 0
+          git commit -m "chore: capture V3.9.2 history/apply diagnostics" || exit 0
           git push
