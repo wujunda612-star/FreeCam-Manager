@@ -21,7 +21,7 @@ def replace_exact(text: str, old: str, new: str, expected: int, label: str) -> s
     return text.replace(old, new)
 
 
-# 1) History context menu: align the duplicate-copy delete item with the other menu rows.
+# 1) History context menu: align duplicate-copy deletion with the other menu rows.
 p, text = read('src-wpf/FreeCamManager/Views/HistoryView.xaml')
 old_dup = '<MenuItem Header="删除此副本" Command="{Binding SelectedRow.DeleteDuplicateCopyCommand}" Foreground="{DynamicResource DangerBrush}">'
 new_dup = '<MenuItem Header="删除此副本" Command="{Binding SelectedRow.DeleteDuplicateCopyCommand}" Foreground="{DynamicResource DangerBrush}" HorizontalContentAlignment="Left">'
@@ -49,8 +49,16 @@ p, text = read('src-wpf/FreeCamManager/FreeCamManager.csproj')
 text = replace_exact(text, '<Version>3.9.2</Version>', '<Version>3.9.3</Version>', 1, 'project version')
 write(p, text)
 
+# Published Manager source packages do not currently carry BUILD_MANIFEST.json,
+# so create it when missing and update it when present.
 manifest_path = root / 'BUILD_MANIFEST.json'
-manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+if manifest_path.exists():
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+else:
+    manifest = {
+        'Project': 'FreeCam_Manager',
+        'ArtifactType': 'Source',
+    }
 manifest.update({
     'Version': 'V3.9.3',
     'BuildName': 'FreeCam_Manager_V3.9.3',
