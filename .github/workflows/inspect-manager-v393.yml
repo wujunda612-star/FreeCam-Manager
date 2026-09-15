@@ -1,0 +1,55 @@
+name: Inspect Manager V3.9.3 Baseline
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.3-ui-polish
+    paths:
+      - .github/workflows/inspect-manager-v393.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.3-ui-polish
+      - name: Capture V3.9.2 history source
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+          pkg = Path('manager/packages/FreeCam_Manager_V3.9.2_Source.zip')
+          with zipfile.ZipFile(pkg) as zf:
+              hv = zf.read('FreeCamManager/Views/HistoryView.xaml').decode('utf-8-sig')
+              vm = zf.read('FreeCamManager/ViewModels/HistoryViewModel.cs').decode('utf-8-sig')
+          out=[]
+          for title,text,terms in [
+              ('HistoryView.xaml',hv,['删除此副本','ColumnDefinition Width="24"','ColumnDefinition Width="82"','星级','时间']),
+              ('HistoryViewModel.cs',vm,['fixedColumns'])]:
+              out.append('===== '+title+' =====')
+              lines=text.splitlines()
+              hits=[]
+              for i,line in enumerate(lines):
+                  if any(t in line for t in terms): hits.append(i)
+              seen=set()
+              for i in hits:
+                  a=max(0,i-4); b=min(len(lines),i+5)
+                  for n in range(a,b):
+                      if n not in seen:
+                          out.append(f'{n+1:05d}: {lines[n]}'); seen.add(n)
+                  out.append('')
+          target=Path('manager/incoming/v3.9.3/history_snapshot.txt')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          target.write_text('\n'.join(out),encoding='utf-8')
+      - name: Commit snapshot
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.3/history_snapshot.txt
+          git commit -m "chore: capture V3.9.2 history layout" || exit 0
+          git push
