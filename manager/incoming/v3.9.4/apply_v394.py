@@ -26,6 +26,7 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 # so pre-window timings are not distorted by per-stage file I/O.
 profiler = r'''using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace FreeCamManager.Services;
