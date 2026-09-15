@@ -1,0 +1,11 @@
+{
+  "version": "3.9.4",
+  "displayVersion": "V3.9.4",
+  "packageName": "FreeCam_Manager_V3.9.4_Source.zip",
+  "sourceSha256": "8d929f90cdd9879a6b978723acd7ed85ec7d574df170a7b3b07698439a664192",
+  "size": 234181,
+  "base": "V3.9.3",
+  "branch": "feature/manager-v3.9.4-startup-diagnostics",
+  "purpose": "cold-start timing diagnostics",
+  "generatedAt": "2026-09-15T16:10:36.382205Z"
+}
