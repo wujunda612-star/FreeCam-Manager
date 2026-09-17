@@ -1,28 +1,3 @@
-00001: using System.IO.Compression;
-00002: using System.Net;
-00003: using System.Net.Http;
-00004: using System.Security.Cryptography;
-00005: using System.Text;
-00006: using System.Text.Json;
-00007: using FreeCamManager.Core.Models;
-00008: using FreeCamManager.Core.Services;
-00009: 
-00010: namespace FreeCamManager.Tests;
-00011: 
-00012: internal static class Program
-00013: {
-00014:     private static int _failed;
-00015:     private static int _passed;
-00016: 
-00017:     public static async Task<int> Main()
-00018:     {
-00019:         await Run("Artifact snake_case JSON", ArtifactSnakeCaseJson);
-00020:         await Run("Legacy metadata migration", LegacyMetadataMigration);
-00021:         await Run("Settings defaults and repair", SettingsDefaultsAndRepair);
-00022:         await Run("V3.1 settings defaults and repair", V31SettingsDefaultsAndRepair);
-00023:         await Run("V3.2 filename aliases external dictionary", V32FilenameAliasesExternalDictionary);
-00024:         await Run("Optional Stable backup does not block startup", OptionalStableBackupDoesNotBlockStartup);
-00025:         await Run("Log directory fallback does not block startup", LogDirectoryFallbackDoesNotBlockStartup);
 00026:         await Run("Inline metadata persistence", InlineMetadataPersistence);
 00027:         await Run("Filename and manifest inspection", FilenameAndManifestInspection);
 00028:         await Run("Classification and Chinese labels", ClassificationAndLabels);
@@ -199,33 +174,230 @@
 00199:         settings.EnsureDirectories(cfg);
 00200:         Assert(Directory.Exists(root), "root should be created");
 00201:         Assert(Directory.Exists(inbox), "inbox should be created");
-00202:         Assert(File.Exists(blockedBackup), "optional Stable backup path must not be touched at startup");
-00203: 
-00204:         var source = Path.Combine(inbox, "FreeCam_R40.3.1_LookAt_Test3.zip");
-00205:         using (var zip = ZipFile.Open(source, ZipArchiveMode.Create))
-00206:         {
-00207:             var e = zip.CreateEntry("BUILD_MANIFEST.json");
-00208:             await using var stream = e.Open();
-00209:             await JsonSerializer.SerializeAsync(stream, new Dictionary<string, object?>
-00210:             {
-00211:                 ["Base"] = "R40.3.1", ["Feature"] = "LookAt", ["Stage"] = "Test3",
-00212:                 ["BuildType"] = "Test", ["Branch"] = "experiment/lookat",
-00213:                 ["ArtifactType"] = "Runtime", ["BuildId"] = "B3"
-00214:             });
-00215:         }
-00216: 
-00217:         var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
-00218:         var organizer = new OrganizerService(root, blockedBackup, library, new ManifestService(), new ClassificationService(), new HashService());
-00219:         var indexed = await organizer.ProcessAsync(source);
-00220:         Assert(indexed.Category == "Experiment", "normal archive processing must not depend on Stable backup access");
-00221:         Assert(File.Exists(blockedBackup), "normal archive processing must not touch Stable backup path");
-00222:     }
-00223: 
-00224:     private static async Task LogDirectoryFallbackDoesNotBlockStartup()
-00225:     {
-00226:         var dir = TempDir();
-00227:         var blocked = Path.Combine(dir, "blocked-log-path");
-00228:         await File.WriteAllTextAsync(blocked, "this is a file, not a directory");
-00229:         var fallback = Path.Combine(dir, "fallback-logs");
-00230: 
-00231:         var log = LogService.TryCreateWithFallback(blocked, "test", out var usedDirectory, fallback);
+00813:         var file = Path.Combine(inbox, "FreeCam_R40.3.1_LookAt_Test1.zip");
+00814:         using (var zip = ZipFile.Open(file, ZipArchiveMode.Create))
+00815:         {
+00816:             var e = zip.CreateEntry("BUILD_MANIFEST.json");
+00817:             await using var stream = e.Open();
+00818:             await JsonSerializer.SerializeAsync(stream, new Dictionary<string, object?>
+00819:             {
+00820:                 ["Base"] = "R40.3.1", ["Feature"] = "LookAt", ["Stage"] = "Test1",
+00821:                 ["BuildType"] = "Test", ["Branch"] = "feature/lookat", ["ArtifactType"] = "Runtime", ["BuildId"] = "B1"
+00822:             });
+00823:         }
+00824:         var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
+00825:         var organizer = new OrganizerService(root, "", library, new ManifestService(), new ClassificationService(), new HashService());
+00826:         var indexed = await organizer.ProcessAsync(file);
+00827:         Assert(indexed.Category == "Feature" && indexed.Path.Contains("20_Feature"), "organizer route failed");
+00828:         library.ToggleProtected(indexed.Path);
+00829:         var refused = false;
+00830:         try { await organizer.ArchiveAsync(indexed.Path); }
+00831:         catch (InvalidOperationException) { refused = true; }
+00832:         Assert(refused, "protected archive should be refused");
+00833:         library.ToggleProtected(indexed.Path);
+00834:         var archived = await organizer.ArchiveAsync(indexed.Path);
+00835:         Assert(archived.Category == "Archive" && archived.ManualStatus == "已废弃", "archive failed");
+00836:     }
+00837: 
+00838:     private static async Task InboxWatcherStability()
+00839:     {
+00840:         var dir = TempDir();
+00841:         var root = Path.Combine(dir, "root");
+00842:         var inbox = Path.Combine(dir, "inbox");
+00843:         Directory.CreateDirectory(inbox);
+00844:         var cfg = new AppSettings { RootDir = root, InboxDir = inbox, LogDir = Path.Combine(root, "Logs"), ScanSeconds = 3 };
+00845:         var settingsService = new SettingsService();
+00846:         settingsService.EnsureDirectories(cfg);
+00847:         var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
+00848:         var manifest = new ManifestService();
+00849:         var classification = new ClassificationService();
+00850:         var organizer = new OrganizerService(root, "", library, manifest, classification, new HashService());
+00851:         var results = new TestResultService(manifest);
+00852:         var watcher = new InboxWatcherService(() => cfg, library, organizer, manifest, classification, new ExtractionService(), new TestStatusRefreshService(library, results));
+00853: 
+00854:         var manager = Path.Combine(inbox, "FreeCam_Manager_v3.0.zip");
+00855:         await File.WriteAllTextAsync(manager, "manager");
+00856:         File.SetLastWriteTimeUtc(manager, DateTime.UtcNow.AddSeconds(-10));
+00857:         await watcher.ScanOnceAsync();
+00858:         await watcher.ScanOnceAsync();
+00859:         Assert(!File.Exists(manager), "Manager delivery zip should be organized after the stable scan");
+00860:         Assert(File.Exists(Path.Combine(root, "50_Manager", "FreeCam_Manager_v3.0.zip")), "Manager delivery zip was not moved to 50_Manager");
+00861:         Assert(library.Snapshot().Any(x => x.Category == "Manager"), "Manager delivery zip missing from project index");
+00862:         Assert(!Directory.Exists(Path.Combine(root, "01_Testing", "FreeCam_Manager_v3.0")), "Manager delivery zip must not be extracted into 01_Testing");
+00863: 
+00864:         var build = Path.Combine(inbox, "FreeCam_R40.3.1_LookAt_Test2.zip");
+00865:         using (var zip = ZipFile.Open(build, ZipArchiveMode.Create))
+00866:         {
+00867:             var e = zip.CreateEntry("BUILD_MANIFEST.json");
+00868:             await using (var stream = e.Open())
+00869:             {
+00870:                 await JsonSerializer.SerializeAsync(stream, new Dictionary<string, object?>
+00871:                 {
+00872:                     ["Base"]="R40.3.1", ["Feature"]="LookAt", ["Stage"]="Test2", ["BuildType"]="Test",
+00873:                     ["Branch"]="experiment/lookat", ["ArtifactType"]="Runtime", ["BuildId"]="B2"
+00874:                 });
+00875:             }
+00876:             var start = zip.CreateEntry("Start.cmd");
+00877:             await using var w = new StreamWriter(start.Open());
+00878:             await w.WriteAsync("echo test");
+00879:         }
+00880:         File.SetLastWriteTimeUtc(build, DateTime.UtcNow.AddSeconds(-10));
+00881:         var first = await watcher.ScanOnceAsync();
+00882:         Assert(!first && File.Exists(build), "first stable scan must not process");
+00883:         var second = await watcher.ScanOnceAsync();
+00884:         Assert(second && !File.Exists(build), "second stable scan should process/move file");
+00885:         Assert(Directory.Exists(Path.Combine(root, "01_Testing", "FreeCam_R40.3.1_LookAt_Test2")), "Testing folder missing");
+00886:         Assert(library.Snapshot().Any(x => x.BuildId == "B2"), "processed build missing from library");
+00887:     }
+00888: 
+00889: 
+00890:     private static async Task V32ManualRefreshImmediateScan()
+00891:     {
+00892:         var dir = TempDir();
+00893:         var root = Path.Combine(dir, "root");
+00894:         var inbox = Path.Combine(dir, "inbox");
+00895:         Directory.CreateDirectory(inbox);
+00896:         var cfg = new AppSettings { RootDir = root, InboxDir = inbox, LogDir = Path.Combine(root, "Logs"), ScanSeconds = 3 };
+00897:         new SettingsService().EnsureDirectories(cfg);
+00898:         var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
+00899:         var manifest = new ManifestService();
+00900:         var classification = new ClassificationService();
+00901:         var organizer = new OrganizerService(root, "", library, manifest, classification, new HashService());
+00902:         var results = new TestResultService(manifest);
+00903:         var watcher = new InboxWatcherService(() => cfg, library, organizer, manifest, classification, new ExtractionService(), new TestStatusRefreshService(library, results));
+00904: 
+00905:         var build = Path.Combine(inbox, "WW36_ExternalVerify_Probe1.3.zip");
+00906:         using (var zip = ZipFile.Open(build, ZipArchiveMode.Create))
+00907:         {
+00908:             var e = zip.CreateEntry("BUILD_MANIFEST.json");
+00909:             await using (var stream = e.Open())
+00910:             {
+00911:                 await JsonSerializer.SerializeAsync(stream, new Dictionary<string, object?>
+00912:                 {
+00913:                     ["Base"]="WW36", ["Feature"]="ExternalVerify", ["Stage"]="Probe1.3", ["BuildType"]="Probe",
+00914:                     ["Branch"]="experiment/external-verify", ["ArtifactType"]="Runtime", ["BuildId"]="V32-MANUAL-1"
+00915:                 });
+00916:             }
+00917:             var start = zip.CreateEntry("Start.cmd");
+00918:             await using var w = new StreamWriter(start.Open());
+00919:             await w.WriteAsync("echo test");
+00920:         }
+00921: 
+00922:         var changed = await watcher.ScanNowAsync();
+00923:         Assert(changed, "manual refresh should process a completed zip on the first click");
+00924:         Assert(!File.Exists(build), "manual refresh did not move the processed zip");
+00925:         Assert(library.Snapshot().Any(x => x.BuildId == "V32-MANUAL-1"), "manual refresh did not update the library");
+00926:     }
+00927: 
+00928:     private static Task WpfListPagesAvoidFragileStyles()
+00929:     {
+00930:         var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+00931:         foreach (var name in new[] { "DevelopmentView.xaml", "HistoryView.xaml", "StableView.xaml", "SettingsView.xaml" })
+00932:         {
+00933:             var path = Path.Combine(sourceRoot, "Views", name);
+00934:             var text = File.ReadAllText(path);
+00935:             Assert(!text.Contains("<DataGrid", StringComparison.Ordinal), $"{name} still uses DataGrid, which triggered the WPF Style popup storm");
+00936:             Assert(!text.Contains("<ComboBox", StringComparison.Ordinal), $"{name} still uses the fragile ComboBox style path");
+00937:             if (name is "DevelopmentView.xaml" or "HistoryView.xaml")
+00938:                 Assert(text.Contains("CompactPickerControl", StringComparison.Ordinal), $"{name} must use the custom conclusion picker");
+00939:         }
+00940:         return Task.CompletedTask;
+00941:     }
+00942: 
+00943:     private static Task Fix13WpfWorkflowContract()
+00944:     {
+00945:         var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+00946:         var dev = File.ReadAllText(Path.Combine(sourceRoot, "Views", "DevelopmentView.xaml"));
+00947:         var history = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HistoryView.xaml"));
+00948:         var row = File.ReadAllText(Path.Combine(sourceRoot, "ViewModels", "ArtifactRowViewModel.cs"));
+00949:         var star = File.ReadAllText(Path.Combine(sourceRoot, "Controls", "StarRatingControl.xaml"));
+00950:         var settings = File.ReadAllText(Path.Combine(sourceRoot, "Views", "SettingsView.xaml"));
+00951:         var project = File.ReadAllText(Path.Combine(sourceRoot, "FreeCamManager.csproj"));
+00952: 
+00953:         Assert(row.Contains("/C call", StringComparison.Ordinal) && !row.Contains("/k call", StringComparison.Ordinal), "cmd test launcher must close when script exits");
+00954:         Assert(!row.Contains("-NoExit", StringComparison.Ordinal), "PowerShell test launcher must close when script exits");
+00955:         Assert(row.Contains("IsExtracted", StringComparison.Ordinal), "artifact row must expose extraction state");
+00956:         Assert(dev.Contains("IconPackage", StringComparison.Ordinal) && dev.Contains("IconOpenPackage", StringComparison.Ordinal), "development list needs packed/open-package icons");
+00957:         Assert(!dev.Contains("编辑标签", StringComparison.Ordinal) && !history.Contains("编辑标签", StringComparison.Ordinal), "tag editor should be removed from list menus");
+00958:         Assert(!history.Contains("列表中的人工结论、星级和锁都会立即保存", StringComparison.Ordinal), "redundant history auto-save hint should be removed");
+00959:         Assert(star.Contains("Orientation=\"Vertical\"", StringComparison.Ordinal) && star.Contains("Width=\"18\"", StringComparison.Ordinal), "rating control must be a narrow vertical strip");
+00960:         Assert(dev.Contains("DimUnmarked=\"True\"", StringComparison.Ordinal) && history.Contains("DimUnmarked=\"True\"", StringComparison.Ordinal), "unmarked conclusion should be visually muted");
+00961:         Assert(settings.Contains("Manager 日志记录", StringComparison.Ordinal), "settings page needs Manager log switch");
+00962:         Assert(project.Contains("ApplicationIcon", StringComparison.Ordinal) && project.Contains("FreeCamManager.ico", StringComparison.Ordinal), "application icon must be configured");
+00963:         return Task.CompletedTask;
+00964:     }
+00965: 
+00966: 
+00967:     private static Task Fix14WpfInteractionContract()
+00968:     {
+00969:         var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+00970:         var controls = File.ReadAllText(Path.Combine(sourceRoot, "Styles", "Controls.xaml"));
+00971:         var picker = File.ReadAllText(Path.Combine(sourceRoot, "Controls", "CompactPickerControl.xaml.cs"));
+00972:         var settings = File.ReadAllText(Path.Combine(sourceRoot, "Views", "SettingsView.xaml"));
+00973:         var dev = File.ReadAllText(Path.Combine(sourceRoot, "Views", "DevelopmentView.xaml"));
+00974:         var history = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HistoryView.xaml"));
+00975:         var row = File.ReadAllText(Path.Combine(sourceRoot, "ViewModels", "ArtifactRowViewModel.cs"));
+00976: 
+00977:         Assert(controls.Contains("TargetType=\"ToolTip\"", StringComparison.Ordinal) && controls.Contains("PanelElevatedBrush", StringComparison.Ordinal), "ToolTip must follow the dark/light app theme");
+00978:         Assert(controls.Contains("MiniScrollBarStyle", StringComparison.Ordinal), "mini hover scrollbar style missing");
+00979:         Assert(picker.Contains("OwnerWindow_PreviewMouseDown", StringComparison.Ordinal) && picker.Contains("Key.Escape", StringComparison.Ordinal), "picker must close on outside click and Escape");
+00980:         Assert(settings.Contains("Height=\"34\"", StringComparison.Ordinal), "settings compact controls must keep the unified height");
+00981:         Assert(dev.Contains("FileColumnThumb_DragDelta", StringComparison.Ordinal), "development file column must be manually resizable");
+00982:         Assert(history.Contains("SharedSizeGroup=\"HistoryFile\"", StringComparison.Ordinal), "history file column must use the shared resizable layout");
+00983:         Assert(!row.Contains("ChooseDiscardDeleteDays", StringComparison.Ordinal), "discarded status must use the global Settings policy without a second popup");
+00984:         return Task.CompletedTask;
+00985:     }
+00986: 
+00987: 
+00988:     private static Task V32WpfRefreshAliasContract()
+00989:     {
+00990:         var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+00991:         var settings = File.ReadAllText(Path.Combine(sourceRoot, "Views", "SettingsView.xaml"));
+00992:         var dev = File.ReadAllText(Path.Combine(sourceRoot, "Views", "DevelopmentView.xaml"));
+00993:         var history = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HistoryView.xaml"));
+00994:         var home = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HomeView.xaml"));
+00995:         var homeVm = File.ReadAllText(Path.Combine(sourceRoot, "ViewModels", "HomeViewModel.cs"));
+00996:         var devVm = File.ReadAllText(Path.Combine(sourceRoot, "ViewModels", "DevelopmentViewModel.cs"));
+00997:         var row = File.ReadAllText(Path.Combine(sourceRoot, "ViewModels", "ArtifactRowViewModel.cs"));
+00998: 
+00999:         Assert(settings.Contains("显示文件名中文别名", StringComparison.Ordinal), "filename alias toggle missing from Settings");
+01000:         Assert(settings.Contains("OpenFilenameTermsCommand", StringComparison.Ordinal) && settings.Contains("ReloadFilenameTermsCommand", StringComparison.Ordinal), "filename term file actions missing from Settings");
+01001:         Assert(dev.Contains("FileNameToolTip", StringComparison.Ordinal) && history.Contains("FileNameToolTip", StringComparison.Ordinal), "original filename tooltip binding missing");
+01002:         Assert(home.Contains("DisplayName", StringComparison.Ordinal) && home.Contains("FileNameToolTip", StringComparison.Ordinal), "home recent list must use alias display and original-name tooltip");
+01003:         Assert(homeVm.Contains("原始文件名", StringComparison.Ordinal) && homeVm.Contains("备注", StringComparison.Ordinal), "home tooltip must combine original filename and notes");
+01004:         Assert(row.Contains("原始文件名", StringComparison.Ordinal) && row.Contains("备注", StringComparison.Ordinal), "tooltip must combine original filename and notes");
+01005:         Assert(devVm.Contains("ManualRefreshAsync", StringComparison.Ordinal) && devVm.Contains("正在扫描收件箱", StringComparison.Ordinal), "development refresh must trigger real inbox scan");
+01006:         Assert(settings.Contains("显示与行为", StringComparison.Ordinal), "settings must keep the display/behavior card");
+01007:         Assert(settings.Contains("功能中文显示", StringComparison.Ordinal) && settings.Contains("阶段中文显示", StringComparison.Ordinal), "feature/stage alias toggles missing");
+01008:         Assert(row.Contains("DisplayFeature", StringComparison.Ordinal) && row.Contains("FeatureToolTip", StringComparison.Ordinal), "feature alias display/tooltip missing");
+01009:         Assert(row.Contains("DisplayStage", StringComparison.Ordinal) && row.Contains("StageToolTip", StringComparison.Ordinal), "stage alias display/tooltip missing");
+01010:         Assert(dev.Contains("{Binding DisplayFeature}", StringComparison.Ordinal) && dev.Contains("{Binding FeatureToolTip}", StringComparison.Ordinal), "development feature alias binding missing");
+01011:         Assert(dev.Contains("{Binding DisplayStage}", StringComparison.Ordinal) && dev.Contains("{Binding StageToolTip}", StringComparison.Ordinal), "development stage alias binding missing");
+01012:         Assert(history.Contains("{Binding DisplayFeature}", StringComparison.Ordinal) && history.Contains("{Binding FeatureToolTip}", StringComparison.Ordinal), "history feature alias binding missing");
+01013:         Assert(history.Contains("{Binding DisplayStage}", StringComparison.Ordinal) && history.Contains("{Binding StageToolTip}", StringComparison.Ordinal), "history stage alias binding missing");
+01014:         return Task.CompletedTask;
+01015:     }
+01016: 
+01017: 
+01018:     private static Task V32Fix2ResponsiveColumnsContract()
+01019:     {
+01020:         var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+01021:         var coreRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager.Core"));
+01022:         var dev = File.ReadAllText(Path.Combine(sourceRoot, "Views", "DevelopmentView.xaml"));
+01023:         var history = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HistoryView.xaml"));
+01024:         var historyCode = File.ReadAllText(Path.Combine(sourceRoot, "Views", "HistoryView.xaml.cs"));
+01025:         var settings = File.ReadAllText(Path.Combine(sourceRoot, "Views", "SettingsView.xaml"));
+01026:         var appSettings = File.ReadAllText(Path.Combine(coreRoot, "Models", "AppSettings.cs"));
+01027:         var stable = File.ReadAllText(Path.Combine(sourceRoot, "Views", "StableView.xaml"));
+01028: 
+01029:         Assert(dev.Contains("MinWidth=\"180\" SharedSizeGroup=\"DevFile\"", StringComparison.Ordinal), "development file column should shrink to 180");
+01030:         Assert(dev.Contains("MinWidth=\"60\" SharedSizeGroup=\"DevFeature\"", StringComparison.Ordinal), "development feature column should shrink to 60");
+01031:         Assert(dev.Contains("MinWidth=\"52\" SharedSizeGroup=\"DevStage\"", StringComparison.Ordinal), "development stage column should shrink to 52");
+01032:         Assert(history.Contains("HistoryHeaderGrid", StringComparison.Ordinal) && history.Contains("FileColumnThumb_DragDelta", StringComparison.Ordinal), "history file column resize UI missing");
+01033:         Assert(history.Contains("HistoryFeature", StringComparison.Ordinal) && history.Contains("HistoryStage", StringComparison.Ordinal), "history feature/stage resize columns missing");
+01034:         Assert(historyCode.Contains("PersistColumnWidthsAsync", StringComparison.Ordinal), "history column widths must persist after drag");
+01035:         Assert(appSettings.Contains("history_file_column_width", StringComparison.Ordinal) && appSettings.Contains("history_feature_column_width", StringComparison.Ordinal) && appSettings.Contains("history_stage_column_width", StringComparison.Ordinal), "history persisted width settings missing");
+01036:         Assert(settings.Contains("HorizontalContentAlignment=\"Stretch\"", StringComparison.Ordinal) && settings.Contains("<Grid HorizontalAlignment=\"Stretch\">", StringComparison.Ordinal), "settings page must stretch to viewport width");
+01037:         Assert(!stable.Contains("FileColumnThumb_DragDelta", StringComparison.Ordinal), "stable page should remain non-resizable");
+01038:         return Task.CompletedTask;
+01039:     }
