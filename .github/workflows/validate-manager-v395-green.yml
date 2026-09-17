@@ -1,0 +1,35 @@
+name: Validate Manager V3.9.5 GREEN
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.5-unrecognized-inbox
+    paths:
+      - .github/workflows/validate-manager-v395-green.yml
+      - manager/incoming/v3.9.5/apply_v395.py
+      - manager/incoming/v3.9.5/apply_v395_test_only.py
+      - manager/incoming/v3.9.5/test_v395_contract.py
+
+jobs:
+  green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build V3.9.5 candidate from V3.9.4 baseline
+        shell: python
+        run: |
+          import shutil, subprocess, sys, zipfile
+          from pathlib import Path
+          src = Path('manager/packages/FreeCam_Manager_V3.9.4_Source.zip')
+          root = Path('_v395_green')
+          out = Path('manager/incoming/v3.9.5/FreeCam_Manager_V3.9.5_Source.zip')
+          if root.exists(): shutil.rmtree(root)
+          root.mkdir()
+          with zipfile.ZipFile(src) as zf: zf.extractall(root)
+          subprocess.run([sys.executable, 'manager/incoming/v3.9.5/apply_v395.py', str(root)], check=True)
+          if out.exists(): out.unlink()
+          with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zf:
+              for p in sorted(root.rglob('*')):
+                  if p.is_file(): zf.write(p, p.relative_to(root).as_posix())
+      - name: Run V3.9.5 contract
+        run: python manager/incoming/v3.9.5/test_v395_contract.py manager/incoming/v3.9.5/FreeCam_Manager_V3.9.5_Source.zip
