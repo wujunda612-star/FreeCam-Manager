@@ -1,0 +1,39 @@
+name: Validate Manager V3.9.5 RED
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.5-unrecognized-inbox
+    paths:
+      - .github/workflows/validate-manager-v395-red.yml
+      - manager/incoming/v3.9.5/apply_v395_test_only.py
+
+jobs:
+  red:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare V3.9.4 baseline with V3.9.5 regression only
+        shell: python
+        run: |
+          import shutil, subprocess, sys, zipfile
+          from pathlib import Path
+          src = Path('manager/packages/FreeCam_Manager_V3.9.4_Source.zip')
+          root = Path('_v395_red')
+          if root.exists(): shutil.rmtree(root)
+          root.mkdir()
+          with zipfile.ZipFile(src) as zf: zf.extractall(root)
+          subprocess.run([sys.executable, 'manager/incoming/v3.9.5/apply_v395_test_only.py', str(root)], check=True)
+
+      - name: Confirm regression is RED on V3.9.4
+        shell: pwsh
+        run: |
+          $log = Join-Path $PWD 'v395_red.log'
+          & .\_v395_red\src-wpf\Build_v3_On_Windows.ps1 -NoLaunch *>&1 | Tee-Object -FilePath $log
+          $code = $LASTEXITCODE
+          if ($code -eq 0) { throw 'RED expected: V3.9.4 unexpectedly passed V3.9.5 regression' }
+          $text = Get-Content $log -Raw
+          if ($text -notmatch 'V3\.9\.5 unrecognized inbox file must stay in inbox') {
+            throw 'RED failed for an unexpected reason; target assertion was not observed'
+          }
+          Write-Host 'RED PASS: V3.9.4 moves unrecognized inbox file, as expected before the fix.'
