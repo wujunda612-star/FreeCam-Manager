@@ -38,10 +38,11 @@ jobs:
                   text = zf.read(source).decode('utf-8-sig', errors='replace')
                   if source.endswith('Program.cs'):
                       lines = text.splitlines()
-                      hits = [i for i,l in enumerate(lines) if 'Inbox two-scan stability' in l or 'manual refresh processes' in l]
+                      keys = ['InboxWatcherStability', 'V32ManualRefreshImmediateScan']
+                      hits = [i for i,l in enumerate(lines) if any(k in l for k in keys)]
                       selected=[]; seen=set()
                       for i in hits:
-                          for n in range(max(0,i-80), min(len(lines), i+180)):
+                          for n in range(max(0,i-25), min(len(lines), i+150)):
                               if n not in seen:
                                   selected.append(f'{n+1:05d}: {lines[n]}'); seen.add(n)
                       text='\n'.join(selected)
@@ -53,5 +54,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manager/incoming/v3.9.5/inspect
-          git commit -m "chore: capture full V3.9.4 inbox routing sources" || exit 0
+          git commit -m "chore: capture V3.9.4 inbox regression methods" || exit 0
           git push
