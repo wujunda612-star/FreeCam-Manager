@@ -1,0 +1,231 @@
+00001: using System.IO.Compression;
+00002: using System.Net;
+00003: using System.Net.Http;
+00004: using System.Security.Cryptography;
+00005: using System.Text;
+00006: using System.Text.Json;
+00007: using FreeCamManager.Core.Models;
+00008: using FreeCamManager.Core.Services;
+00009: 
+00010: namespace FreeCamManager.Tests;
+00011: 
+00012: internal static class Program
+00013: {
+00014:     private static int _failed;
+00015:     private static int _passed;
+00016: 
+00017:     public static async Task<int> Main()
+00018:     {
+00019:         await Run("Artifact snake_case JSON", ArtifactSnakeCaseJson);
+00020:         await Run("Legacy metadata migration", LegacyMetadataMigration);
+00021:         await Run("Settings defaults and repair", SettingsDefaultsAndRepair);
+00022:         await Run("V3.1 settings defaults and repair", V31SettingsDefaultsAndRepair);
+00023:         await Run("V3.2 filename aliases external dictionary", V32FilenameAliasesExternalDictionary);
+00024:         await Run("Optional Stable backup does not block startup", OptionalStableBackupDoesNotBlockStartup);
+00025:         await Run("Log directory fallback does not block startup", LogDirectoryFallbackDoesNotBlockStartup);
+00026:         await Run("Inline metadata persistence", InlineMetadataPersistence);
+00027:         await Run("Filename and manifest inspection", FilenameAndManifestInspection);
+00028:         await Run("Classification and Chinese labels", ClassificationAndLabels);
+00029:         await Run("Stable release version beats base", StableReleaseVersionBeatsBase);
+00030:         await Run("Stable manifest schema and candidate repair", StableManifestSchemaAndCandidateRepair);
+00031:         await Run("Stable freeze requires runtime/source and auto-generates SHA256", StableFreezeMinimumMaterials);
+00032:         await Run("Moved FreeCam root rebases stale artifact paths", MovedRootRebasesStalePaths);
+00033:         await Run("V3.8 path rebase merges duplicate target safely", V38PathRebaseMergesDuplicateTargetSafely);
+00034:         await Run("V3.9 Manager and index library classification", V39ManagerAndIndexLibraryClassification);
+00035:         await Run("V3.9 UI protection and settings contract", V39UiProtectionAndSettingsContract);
+00036:         await Run("V3.9 five-star rating locks without auto-unlock", V39FiveStarLocksWithoutAutoUnlock);
+00037:         await Run("SHA256", Sha256Test);
+00038:         await Run("Safe Testing extraction", SafeExtraction);
+00039:         await Run("One-click test workspace prepares and discovers launcher", OneClickTestWorkspace);
+00040:         await Run("Raw test log marks build tested and stores draggable evidence", RawLogMarksTested);
+00041:         await Run("Testing cleanup preserves result evidence", TestingCleanupPreservesEvidence);
+00042:         await Run("Deleted Testing folder clears workspace flag but keeps tested history", DeletedTestingFolderKeepsTestHistory);
+00043:         await Run("Paired Result immediately stores draggable path", PairedResultStoresDraggablePath);
+00044:         await Run("V3.1 preferred drag evidence ignores internal marker", PreferredDragEvidenceIgnoresInternalMarker);
+00045:         await Run("Manager logging defaults enabled", ManagerLoggingDefaultsEnabled);
+00046:         await Run("Manager logging switch is runtime controllable", ManagerLoggingRuntimeSwitch);
+00047:         await Run("Discarded build delete schedule persists and cancels", DiscardDeleteSchedulePersistsAndCancels);
+00048:         await Run("Due discarded build cleanup preserves evidence", DueDiscardCleanupPreservesEvidence);
+00049:         await Run("Results detection", ResultsDetection);
+00050:         await Run("Organizer archive and protection", OrganizerArchiveProtection);
+00051:         await Run("Inbox two-scan stability and manager classification", InboxWatcherStability);
+00052:         await Run("V3.2 manual refresh processes completed download immediately", V32ManualRefreshImmediateScan);
+00053:         await Run("WPF list pages avoid DataGrid/ComboBox style regression", WpfListPagesAvoidFragileStyles);
+00054:         await Run("Fix13 WPF workflow contract", Fix13WpfWorkflowContract);
+00055:         await Run("Fix14 WPF interaction contract", Fix14WpfInteractionContract);
+00056:         await Run("V3.2 WPF refresh and filename alias contract", V32WpfRefreshAliasContract);
+00057:         await Run("V3.2 Fix2 responsive settings and resizable list columns", V32Fix2ResponsiveColumnsContract);
+00058:         await Run("V3.3 online terms update validates SHA and avoids redundant download", V33OnlineTermsUpdate);
+00059:         await Run("V3.3 current workspace result beats prior evidence folders", V33CurrentWorkspaceResultPriority);
+00060:         await Run("V3.4 settings support system theme", V34SystemThemeSettings);
+00061:         await Run("V3.4 manager update manifest and safe staging", V34ManagerUpdateService);
+00062:         await Run("V3.4 Fix3 stage display removes duplicated type prefix", V34Fix3StageDisplay);
+00063:         await Run("V3.4 Fix4 staging failures persist diagnostics", V34Fix4StageFailureDiagnostics);
+00064:         await Run("V3.4 Fix5 manager manifest bypasses mutable-branch cache", V34Fix5ManifestUsesGitHubApi);
+00065:         await Run("V3.4 Fix6 parses GitHub Contents envelope and reports local-ahead state", V34Fix6ContentsEnvelopeAndLocalAhead);
+00066:         await Run("V3.4 Fix7 coalesces rapid manager update checks", V34Fix7CoalescesRapidUpdateChecks);
+00067:         await Run("V3.5 settings and context menu contract", V35SettingsAndContextMenuContract);
+00068:         await Run("V3.5 update cleanup keeps diagnostics only", V35UpdateCleanupKeepsDiagnosticsOnly);
+00069:         await Run("V3.6 context menu separator uses MenuItem separator key", V36ContextMenuSeparatorUsesMenuItemKey);
+00070:         await Run("V3.6 home summary icons share one presentation style", V36HomeSummaryIconsShareOnePresentationStyle);
+00071:         await Run("V3.6 single-instance startup contract", V36SingleInstanceStartupContract);
+00072:         await Run("V3.7 matched Result ZIP beats raw log", V37MatchedResultZipBeatsRawLog);
+00073:         await Run("V3.7 tested raw log upgrades when Result ZIP appears", V37RefreshUpgradesRawLogToResultZip);
+00074:         await Run("V3.7 tested status click opens Result location without breaking drag", V37TestedStatusClickContract);
+00075:         await Run("V3.7 Fix1 background refresh preserves manual conclusion interaction", V371BackgroundRefreshPreservesManualConclusionInteraction);
+00076:         await Run("V3.7 Fix1 corrupted library restores from valid backup", V371CorruptedLibraryRestoresFromBackup);
+00077:         await Run("V3.7 Fix1 safe save keeps last-known-good backup", V371SafeSaveKeepsBackup);
+00078:         await Run("V3.7 Fix1 root reconciliation rebuilds managed library without moving files", V371RootReconciliationRebuildsManagedLibrary);
+00079:         await Run("V3.7 Fix1 root reconciliation preserves existing manual metadata", V371RootReconciliationPreservesManualMetadata);
+00080:         await Run("V3.7 Fix1 startup and manual refresh wire recovery reconciliation", V371RecoveryWiringContract);
+00081: 
+00082:         Console.WriteLine($"\nTests: {_passed} passed, {_failed} failed");
+00083:         return _failed == 0 ? 0 : 1;
+00084:     }
+00085: 
+00086:     private static Task ArtifactSnakeCaseJson()
+00087:     {
+00088:         var a = new Artifact { Path = "A.zip", RelativePath = Path.Combine("20_Feature", "A.zip"), BuildId = "B1", ManualStatus = "通过", Rating = 3 };
+00089:         var json = JsonSerializer.Serialize(a);
+00090:         using var doc = JsonDocument.Parse(json);
+00091:         var root = doc.RootElement;
+00092:         Assert(root.GetProperty("build_id").GetString() == "B1", "build_id mapping missing");
+00093:         Assert(root.GetProperty("relative_path").GetString() == Path.Combine("20_Feature", "A.zip"), "relative_path mapping missing");
+00094:         Assert(root.GetProperty("manual_status").GetString() == "通过", "manual_status mapping missing");
+00095:         return Task.CompletedTask;
+00096:     }
+00097: 
+00098:     private static async Task LegacyMetadataMigration()
+00099:     {
+00100:         var dir = TempDir();
+00101:         var file = Path.Combine(dir, "library.json");
+00102:         await File.WriteAllTextAsync(file, "{\"items\":[{\"path\":\"A.zip\",\"favorite\":true,\"status\":\"待复测\"}]}");
+00103:         var lib = await LibraryService.LoadAsync(file);
+00104:         var item = lib.ByPath("A.zip")!;
+00105:         Assert(item.Rating == 5, "favorite=true should migrate to rating=5");
+00106:         Assert(item.ManualStatus == "待复测", "legacy manual status migration failed");
+00107:     }
+00108: 
+00109:     private static async Task SettingsDefaultsAndRepair()
+00110:     {
+00111:         var dir = TempDir();
+00112:         var file = Path.Combine(dir, "app", "settings.json");
+00113:         var service = new SettingsService();
+00114:         var cfg = await service.LoadOrCreateAsync(file, Path.Combine(dir, "home"));
+00115:         Assert(cfg.ScanSeconds == 3 && cfg.Theme == "system", "default settings invalid");
+00116:         Assert(cfg.InboxDir == Path.Combine(cfg.RootDir, "00_Downloa"), "default inbox should live under FreeCam root");
+00117:         cfg.RootDir = Path.Combine(dir, "root");
+00118:         cfg.InboxDir = Path.Combine(dir, "inbox");
+00119:         cfg.LogDir = "";
+00120:         cfg.Theme = "neon";
+00121:         await service.SaveAsync(file, cfg);
+00122:         var repaired = await service.LoadOrCreateAsync(file, Path.Combine(dir, "home"));
+00123:         Assert(repaired.LogDir == Path.Combine(repaired.RootDir, "Logs"), "log dir repair failed");
+00124:         Assert(repaired.Theme == "system", "theme repair failed");
+00125:         service.EnsureDirectories(repaired);
+00126:         Assert(Directory.Exists(Path.Combine(repaired.RootDir, "01_Testing")), "01_Testing missing");
+00127:     }
+00128: 
+00129: 
+00130:     private static async Task V31SettingsDefaultsAndRepair()
+00131:     {
+00132:         var dir = TempDir();
+00133:         var file = Path.Combine(dir, "settings.json");
+00134:         var service = new SettingsService();
+00135:         var cfg = service.CreateDefault(dir);
+00136:         Assert(cfg.DiscardAutoDeleteDays == 0, "discard auto-delete should default to disabled");
+00137:         Assert(cfg.HideFreeCamPrefix, "FreeCam_ prefix should be hidden by default");
+00138:         Assert(cfg.DevelopmentFileColumnWidth == 0, "file column width 0 should mean auto-fill");
+00139:         Assert(cfg.DevelopmentFeatureColumnWidth == 104 && cfg.DevelopmentStageColumnWidth == 74, "development column defaults changed unexpectedly");
+00140:         Assert(cfg.HistoryFileColumnWidth == 0 && cfg.HistoryFeatureColumnWidth == 104 && cfg.HistoryStageColumnWidth == 74, "history column defaults changed unexpectedly");
+00141: 
+00142:         cfg.DiscardAutoDeleteDays = 2;
+00143:         cfg.DevelopmentFileColumnWidth = 40;
+00144:         cfg.DevelopmentFeatureColumnWidth = 20;
+00145:         cfg.DevelopmentStageColumnWidth = 10;
+00146:         cfg.HistoryFileColumnWidth = 40;
+00147:         cfg.HistoryFeatureColumnWidth = 20;
+00148:         cfg.HistoryStageColumnWidth = 10;
+00149:         await service.SaveAsync(file, cfg);
+00150:         var repaired = await service.LoadOrCreateAsync(file, dir);
+00151:         Assert(repaired.DiscardAutoDeleteDays == 0, "unsupported discarded auto-delete policy should repair to disabled");
+00152:         Assert(repaired.DevelopmentFileColumnWidth == 0, "too-small file width should repair to auto-fill");
+00153:         Assert(repaired.DevelopmentFeatureColumnWidth == 104 && repaired.DevelopmentStageColumnWidth == 74, "too-small resizable columns should repair to defaults");
+00154:         Assert(repaired.HistoryFileColumnWidth == 0 && repaired.HistoryFeatureColumnWidth == 104 && repaired.HistoryStageColumnWidth == 74, "too-small history widths should repair to defaults");
+00155:     }
+00156: 
+00157: 
+00158:     private static async Task V32FilenameAliasesExternalDictionary()
+00159:     {
+00160:         var dir = TempDir();
+00161:         var file = Path.Combine(dir, "Config", "FilenameTerms.json");
+00162:         var service = new FilenameAliasService(file);
+00163:         var count = await service.EnsureAndReloadAsync();
+00164:         Assert(count >= 10, "default filename term dictionary should be populated");
+00165:         Assert(File.Exists(file), "external filename term dictionary was not created");
+00166:         Assert(service.Translate("WW36_ExternalVerify_Probe1.3.zip") == "WW36_外部验证_探针1.3.zip", "default alias translation failed");
+00167:         Assert(service.Translate("R40.4.0_Env_Probe1.6_Bundle.zip") == "R40.4.0_环境_探针1.6_整合包.zip", "Env/Bundle alias translation failed");
+00168: 
+00169:         await File.WriteAllTextAsync(file, "[{\"from\":\"ExternalVerify\",\"to\":\"外验\"},{\"from\":\"Probe\",\"to\":\"探针\"}]");
+00170:         var reloaded = await service.ReloadAsync();
+00171:         Assert(reloaded == 2, "custom filename term reload count invalid");
+00172:         Assert(service.Translate("WW36_ExternalVerify_Probe1.3.zip") == "WW36_外验_探针1.3.zip", "reloaded external dictionary was not applied");
+00173: 
+00174:         var settings = new SettingsService().CreateDefault(dir);
+00175:         Assert(settings.ShowFilenameAliases, "filename aliases should default to visible");
+00176:         Assert(settings.ShowFeatureAliases, "feature aliases should default to visible");
+00177:         Assert(settings.ShowStageAliases, "stage aliases should default to visible");
+00178:     }
+00179: 
+00180:     private static async Task OptionalStableBackupDoesNotBlockStartup()
+00181:     {
+00182:         var dir = TempDir();
+00183:         var root = Path.Combine(dir, "root");
+00184:         var inbox = Path.Combine(dir, "inbox");
+00185:         var blockedBackup = Path.Combine(dir, "backup-blocker");
+00186:         await File.WriteAllTextAsync(blockedBackup, "this is a file, not a directory");
+00187: 
+00188:         var cfg = new AppSettings
+00189:         {
+00190:             RootDir = root,
+00191:             InboxDir = inbox,
+00192:             LogDir = Path.Combine(root, "Logs"),
+00193:             StableBackupDir = blockedBackup,
+00194:             ScanSeconds = 3,
+00195:             Theme = "dark"
+00196:         };
+00197: 
+00198:         var settings = new SettingsService();
+00199:         settings.EnsureDirectories(cfg);
+00200:         Assert(Directory.Exists(root), "root should be created");
+00201:         Assert(Directory.Exists(inbox), "inbox should be created");
+00202:         Assert(File.Exists(blockedBackup), "optional Stable backup path must not be touched at startup");
+00203: 
+00204:         var source = Path.Combine(inbox, "FreeCam_R40.3.1_LookAt_Test3.zip");
+00205:         using (var zip = ZipFile.Open(source, ZipArchiveMode.Create))
+00206:         {
+00207:             var e = zip.CreateEntry("BUILD_MANIFEST.json");
+00208:             await using var stream = e.Open();
+00209:             await JsonSerializer.SerializeAsync(stream, new Dictionary<string, object?>
+00210:             {
+00211:                 ["Base"] = "R40.3.1", ["Feature"] = "LookAt", ["Stage"] = "Test3",
+00212:                 ["BuildType"] = "Test", ["Branch"] = "experiment/lookat",
+00213:                 ["ArtifactType"] = "Runtime", ["BuildId"] = "B3"
+00214:             });
+00215:         }
+00216: 
+00217:         var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
+00218:         var organizer = new OrganizerService(root, blockedBackup, library, new ManifestService(), new ClassificationService(), new HashService());
+00219:         var indexed = await organizer.ProcessAsync(source);
+00220:         Assert(indexed.Category == "Experiment", "normal archive processing must not depend on Stable backup access");
+00221:         Assert(File.Exists(blockedBackup), "normal archive processing must not touch Stable backup path");
+00222:     }
+00223: 
+00224:     private static async Task LogDirectoryFallbackDoesNotBlockStartup()
+00225:     {
+00226:         var dir = TempDir();
+00227:         var blocked = Path.Combine(dir, "blocked-log-path");
+00228:         await File.WriteAllTextAsync(blocked, "this is a file, not a directory");
+00229:         var fallback = Path.Combine(dir, "fallback-logs");
+00230: 
+00231:         var log = LogService.TryCreateWithFallback(blocked, "test", out var usedDirectory, fallback);
