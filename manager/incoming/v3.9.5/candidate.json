@@ -1,0 +1,11 @@
+{
+  "version": "3.9.5",
+  "displayVersion": "V3.9.5",
+  "packageName": "FreeCam_Manager_V3.9.5_Source.zip",
+  "sourceSha256": "c97dbfe961fe09de33c2c28d74bc714c8c76f0034b2f19d6e12a499061c2c8ca",
+  "size": 234507,
+  "base": "V3.9.4",
+  "branch": "feature/manager-v3.9.5-inbox-unknown",
+  "purpose": "keep unrecognized files in Inbox",
+  "generatedAt": "2026-09-19T05:16:18.288315Z"
+}
