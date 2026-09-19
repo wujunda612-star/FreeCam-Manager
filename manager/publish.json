@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.4",
-  "displayVersion": "V3.9.4",
-  "packageName": "FreeCam_Manager_V3.9.4_Source.zip",
-  "sourceSha256": "8d929f90cdd9879a6b978723acd7ed85ec7d574df170a7b3b07698439a664192",
-  "notes": "V3.9.4：启动性能诊断版；不改变现有启动流程，只记录冷启动各阶段耗时。每次启动会在 Manager 数据目录的 Logs 下追加 STARTUP_TIMING.log，用于定位系统重启后首次启动窗口出现较慢的具体阶段。",
-  "publishRevision": 7
+  "version": "3.9.5",
+  "displayVersion": "V3.9.5",
+  "packageName": "FreeCam_Manager_V3.9.5_Source.zip",
+  "sourceSha256": "c97dbfe961fe09de33c2c28d74bc714c8c76f0034b2f19d6e12a499061c2c8ca",
+  "notes": "V3.9.5：收件箱自动分类改为“识别成功才归档”；未识别文件保持在收件箱原位置，不再移动到 90_Unknown，也不会提前解压到 Testing；文件内容或时间变化后会重新识别，手动刷新也会重新检查。",
+  "publishRevision": 8
 }
