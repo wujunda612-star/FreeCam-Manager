@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.4",
-  "displayVersion": "V3.9.4",
-  "sourceRef": "ded32f0115df1f26a6a10bccbbee0bc3d054f85b",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/ded32f0115df1f26a6a10bccbbee0bc3d054f85b/manager/packages/FreeCam_Manager_V3.9.4_Source.zip",
-  "sourceSha256": "8d929f90cdd9879a6b978723acd7ed85ec7d574df170a7b3b07698439a664192",
-  "publishedAt": "2026-09-15T16:13:45.563642Z",
-  "notes": "V3.9.4：启动性能诊断版；不改变现有启动流程，只记录冷启动各阶段耗时。每次启动会在 Manager 数据目录的 Logs 下追加 STARTUP_TIMING.log，用于定位系统重启后首次启动窗口出现较慢的具体阶段。"
+  "version": "3.9.5",
+  "displayVersion": "V3.9.5",
+  "sourceRef": "ef35846e059973e08e08872b99e6dd85e54a7963",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/ef35846e059973e08e08872b99e6dd85e54a7963/manager/packages/FreeCam_Manager_V3.9.5_Source.zip",
+  "sourceSha256": "c97dbfe961fe09de33c2c28d74bc714c8c76f0034b2f19d6e12a499061c2c8ca",
+  "publishedAt": "2026-09-19T05:18:37.494976Z",
+  "notes": "V3.9.5：收件箱自动分类改为“识别成功才归档”；未识别文件保持在收件箱原位置，不再移动到 90_Unknown，也不会提前解压到 Testing；文件内容或时间变化后会重新识别，手动刷新也会重新检查。"
 }
