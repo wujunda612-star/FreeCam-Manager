@@ -1,0 +1,67 @@
+name: Inspect Manager V3.9.5 Routing
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.5-inbox-unknown
+    paths:
+      - .github/workflows/inspect-manager-v395-routing.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.5-inbox-unknown
+
+      - name: Inspect V3.9.4 routing source
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+
+          pkg = Path('manager/packages/FreeCam_Manager_V3.9.4_Source.zip')
+          needles = [
+              '90_', 'ClassificationService', 'InboxWatcherService',
+              'Category', 'Archive', 'Unknown', 'Other', 'Unclassified',
+              'Move', 'Destination', 'OrganizerService', 'classify',
+              '80_Archive', '90_'
+          ]
+          out = []
+          with zipfile.ZipFile(pkg) as zf:
+              for name in zf.namelist():
+                  if not name.endswith('.cs'):
+                      continue
+                  try:
+                      text = zf.read(name).decode('utf-8-sig')
+                  except Exception:
+                      continue
+                  lines = text.splitlines()
+                  hit_idx = [i for i,l in enumerate(lines) if any(n.lower() in l.lower() for n in needles)]
+                  if not hit_idx:
+                      continue
+                  out.append('\n===== ' + name + ' =====')
+                  seen=set()
+                  for i in hit_idx[:120]:
+                      a=max(0,i-8); b=min(len(lines),i+16)
+                      for j in range(a,b):
+                          if j not in seen:
+                              out.append(f'{j+1:05d}: {lines[j]}')
+                              seen.add(j)
+                      out.append('')
+          target = Path('manager/incoming/v3.9.5/routing_snapshot.txt')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text('\n'.join(out), encoding='utf-8')
+
+      - name: Commit snapshot
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.5/routing_snapshot.txt
+          git commit -m "chore: inspect V3.9.4 routing" || exit 0
+          git push
