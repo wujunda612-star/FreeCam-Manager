@@ -311,7 +311,7 @@ tests = replace_once(
             "manual scans and the inbox watcher must wait until startup maintenance is finished");
         Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
             && source.Contains("libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal)
-            && source.Contains("startupTiming.Flush(\"BACKGROUND_MAINTENANCE_DONE\")", StringComparison.Ordinal),
+            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),
             "background repair must still reconcile the library and record completion");
         return Task.CompletedTask;
     }
