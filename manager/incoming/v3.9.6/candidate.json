@@ -1,0 +1,11 @@
+{
+  "version": "3.9.6",
+  "displayVersion": "V3.9.6",
+  "packageName": "FreeCam_Manager_V3.9.6_Source.zip",
+  "sourceSha256": "621cc439f103a529fc3c4edb0645c639bd7fe9a8edc3f68ab0ff60cb90c8f245",
+  "size": 235879,
+  "base": "V3.9.5",
+  "branch": "feature/manager-v3.9.6-fast-startup",
+  "purpose": "render window before background library maintenance; numeric version labels",
+  "generatedAt": "2026-09-23T05:27:51.298378Z"
+}
