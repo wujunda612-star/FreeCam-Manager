@@ -1,0 +1,118 @@
+name: Prepare Manager V3.9.6 Fast Startup
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.6-fast-startup
+    paths:
+      - .github/workflows/prepare-manager-v396.yml
+      - manager/incoming/v3.9.6/apply_v396.py
+      - manager/incoming/v3.9.6/test_v396_startup.py
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.6-fast-startup
+
+      - name: Confirm baseline fails new startup contract (RED)
+        shell: pwsh
+        run: |
+          python manager/incoming/v3.9.6/test_v396_startup.py manager/packages/FreeCam_Manager_V3.9.5_Source.zip
+          if ($LASTEXITCODE -eq 0) { throw "V3.9.5 unexpectedly passes the new startup contract" }
+          Write-Host "RED PASS: V3.9.5 still blocks first window render"
+
+      - name: Patch existing V3.9.5 source and create final V3.9.6 package
+        shell: python
+        run: |
+          import json, shutil, subprocess, sys, zipfile
+          from pathlib import Path
+
+          baseline = Path('manager/packages/FreeCam_Manager_V3.9.5_Source.zip')
+          stage = Path('_v396_stage')
+          dest = Path('manager/packages/FreeCam_Manager_V3.9.6_Source.zip')
+          if stage.exists(): shutil.rmtree(stage)
+          stage.mkdir()
+          with zipfile.ZipFile(baseline) as zf: zf.extractall(stage)
+          subprocess.run([sys.executable, 'manager/incoming/v3.9.6/apply_v396.py', str(stage)], check=True)
+          if dest.exists(): dest.unlink()
+          with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for path in sorted(stage.rglob('*')):
+                  if path.is_file(): zf.write(path, path.relative_to(stage).as_posix())
+          print('Created', dest, dest.stat().st_size)
+
+      - name: Verify final V3.9.6 source package contract (GREEN)
+        shell: pwsh
+        run: |
+          python manager/incoming/v3.9.6/test_v396_startup.py manager/packages/FreeCam_Manager_V3.9.6_Source.zip
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.6 startup contract failed" }
+
+      - name: Verify updater source layout
+        shell: python
+        run: |
+          import zipfile
+          required = {
+              'BUILD_MANIFEST.json',
+              'src-wpf/Build_v3_On_Windows.ps1',
+              'src-wpf/Apply_Manager_Update.ps1',
+              'src-wpf/FreeCamManager.sln',
+              'src-wpf/FreeCamManager/FreeCamManager.csproj',
+              'src-wpf/FreeCamManager/App.xaml.cs',
+              'src-wpf/FreeCamManager.Core/Services/AppVersionService.cs',
+              'src-wpf/FreeCamManager.Tests/Program.cs',
+          }
+          with zipfile.ZipFile('manager/packages/FreeCam_Manager_V3.9.6_Source.zip') as zf:
+              names = set(zf.namelist())
+          missing = sorted(required - names)
+          if missing: raise SystemExit('Source package missing: ' + ', '.join(missing))
+          print('Updater source layout PASS')
+
+      - name: Run Windows full build and regression suite
+        shell: pwsh
+        run: |
+          & .\_v396_stage\src-wpf\Build_v3_On_Windows.ps1 -NoLaunch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify final executable exists
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path _v396_stage\src-wpf -Recurse -Filter FreeCam_Manager.exe | Select-Object -First 1
+          if (-not $exe) { throw "Windows build did not produce FreeCam_Manager.exe" }
+          Write-Host "EXE PASS: $($exe.FullName)"
+
+      - name: Record validated package and checksum
+        shell: python
+        run: |
+          from pathlib import Path
+          import datetime, hashlib, json
+          source = Path('manager/packages/FreeCam_Manager_V3.9.6_Source.zip')
+          meta = {
+            'version': '3.9.6',
+            'displayVersion': 'V3.9.6',
+            'packageName': source.name,
+            'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+            'size': source.stat().st_size,
+            'base': 'V3.9.5',
+            'branch': 'feature/manager-v3.9.6-fast-startup',
+            'purpose': 'render window before background library maintenance; numeric version labels',
+            'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00', 'Z'),
+          }
+          path = Path('manager/incoming/v3.9.6/candidate.json')
+          path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(meta, ensure_ascii=False))
+
+      - name: Commit tested V3.9.6 source ZIP
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/packages/FreeCam_Manager_V3.9.6_Source.zip manager/incoming/v3.9.6/candidate.json
+          git commit -m "build: add Windows-validated Manager V3.9.6 source package"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
