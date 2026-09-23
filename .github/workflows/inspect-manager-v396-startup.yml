@@ -36,6 +36,9 @@ jobs:
             'src-wpf/FreeCamManager.Core/Services/InboxWatcherService.cs',
             'src-wpf/FreeCamManager.Core/Services/SettingsService.cs',
             'src-wpf/FreeCamManager.Tests/Program.cs',
+            'src-wpf/FreeCamManager/Services/StartupTimingRecorder.cs',
+            'src-wpf/FreeCamManager.Core/Services/AppVersionService.cs',
+            'src-wpf/FreeCamManager/Services/AppVersionService.cs',
           ]
           with zipfile.ZipFile(pkg) as archive:
             names = set(archive.namelist())
