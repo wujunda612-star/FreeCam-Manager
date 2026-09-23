@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.5",
-  "displayVersion": "V3.9.5",
-  "packageName": "FreeCam_Manager_V3.9.5_Source.zip",
-  "sourceSha256": "c97dbfe961fe09de33c2c28d74bc714c8c76f0034b2f19d6e12a499061c2c8ca",
-  "notes": "V3.9.5：收件箱自动分类改为“识别成功才归档”；未识别文件保持在收件箱原位置，不再移动到 90_Unknown，也不会提前解压到 Testing；文件内容或时间变化后会重新识别，手动刷新也会重新检查。",
-  "publishRevision": 8
+  "version": "3.9.6",
+  "displayVersion": "V3.9.6",
+  "packageName": "FreeCam_Manager_V3.9.6_Source.zip",
+  "sourceSha256": "621cc439f103a529fc3c4edb0645c639bd7fe9a8edc3f68ab0ff60cb90c8f245",
+  "notes": "V3.9.6：优化启动流程；主界面先显示，版本库路径修复、索引重建、Stable 候选目录修复和到期清理在首帧后后台执行；后台校验完成再开启收件箱监控，手动扫描同步等待避免冲突。版本显示、日志统一 V3.x.x，不再使用 Fix 后缀。",
+  "publishRevision": 9
 }
