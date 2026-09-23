@@ -11,6 +11,8 @@ with ZipFile(package) as zf:
     csproj = read('src-wpf/FreeCamManager/FreeCamManager.csproj')
     manifest = json.loads(read('BUILD_MANIFEST.json'))
     timing = read('src-wpf/FreeCamManager/Services/StartupTimingRecorder.cs')
+    version_service = read('src-wpf/FreeCamManager.Core/Services/AppVersionService.cs')
+    regression = read('src-wpf/FreeCamManager.Tests/Program.cs')
 
 errors = []
 def check(ok, message):
@@ -53,6 +55,11 @@ check('STARTUP_MAINTENANCE_DONE' in app
       'Background maintenance must log completion and flush timing diagnostics')
 check('lock (_sync)' in timing and timing.find('lock (_sync)') < timing.find('_lastElapsedMs = elapsedMs'),
       'Timing recorder needs synchronized delta updates when used on a background thread')
+
+check('return $"V{normalized.Major}.{normalized.Minor}.{normalized.Build}";' in version_service,
+      'AppVersionService must display V3.x.x without Fix suffix')
+check('V396FirstFrameStartupContract' in regression and 'V396ThreePartVersionDisplay' in regression,
+      'The final source package must ship startup and numeric-version regression tests')
 
 if errors:
     print('V3.9.6 startup contract FAIL:')
