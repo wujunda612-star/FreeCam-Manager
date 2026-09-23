@@ -21,11 +21,14 @@ jobs:
           ref: feature/manager-v3.9.6-fast-startup
 
       - name: Confirm baseline fails new startup contract (RED)
-        shell: pwsh
+        shell: python
         run: |
-          python manager/incoming/v3.9.6/test_v396_startup.py manager/packages/FreeCam_Manager_V3.9.5_Source.zip
-          if ($LASTEXITCODE -eq 0) { throw "V3.9.5 unexpectedly passes the new startup contract" }
-          Write-Host "RED PASS: V3.9.5 still blocks first window render"
+          import subprocess, sys
+          result = subprocess.run([sys.executable, 'manager/incoming/v3.9.6/test_v396_startup.py',
+              'manager/packages/FreeCam_Manager_V3.9.5_Source.zip'], check=False)
+          if result.returncode == 0:
+              raise SystemExit('V3.9.5 unexpectedly passes the new startup contract')
+          print('RED PASS: baseline violates new startup/version contract')
 
       - name: Patch existing V3.9.5 source and create final V3.9.6 package
         shell: python
