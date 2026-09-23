@@ -1,0 +1,57 @@
+name: Inspect Manager V3.9.6 Startup
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.6-fast-startup
+    paths:
+      - .github/workflows/inspect-manager-v396-startup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.6-fast-startup
+      - name: Extract startup source for inspection
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path
+          pkg = Path('manager/packages/FreeCam_Manager_V3.9.5_Source.zip')
+          root = Path('manager/incoming/v3.9.6/inspection')
+          wanted = [
+            'src-wpf/FreeCamManager/App.xaml.cs',
+            'src-wpf/FreeCamManager/MainWindow.xaml',
+            'src-wpf/FreeCamManager/MainWindow.xaml.cs',
+            'src-wpf/FreeCamManager/ViewModels/MainWindowViewModel.cs',
+            'src-wpf/FreeCamManager.Core/Services/LibraryRebuildService.cs',
+            'src-wpf/FreeCamManager.Core/Services/LibraryService.cs',
+            'src-wpf/FreeCamManager.Core/Services/PathRebaseService.cs',
+            'src-wpf/FreeCamManager.Core/Services/TestStatusRefreshService.cs',
+            'src-wpf/FreeCamManager.Core/Services/InboxWatcherService.cs',
+            'src-wpf/FreeCamManager.Core/Services/SettingsService.cs',
+            'src-wpf/FreeCamManager.Tests/Program.cs',
+          ]
+          with zipfile.ZipFile(pkg) as archive:
+            names = set(archive.namelist())
+            for name in wanted:
+              if name not in names:
+                print('MISSING', name)
+                continue
+              target = root / name
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(archive.read(name))
+              print(name, target.stat().st_size)
+      - name: Commit extracted startup sources
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.6/inspection
+          git commit -m "chore: inspect V3.9.5 startup path" || exit 0
+          git push
