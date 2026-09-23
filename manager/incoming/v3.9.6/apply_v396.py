@@ -98,7 +98,7 @@ app = replace_once(
                 _mainViewModel.StatusText = "主界面已显示，版本库正在后台校验…";
                 _startupMaintenanceTask = Task.Run(() => RunStartupMaintenanceAsync(
                     settings, organizer, libraryRebuild, discardCleanup, startupTiming, _shutdown.Token));
-                var maintenance = _startupMaintenanceTask;
+                var maintenance = _startupMaintenanceTask!;
                 maintenanceStarted.TrySetResult(true);
 
                 // Reconciliation, automatic inbox imports, and manual scans must
@@ -268,4 +268,68 @@ manifest.update({
     "BuildId": "MANAGER-V396-FASTSTART-20260923"
 })
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+# Permanently use numeric three-part versions in every future UI/log display.
+p, version = load("src-wpf/FreeCamManager.Core/Services/AppVersionService.cs")
+version = replace_once(
+    version,
+    '''        var baseText = $"V{normalized.Major}.{normalized.Minor}";
+        return normalized.Build > 0 ? $"{baseText} Fix{normalized.Build}" : baseText;''',
+    '''        return $"V{normalized.Major}.{normalized.Minor}.{normalized.Build}";''',
+    "three-part display version"
+)
+save(p, version)
+
+# Include the startup ordering and version-format regression in the distributed test suite.
+p, tests = load("src-wpf/FreeCamManager.Tests/Program.cs")
+tests = replace_once(
+    tests,
+    '        await Run("V3.7 Fix1 startup and manual refresh wire recovery reconciliation", V371RecoveryWiringContract);',
+    '        await Run("V3.7 Fix1 startup and manual refresh wire recovery reconciliation", V371RecoveryWiringContract);\n'
+    '        await Run("V3.9.6 first frame precedes background reconciliation", V396FirstFrameStartupContract);\n'
+    '        await Run("V3.9.6 version strings use three numeric components", V396ThreePartVersionDisplay);',
+    "register new startup/version regression tests"
+)
+tests = replace_once(
+    tests,
+    '    private static string TempDir()',
+    '''    private static Task V396FirstFrameStartupContract()
+    {
+        var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+        var source = File.ReadAllText(Path.Combine(sourceRoot, "App.xaml.cs"));
+        var startup = source.Split("protected override async void OnStartup", 2, StringSplitOptions.None)[1]
+            .Split("private async Task RunStartupMaintenanceAsync", 2, StringSplitOptions.None)[0];
+        var render = startup.IndexOf("window.ContentRendered +=", StringComparison.Ordinal);
+        var launch = startup.IndexOf("_startupMaintenanceTask = Task.Run(", StringComparison.Ordinal);
+        var show = startup.IndexOf("window.Show();", StringComparison.Ordinal);
+        Assert(render >= 0 && launch > render && show > launch,
+            "startup maintenance must launch from the first ContentRendered callback");
+        Assert(!startup[..render].Contains("await libraryRebuild.ReconcileAsync(", StringComparison.Ordinal),
+            "startup must show the window before blocking root reconciliation");
+        Assert(startup.Contains("await maintenanceStarted.Task.WaitAsync(_shutdown.Token)", StringComparison.Ordinal)
+            && startup.Contains("await maintenance.ConfigureAwait(false)", StringComparison.Ordinal),
+            "manual scans and the inbox watcher must wait until startup maintenance is finished");
+        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
+            && source.Contains("libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal)
+            && source.Contains("startupTiming.Flush(\"BACKGROUND_MAINTENANCE_DONE\")", StringComparison.Ordinal),
+            "background repair must still reconcile the library and record completion");
+        return Task.CompletedTask;
+    }
+
+    private static Task V396ThreePartVersionDisplay()
+    {
+        Assert(AppVersionService.FormatDisplay(new Version(3, 9, 6)) == "V3.9.6",
+            "Manager must display V3.9.6, not V3.9 Fix6");
+        Assert(AppVersionService.FormatDisplay(new Version(3, 9, 5)) == "V3.9.5",
+            "Manager must display V3.9.5, not V3.9 Fix5");
+        Assert(AppVersionService.FormatDisplay(new Version(3, 10, 0)) == "V3.10.0",
+            "three-part display must retain zero patch versions");
+        return Task.CompletedTask;
+    }
+
+    private static string TempDir()''',
+    "embed startup and version tests"
+)
+save(p, tests)
+
 print("Applied FreeCam Manager V3.9.6 post-render startup patch")
