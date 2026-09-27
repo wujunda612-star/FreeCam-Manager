@@ -11,7 +11,8 @@ public sealed class LibraryRebuildService(
     LibraryService library,
     ManifestService manifest,
     HashService hash,
-    IAppLogger? log = null)
+    IAppLogger? log = null,
+    ClassificationService? classification = null)
 {
     private static readonly string[] ManagedRoots =
         new[] { "10_Stable", "20_Feature", "30_Experiment", "40_Result", "50_Manager", "60_索引库", "80_Archive", "90_Unknown" };
@@ -25,7 +26,7 @@ public sealed class LibraryRebuildService(
         var linked = 0;
         var failed = 0;
 
-        foreach (var managedRoot in ManagedRoots)
+        foreach (var managedRoot in ManagedRoots.Concat(classification?.AdditionalManagedRoots() ?? []).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var directory = Path.Combine(root, managedRoot);
             if (!Directory.Exists(directory)) continue;
@@ -42,7 +43,7 @@ public sealed class LibraryRebuildService(
             foreach (var path in files)
             {
                 ct.ThrowIfCancellationRequested();
-                if (!ShouldIndex(path, managedRoot)) continue;
+                if (!ShouldIndex(path, managedRoot) && classification?.CustomCategoryFromRelativePath(Path.GetRelativePath(root, path)) is null) continue;
                 if (library.ByPath(path) is not null) continue;
 
                 try
@@ -60,7 +61,8 @@ public sealed class LibraryRebuildService(
                     artifact.Path = path;
                     artifact.Name = Path.GetFileName(path);
                     artifact.RelativePath = PathRebaseService.TryMakeRelative(root, path);
-                    artifact.Category = CategoryFromPath(managedRoot, artifact.RelativePath);
+                    artifact.Category = classification?.CustomCategoryFromRelativePath(artifact.RelativePath)
+                        ?? CategoryFromPath(managedRoot, artifact.RelativePath);
                     artifact.Size = info.Exists ? info.Length : 0;
                     artifact.ImportedAt = info.Exists
                         ? new DateTimeOffset(info.LastWriteTimeUtc).ToString("O")
@@ -84,7 +86,7 @@ public sealed class LibraryRebuildService(
             }
         }
 
-        foreach (var build in library.Snapshot().Where(x => x.Category is "Feature" or "Experiment"))
+        foreach (var build in library.Snapshot().Where(x => x.Category is "Feature" or "Experiment" || FileRuleEngine.IsCustomCategory(x.Category)))
         {
             ct.ThrowIfCancellationRequested();
             if (!string.IsNullOrWhiteSpace(build.TestingPath) && Directory.Exists(build.TestingPath)) continue;
