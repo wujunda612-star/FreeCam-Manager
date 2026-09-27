@@ -48,7 +48,7 @@ public static class FileRuleEngine
         foreach (var rule in rules)
         {
             if (!rule.Enabled) continue;
-            if (string.IsNullOrWhiteSpace(rule.Pattern) || rule.Pattern.IndexOfAny(['/', '\\']) >= 0)
+            if (string.IsNullOrWhiteSpace(rule.Pattern) || (rule.MatchBy != "分支" && rule.Pattern.IndexOfAny(['/', '\\']) >= 0))
                 throw new InvalidDataException(kind + "：匹配条件不能为空，也不能包含目录分隔符");
             if (kind == "分类")
             {
