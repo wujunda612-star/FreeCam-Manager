@@ -8,27 +8,61 @@ public sealed record ClassificationDecision(string Category, string RelativeDire
 
 public sealed class ClassificationService
 {
+    private readonly Func<IReadOnlyList<ClassificationRule>> _rules;
+    public ClassificationService(Func<IReadOnlyList<ClassificationRule>>? rules = null)
+        => _rules = rules ?? (() => RuleDefaults.Classification());
+
     public ClassificationDecision Plan(Artifact a)
     {
         var name = (a.Name ?? Path.GetFileName(a.Path ?? "") ?? "").Trim();
-        if (name.StartsWith("FreeCam_Manager_", StringComparison.OrdinalIgnoreCase))
-            return new("Manager", "50_Manager");
-        if (name.StartsWith("WW底层索引_", StringComparison.OrdinalIgnoreCase)
-            || name.StartsWith("WW底层索引库_", StringComparison.OrdinalIgnoreCase))
-            return new("IndexLibrary", "60_索引库");
+        // Result packages remain a system pairing concern, not a user category
+        // rule. Preserve legacy 40_Result behavior for external Result imports.
         if (Eq(a.ArtifactType, "Result"))
             return new("Result", Path.Combine("40_Result", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
-        if (IsStableLike(a))
+
+        // User filename globs cannot defeat the existing Stable freeze gate.
+        var stable = IsStableLike(a);
+        foreach (var rule in _rules())
+        {
+            if (!rule.Enabled || string.IsNullOrWhiteSpace(rule.Category)
+                || !Matches(rule, a, name)) continue;
+            if (stable && !Eq(rule.Category, "StableCandidate")) continue;
+            try
+            {
+                var dir = RuleMatcher.ResolveFolder(rule.Folder,
+                    Path.Combine(Path.GetTempPath(), "FreeCam_Classifier_Rules"),
+                    a.Feature, a.Stage, StableVersionResolver.Resolve(a));
+                return new(rule.Category.Trim(), dir, Eq(rule.Category, "StableCandidate"));
+            }
+            catch (InvalidOperationException) { continue; }
+        }
+
+        if (stable)
         {
             var version = Safe(StableVersionResolver.Resolve(a), "Unknown");
             return new("StableCandidate", Path.Combine("90_Unknown", "Stable_Candidate", version), true);
         }
-        var branch = (a.Branch ?? "").Trim();
-        if (branch.StartsWith("feature/", StringComparison.OrdinalIgnoreCase) || Eq(a.BuildType, "Feature"))
-            return new("Feature", Path.Combine("20_Feature", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
-        if (branch.StartsWith("experiment/", StringComparison.OrdinalIgnoreCase) || IsExperimentType(a.BuildType))
-            return new("Experiment", Path.Combine("30_Experiment", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
         return new("Unknown", "90_Unknown");
+    }
+
+    public static bool Matches(ClassificationRule rule, Artifact a, string? filename = null)
+    {
+        var name = filename ?? (a.Name ?? Path.GetFileName(a.Path ?? ""));
+        var value = rule.Field switch
+        {
+            "FileName" => name,
+            "ArtifactType" => a.ArtifactType,
+            "BuildType" => a.BuildType,
+            "Branch" => a.Branch,
+            "ReleaseState" => a.ReleaseState,
+            "StableLike" => IsStableLike(a) ? "true" : "",
+            "FeatureLike" => (a.Branch ?? "").StartsWith("feature/", StringComparison.OrdinalIgnoreCase)
+                || Eq(a.BuildType, "Feature") ? "true" : "",
+            "ExperimentLike" => (a.Branch ?? "").StartsWith("experiment/", StringComparison.OrdinalIgnoreCase)
+                || IsExperimentType(a.BuildType) ? "true" : "",
+            _ => ""
+        };
+        return RuleMatcher.Glob(rule.Pattern, value);
     }
 
     public string CategoryLabel(Artifact a)
@@ -53,6 +87,7 @@ public sealed class ClassificationService
             "duplicate" => "重复文件",
             "archive" => "历史归档",
             "unknown" => "未识别",
+            _ when !string.IsNullOrWhiteSpace(a.Category) && !RuleMatcher.IsBuiltInCategory(a.Category) => a.Category,
             _ => buildType switch
             {
                 "feature" => "正式功能",
