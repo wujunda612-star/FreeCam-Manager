@@ -36,18 +36,20 @@ public sealed class MainWindowViewModel : ObservableObject
         Func<Task> refresh = RefreshAllAsync;
 
         Home = new HomeViewModel(snapshot, classification, settings, filenameAliases);
-        var workspace = new TestWorkspaceService(extraction);
+        var workspace = new TestWorkspaceService(extraction, () => settings.LaunchRules ?? RuleDefaults.Launch());
         Development = new DevelopmentViewModel(snapshot, library, organizer, classification, dialogs, workspace, results, refresh,
             () => settings.RootDir, () => SettingsService.TestingRoot(settings), () => SettingsService.ResultRoot(settings), status,
             settings, settingsService, filenameAliases, scanInboxNow);
         Stable = new StableViewModel(snapshot, organizer, dialogs, refresh, status);
-        History = new HistoryViewModel(snapshot, library, organizer, classification, dialogs, refresh, status, settings, settingsService, filenameAliases);
+        History = new HistoryViewModel(snapshot, library, organizer, classification, dialogs, refresh, status, settings, settingsService, filenameAliases, workspace, results);
+        CustomCategories = new CustomCategoryViewModel(snapshot, settings, library, organizer, classification, dialogs, workspace, results, filenameAliases, status, refresh);
 
         Settings = new SettingsViewModel(settings, settingsService, theme, filenameAliases, status, cfg =>
         {
             organizer.Root = cfg.RootDir;
             organizer.StableBackup = cfg.StableBackupDir;
             RefreshFilenameDisplay();
+            CustomCategories.Refresh();
             onSettingsSaved?.Invoke(cfg);
         }, RefreshFilenameDisplay, localTermsState, checkTermsUpdate, checkManagerUpdate,
         installManagerUpdate is null ? null : async manifest =>
@@ -66,6 +68,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public DevelopmentViewModel Development { get; }
     public StableViewModel Stable { get; }
     public HistoryViewModel History { get; }
+    public CustomCategoryViewModel CustomCategories { get; }
     public SettingsViewModel Settings { get; }
     public ICommand NavigateCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -78,6 +81,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Home.Refresh();
         Development.Refresh();
         History.Refresh();
+        CustomCategories.Refresh();
     }
 
     public async Task RefreshAllAsync()
@@ -107,6 +111,7 @@ public sealed class MainWindowViewModel : ObservableObject
             "开发中" => Development,
             "稳定版" => Stable,
             "历史" => History,
+            "自定义分类" => CustomCategories,
             "设置" => Settings,
             _ => Home
         };
