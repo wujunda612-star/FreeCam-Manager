@@ -33,6 +33,9 @@ public sealed class Artifact
     [JsonPropertyName("status")] public string Status { get; set; } = "";
     [JsonPropertyName("test_status")] public string TestStatus { get; set; } = "";
     [JsonPropertyName("manual_status")] public string ManualStatus { get; set; } = "";
+    [JsonPropertyName("launch_override_relative")] public string LaunchOverrideRelative { get; set; } = "";
+    [JsonPropertyName("drag_override_path")] public string DragOverridePath { get; set; } = "";
+    [JsonPropertyName("drag_override_relative")] public string DragOverrideRelative { get; set; } = "";
     [JsonPropertyName("testing_path")] public string TestingPath { get; set; } = "";
     [JsonPropertyName("testing_relative_path")] public string TestingRelativePath { get; set; } = "";
     [JsonPropertyName("result_path")] public string ResultPath { get; set; } = "";
@@ -57,6 +60,7 @@ public sealed class Artifact
         Commit = Commit, SourceMode = SourceMode, SourceState = SourceState, ReleaseState = ReleaseState,
         BuildDate = BuildDate, ManifestFound = ManifestFound, ManifestName = ManifestName, Sha256 = Sha256,
         Size = Size, Category = Category, Status = Status, TestStatus = TestStatus, ManualStatus = ManualStatus,
+        LaunchOverrideRelative = LaunchOverrideRelative, DragOverridePath = DragOverridePath, DragOverrideRelative = DragOverrideRelative,
         TestingPath = TestingPath, TestingRelativePath = TestingRelativePath, ResultPath = ResultPath, ResultRelativePath = ResultRelativePath,
         LastTestedAt = LastTestedAt, TestStartedAt = TestStartedAt, Tags = [.. Tags], Notes = Notes, Favorite = Favorite, Rating = Rating,
         Protected = Protected, PairedBuildId = PairedBuildId, ImportedAt = ImportedAt, DuplicateOf = DuplicateOf, AutoDeleteAt = AutoDeleteAt
