@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.6",
-  "displayVersion": "V3.9.6",
-  "sourceRef": "8c78c1df03d61a78af0e74a4397168048e928425",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/8c78c1df03d61a78af0e74a4397168048e928425/manager/packages/FreeCam_Manager_V3.9.6_Source.zip",
-  "sourceSha256": "621cc439f103a529fc3c4edb0645c639bd7fe9a8edc3f68ab0ff60cb90c8f245",
-  "publishedAt": "2026-09-23T05:31:11.564813Z",
-  "notes": "V3.9.6：优化启动流程；主界面先显示，版本库路径修复、索引重建、Stable 候选目录修复和到期清理在首帧后后台执行；后台校验完成再开启收件箱监控，手动扫描同步等待避免冲突。版本显示、日志统一 V3.x.x，不再使用 Fix 后缀。"
+  "version": "3.9.7",
+  "displayVersion": "V3.9.7",
+  "sourceRef": "81e2ef7b8e122d3eaa0b09243c529c9d6502973b",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/81e2ef7b8e122d3eaa0b09243c529c9d6502973b/manager/packages/FreeCam_Manager_V3.9.7_Source.zip",
+  "sourceSha256": "8bd1d0f169a64485d999521c4ee4cafb23887dd3edd3e0c4985138b799995642",
+  "publishedAt": "2026-09-27T08:37:30.054184Z",
+  "notes": "V3.9.7：修复 WW 索引库测试目录含 Phase3、Result ZIP 文件名省略 Phase3 时拖拽错误选择 .log。优先使用当前测试目录 Results 下同项目/功能/Test 编号匹配的 Result.zip；拒绝 ForBuildId 明确不匹配的结果和 Prior_* 旧证据；已关联的 40_Result ZIP 也优先于 .log。"
 }
