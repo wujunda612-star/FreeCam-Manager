@@ -140,8 +140,8 @@ public static class FileRuleSelector
     {
         if (!IsWithin(path, testingPath)) return 4;
         var rel = Path.GetRelativePath(testingPath, path);
-        if (Path.GetDirectoryName(rel) is { } parent
-            && parent.Equals("Results", StringComparison.OrdinalIgnoreCase)) return 0;
+        var parent = Path.GetDirectoryName(rel) ?? "";
+        if (parent.Equals("Results", StringComparison.OrdinalIgnoreCase)) return 0;
         if (RelativeDepth(path, testingPath) == 0) return 1;
         if (parent.Equals("Logs", StringComparison.OrdinalIgnoreCase)) return 2;
         return 3;
