@@ -8,14 +8,19 @@ public sealed record ClassificationDecision(string Category, string RelativeDire
 
 public sealed class ClassificationService
 {
+    private readonly Func<IReadOnlyList<FileRule>> _rules;
+
+    public ClassificationService(Func<IReadOnlyList<FileRule>>? rules = null)
+    {
+        _rules = rules ?? (() => RuleDefaults.Classification());
+    }
+
+    public IReadOnlyList<FileRule> ConfiguredRules => _rules();
+
     public ClassificationDecision Plan(Artifact a)
     {
-        var name = (a.Name ?? Path.GetFileName(a.Path ?? "") ?? "").Trim();
-        if (name.StartsWith("FreeCam_Manager_", StringComparison.OrdinalIgnoreCase))
-            return new("Manager", "50_Manager");
-        if (name.StartsWith("WW底层索引_", StringComparison.OrdinalIgnoreCase)
-            || name.StartsWith("WW底层索引库_", StringComparison.OrdinalIgnoreCase))
-            return new("IndexLibrary", "60_索引库");
+        // System-owned packages and stable freeze retain their original
+        // safety rules; only regular incoming builds use editable ordering.
         if (Eq(a.ArtifactType, "Result"))
             return new("Result", Path.Combine("40_Result", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
         if (IsStableLike(a))
@@ -23,18 +28,52 @@ public sealed class ClassificationService
             var version = Safe(StableVersionResolver.Resolve(a), "Unknown");
             return new("StableCandidate", Path.Combine("90_Unknown", "Stable_Candidate", version), true);
         }
-        var branch = (a.Branch ?? "").Trim();
-        if (branch.StartsWith("feature/", StringComparison.OrdinalIgnoreCase) || Eq(a.BuildType, "Feature"))
-            return new("Feature", Path.Combine("20_Feature", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
-        if (branch.StartsWith("experiment/", StringComparison.OrdinalIgnoreCase) || IsExperimentType(a.BuildType))
-            return new("Experiment", Path.Combine("30_Experiment", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
+
+        foreach (var rule in ConfiguredRules)
+        {
+            if (!FileRuleEngine.MatchesClassification(rule, a)) continue;
+            var category = FileRuleEngine.PersistedCategory(rule.Category);
+            var directory = FileRuleEngine.FormatDirectory(rule.Directory, a);
+            return new(category, directory);
+        }
         return new("Unknown", "90_Unknown");
+    }
+
+    public IEnumerable<string> AdditionalManagedRoots()
+    {
+        foreach (var rule in ConfiguredRules.Where(r => r.Enabled))
+        {
+            var category = FileRuleEngine.PersistedCategory(rule.Category);
+            if (!FileRuleEngine.IsCustomCategory(category)) continue;
+            var first = rule.Directory.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(first) && !first.Contains('{') && first != "." && first != "..")
+                yield return first;
+        }
+    }
+
+    // Called only when rebuilding a missing SQLite entry. Existing entries
+    // keep their original Category when rules are edited.
+    public string? CustomCategoryFromRelativePath(string relative)
+    {
+        var normalized = relative.Replace('\\', '/');
+        foreach (var rule in ConfiguredRules.Where(r => r.Enabled))
+        {
+            var category = FileRuleEngine.PersistedCategory(rule.Category);
+            if (!FileRuleEngine.IsCustomCategory(category)) continue;
+            var prefix = rule.Directory.Replace('\\', '/').Split('{')[0].TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(prefix) &&
+                (normalized.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase)
+                 || normalized.Equals(prefix, StringComparison.OrdinalIgnoreCase)))
+                return category;
+        }
+        return null;
     }
 
     public string CategoryLabel(Artifact a)
     {
         var category = (a.Category ?? "").Trim().ToLowerInvariant();
         var buildType = (a.BuildType ?? "").Trim().ToLowerInvariant();
+        if (FileRuleEngine.IsCustomCategory(a.Category ?? "")) return a.Category["Custom:".Length..];
         return category switch
         {
             "feature" => IsTest(a) ? "正式功能 · 测试" : "正式功能",
