@@ -12,6 +12,8 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="14"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <StackPanel>
@@ -170,8 +172,130 @@
                 </Grid>
             </Border>
 
-            <!-- Software update -->
+            <!-- Three independent, editable rules; ordered from top to bottom -->
             <Border Grid.Row="6" Style="{StaticResource PanelCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="自定义规则" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="启动、拖拽、分类互不干扰。优先匹配列表第一条启用规则；修改后点击保存。"
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="① 启动文件规则" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="+ 新增" Command="{Binding AddLaunchRuleCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                        <Button Grid.Column="3" Content="恢复默认" Command="{Binding ResetLaunchCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                    </Grid>
+                    <TextBlock Text="匹配当前测试目录内的启动文件；找不到会提示手动指定，不影响双击解压。"
+                               Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                    <ItemsControl ItemsSource="{Binding LaunchRules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,5">
+                                    <WrapPanel VerticalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="启用 / 停用"/>
+                                        <TextBox Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="245"
+                                                 Style="{StaticResource ModernTextBoxStyle}" ToolTip="支持 * 和 ? 通配符，如 Start*.cmd"/>
+                                        <Button Content="↑" Command="{Binding DataContext.MoveLaunchUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="8,0,0,0" ToolTip="提高优先级"/>
+                                        <Button Content="↓" Command="{Binding DataContext.MoveLaunchDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="5,0,0,0" ToolTip="降低优先级"/>
+                                        <Button Content="删除" Command="{Binding DataContext.RemoveLaunchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="5,0,0,0"/>
+                                    </WrapPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,14"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="② 拖拽文件规则" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="+ 新增" Command="{Binding AddDragRuleCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                        <Button Grid.Column="3" Content="恢复默认" Command="{Binding ResetDragCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                    </Grid>
+                    <TextBlock Text="完全按以下规则匹配；默认只选 Result ZIP。找不到就提示，绝不会自动改选日志；确实需要 .log 时可自行新增。"
+                               Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                    <ItemsControl ItemsSource="{Binding DragRules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,5">
+                                    <WrapPanel VerticalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBox Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="245"
+                                                 Style="{StaticResource ModernTextBoxStyle}" ToolTip="如 *_Result.zip 或 *.log"/>
+                                        <Button Content="↑" Command="{Binding DataContext.MoveDragUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="8,0,0,0"/>
+                                        <Button Content="↓" Command="{Binding DataContext.MoveDragDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="5,0,0,0"/>
+                                        <Button Content="删除" Command="{Binding DataContext.RemoveDragCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="12,5" Margin="5,0,0,0"/>
+                                    </WrapPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,14"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="③ 自动分类规则" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="+ 新增分类" Command="{Binding AddClassificationRuleCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                        <Button Grid.Column="3" Content="恢复原分类" Command="{Binding ResetClassificationCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4"/>
+                    </Grid>
+                    <TextBlock Text="已转换原有分类条件。可使用现有分类，或填入新分类名称及根目录内的新目录；未匹配文件留在收件箱。Result 归档与 Stable 冻结保护仍由系统独立处理。"
+                               Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                    <ItemsControl ItemsSource="{Binding ClassificationRules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,7">
+                                    <StackPanel>
+                                        <WrapPanel VerticalAlignment="Center">
+                                            <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <controls:CompactPickerControl ItemsSource="{Binding DataContext.ClassificationMatchFields, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           SelectedValue="{Binding MatchBy, Mode=TwoWay}" Width="95" Height="32"/>
+                                            <TextBox Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="235"
+                                                     Style="{StaticResource ModernTextBoxStyle}" Margin="6,0,0,0" ToolTip="文件名或 Manifest 字段通配匹配"/>
+                                            <Button Content="↑" Command="{Binding DataContext.MoveClassificationUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="10,5" Margin="6,0,0,0"/>
+                                            <Button Content="↓" Command="{Binding DataContext.MoveClassificationDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="10,5" Margin="5,0,0,0"/>
+                                            <Button Content="删除" Command="{Binding DataContext.RemoveClassificationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" Style="{StaticResource RoundedButtonStyle}" Padding="10,5" Margin="5,0,0,0"/>
+                                        </WrapPanel>
+                                        <WrapPanel Margin="0,5,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="分类" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBox Text="{Binding Category, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="126"
+                                                     Style="{StaticResource ModernTextBoxStyle}" ToolTip="Manager、IndexLibrary、Feature、Experiment 或自建名称"/>
+                                            <TextBlock Text="目录" VerticalAlignment="Center" Margin="12,0,5,0"/>
+                                            <TextBox Text="{Binding Directory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="320"
+                                                     Style="{StaticResource ModernTextBoxStyle}" ToolTip="根目录内相对路径；支持 {Feature}、{Stage}、{Version}"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,14"/>
+                    <TextBlock Text="规则匹配预览" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <WrapPanel>
+                        <TextBox Text="{Binding RulePreviewName, UpdateSourceTrigger=PropertyChanged}" Width="325" Style="{StaticResource ModernTextBoxStyle}"
+                                 ToolTip="要测试的文件名"/>
+                        <TextBox Text="{Binding RulePreviewBuildType, UpdateSourceTrigger=PropertyChanged}" Width="95" Margin="6,0,0,0" Style="{StaticResource ModernTextBoxStyle}"
+                                 ToolTip="可选：构建类型（如 Test）"/>
+                        <TextBox Text="{Binding RulePreviewBranch, UpdateSourceTrigger=PropertyChanged}" Width="155" Margin="6,0,0,0" Style="{StaticResource ModernTextBoxStyle}"
+                                 ToolTip="可选：分支（如 feature/demo）"/>
+                        <Button Content="预览匹配" Command="{Binding PreviewRulesCommand}" Style="{StaticResource RoundedButtonStyle}" Padding="12,4" Margin="6,0,0,0"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding RulePreviewText}" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,9,0,12"/>
+                    <Button Content="保存自定义规则与设置" Command="{Binding SaveCommand}" Style="{StaticResource RoundedButtonStyle}"
+                            Background="{DynamicResource AccentSoftBrush}" BorderBrush="{DynamicResource AccentBrush}" HorizontalAlignment="Left" Padding="18,7"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Software update -->
+            <Border Grid.Row="8" Style="{StaticResource PanelCardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition MinWidth="300"/>
