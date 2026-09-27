@@ -1,15 +1,15 @@
 {
   "SchemaVersion": 3,
   "Project": "FreeCam_Manager",
-  "Version": "V3.9.2",
-  "BuildName": "FreeCam_Manager_V3.9.2",
-  "Base": "FreeCam_Manager_V3.9.1",
-  "Branch": "feature/manager-v3.9.2-settings-grid",
-  "Feature": "Settings 3x2 + History Duplicate Copy Delete",
+  "Version": "V3.9.8",
+  "BuildName": "FreeCam_Manager_V3.9.8",
+  "Base": "FreeCam_Manager_V3.9.7",
+  "Branch": "feature/manager-v3.9.8-custom-rules",
+  "Feature": "Customizable launch/drag/classification rules and custom categories",
   "BuildType": "Stable",
   "ArtifactType": "Runtime+FullSource",
   "Stage": "Release",
-  "BuildId": "MANAGER-V392-20260915",
+  "BuildId": "MANAGER-V398-RULES-20260928",
   "Commit": "PUBLISH-WORKFLOW (see manager/update.json sourceRef)",
   "ReleaseState": "Stable",
   "Modules": [
@@ -31,7 +31,10 @@
     "theme-blue active rating indicator",
     "display-and-behavior settings two-column layout",
     "50_Manager and 60_索引库 inbox classification",
-    "final-package updater release gate"
+    "final-package updater release gate",
+    "persisted and prioritized legacy-converted classification rules",
+    "configurable launch and strict drag with per-version file overrides",
+    "independent custom categories browser and recovery scanner"
   ],
   "Verification": [
     "Reliability Lab Test1.1: unit 17/17, destructive 18/18",
