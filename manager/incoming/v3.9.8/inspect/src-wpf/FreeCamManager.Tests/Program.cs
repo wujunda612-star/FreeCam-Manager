@@ -2039,8 +2039,8 @@ internal static class Program
             migrated.DragRules.All(x => !x.Pattern.Contains(".log", StringComparison.OrdinalIgnoreCase)),
             "default drag must exclude logs entirely");
         Assert(migrated.ClassificationRules?.Any(x => x.Pattern == "FreeCam_Manager_*") == true
-            && migrated.ClassificationRules.Any(x => x.Pattern == "WW底层索引_*")
-            && migrated.ClassificationRules.Any(x => x.MatchBy == "分支" && x.Pattern == "experiment/*"),
+            && migrated.ClassificationRules!.Any(x => x.Pattern == "WW底层索引_*")
+            && migrated.ClassificationRules!.Any(x => x.MatchBy == "分支" && x.Pattern == "experiment/*"),
             "original Manager/index/branch classification must migrate without changing categories");
         migrated.DragRules.Clear();
         await service.SaveAsync(path, migrated);
