@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
     <AssemblyName>FreeCam_Manager</AssemblyName>
-    <Version>3.9.7</Version>
+    <Version>3.9.8</Version>
     <RootNamespace>FreeCamManager</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\FreeCamManager.ico</ApplicationIcon>
