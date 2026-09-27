@@ -1,15 +1,15 @@
 {
   "SchemaVersion": 3,
   "Project": "FreeCam_Manager",
-  "Version": "V3.9.2",
-  "BuildName": "FreeCam_Manager_V3.9.2",
-  "Base": "FreeCam_Manager_V3.9.1",
-  "Branch": "feature/manager-v3.9.2-settings-grid",
-  "Feature": "Settings 3x2 + History Duplicate Copy Delete",
+  "Version": "V3.9.8",
+  "BuildName": "FreeCam_Manager_V3.9.8",
+  "Base": "FreeCam_Manager_V3.9.7",
+  "Branch": "feature/manager-v3.9.8-configurable-rules",
+  "Feature": "User-configurable launch, drag, original classification, custom category page",
   "BuildType": "Stable",
   "ArtifactType": "Runtime+FullSource",
   "Stage": "Release",
-  "BuildId": "MANAGER-V392-20260915",
+  "BuildId": "MANAGER-V398-20260928",
   "Commit": "PUBLISH-WORKFLOW (see manager/update.json sourceRef)",
   "ReleaseState": "Stable",
   "Modules": [
@@ -34,15 +34,7 @@
     "final-package updater release gate"
   ],
   "Verification": [
-    "Reliability Lab Test1.1: unit 17/17, destructive 18/18",
-    "Reliability Lab Test2: unit 20/20, endurance 600/600",
-    "SQLite Migration Test1: 7/7",
-    "SQLite Migration Test2.1: 14/14 + WPF persistence confirmed",
-    "SQLite Migration Test3: 15/15 + sandbox workflows 7/7",
-    "RC2.1: core regression 59/59, SQLite 21/21, runtime quick_check PASS",
-    "V3.8 Fix1: formal updater build 59/59 + WPF publish PASS",
-    "V3.9: core regression 62/62 + Windows WPF publish PASS",
-    "V3.9: SQLite migration regression PASS"
+    "V3.9.8: Windows full regression + WPF self-contained build (see GitHub Actions publish gate)"
   ],
   "RemotePublish": true
 }
