@@ -339,6 +339,11 @@ public sealed class ArtifactRowViewModel : ObservableObject
 
     private async Task StartTestAsync()
     {
+        if (!new ExtractionService().ShouldExtract(_artifact))
+        {
+            _dialogs.Info("不是运行测试包", "这是资料、源码或测试结果包，不会自动解压并启动。可右键打开文件位置。");
+            return;
+        }
         if (!File.Exists(Path))
         {
             _dialogs.Info("原始 ZIP 不存在", "这个版本的原始 ZIP 已经不在磁盘上，无法一键测试。");
