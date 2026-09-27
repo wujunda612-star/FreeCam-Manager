@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
 using FreeCamManager.Core.Models;
@@ -42,6 +43,22 @@ public sealed class SettingsViewModel : ObservableObject
     private string _managerUpdateStatusText = "GitHub 自动检查：每 30 分钟";
     private ManagerUpdateManifest? _availableManagerUpdate;
     private bool _loading = true;
+    private EditableRuleRow? _selectedLaunchRule;
+    private EditableRuleRow? _selectedDragRule;
+    private EditableRuleRow? _selectedClassificationRule;
+    private string _previewName = "WW36_Phase3_GICamera_Test3.1.zip";
+    private string _previewSummary = "输入文件名后，点击预览。";
+    public IReadOnlyList<string> RuleFields { get; } =
+        ["FileName", "ArtifactType", "BuildType", "Branch", "ReleaseState", "StableLike", "FeatureLike", "ExperimentLike"];
+    public ObservableCollection<EditableRuleRow> LaunchRules { get; } = [];
+    public ObservableCollection<EditableRuleRow> DragRules { get; } = [];
+    public ObservableCollection<EditableRuleRow> ClassificationRules { get; } = [];
+    public EditableRuleRow? SelectedLaunchRule { get => _selectedLaunchRule; set => SetProperty(ref _selectedLaunchRule, value); }
+    public EditableRuleRow? SelectedDragRule { get => _selectedDragRule; set => SetProperty(ref _selectedDragRule, value); }
+    public EditableRuleRow? SelectedClassificationRule { get => _selectedClassificationRule; set => SetProperty(ref _selectedClassificationRule, value); }
+    public string PreviewName { get => _previewName; set => SetProperty(ref _previewName, value); }
+    public string PreviewSummary { get => _previewSummary; private set => SetProperty(ref _previewSummary, value); }
+
 
     public SettingsViewModel(AppSettings settings, SettingsService settingsService, ThemeService theme, FilenameAliasService filenameAliases,
         Action<string> statusSink, Action<AppSettings>? onSaved = null, Action? onFilenameDisplayChanged = null,
@@ -61,6 +78,10 @@ public sealed class SettingsViewModel : ObservableObject
         _showFilenameAliases = settings.ShowFilenameAliases;
         _showFeatureAliases = settings.ShowFeatureAliases;
         _showStageAliases = settings.ShowStageAliases;
+        ReplaceRules(LaunchRules, settings.LaunchRules ?? RuleDefaults.Launch());
+        ReplaceRules(DragRules, settings.DragRules ?? RuleDefaults.Drag());
+        ReplaceRules(ClassificationRules, settings.ClassificationRules ?? RuleDefaults.Classification());
+        CreateRuleCommands();
         if (localTermsState is not null) _termsSummary = $"版本：{localTermsState.Version} · {localTermsState.TermCount} 条";
         ChooseRootCommand = new RelayCommand(_ => ChooseFolder("选择 FreeCam 根目录", value => RootDir = value, RootDir));
         ChooseInboxCommand = new RelayCommand(_ => ChooseFolder("选择收件箱目录", value => InboxDir = value, InboxDir));
@@ -163,6 +184,24 @@ public sealed class SettingsViewModel : ObservableObject
         }
     }
 
+    public ICommand AddLaunchRuleCommand { get; private set; } = null!;
+    public ICommand RemoveLaunchRuleCommand { get; private set; } = null!;
+    public ICommand MoveLaunchUpCommand { get; private set; } = null!;
+    public ICommand MoveLaunchDownCommand { get; private set; } = null!;
+    public ICommand ResetLaunchRulesCommand { get; private set; } = null!;
+    public ICommand AddDragRuleCommand { get; private set; } = null!;
+    public ICommand RemoveDragRuleCommand { get; private set; } = null!;
+    public ICommand MoveDragUpCommand { get; private set; } = null!;
+    public ICommand MoveDragDownCommand { get; private set; } = null!;
+    public ICommand ResetDragRulesCommand { get; private set; } = null!;
+    public ICommand AddClassificationRuleCommand { get; private set; } = null!;
+    public ICommand RemoveClassificationRuleCommand { get; private set; } = null!;
+    public ICommand MoveClassificationUpCommand { get; private set; } = null!;
+    public ICommand MoveClassificationDownCommand { get; private set; } = null!;
+    public ICommand ResetClassificationRulesCommand { get; private set; } = null!;
+    public ICommand PreviewLaunchCommand { get; private set; } = null!;
+    public ICommand PreviewDragCommand { get; private set; } = null!;
+    public ICommand PreviewClassificationCommand { get; private set; } = null!;
     public ICommand ChooseRootCommand { get; }
     public ICommand ChooseInboxCommand { get; }
     public ICommand ChooseBackupCommand { get; }
@@ -176,6 +215,16 @@ public sealed class SettingsViewModel : ObservableObject
 
     private async Task SaveAsync()
     {
+        var issue = ValidateRules();
+        if (!string.IsNullOrWhiteSpace(issue))
+        {
+            _statusSink("自定义规则无法保存：" + issue);
+            PreviewSummary = "检查规则：" + issue;
+            return;
+        }
+        _settings.LaunchRules = LaunchRules.Select(x => x.ToPatternRule()).ToList();
+        _settings.DragRules = DragRules.Select(x => x.ToPatternRule()).ToList();
+        _settings.ClassificationRules = ClassificationRules.Select(x => x.ToClassificationRule()).ToList();
         _settings.RootDir = RootDir.Trim();
         _settings.InboxDir = InboxDir.Trim();
         _settings.StableBackupDir = StableBackupDir.Trim();
@@ -196,6 +245,96 @@ public sealed class SettingsViewModel : ObservableObject
             _statusSink("设置已保存；Manager 日志设置已立即生效");
         }
         catch (Exception ex) { _statusSink("设置保存失败: " + ex.Message); }
+    }
+
+    private void CreateRuleCommands()
+    {
+        AddLaunchRuleCommand = new RelayCommand(_ => Add(LaunchRules, new EditableRuleRow("Start*.cmd"), x => SelectedLaunchRule = x));
+        RemoveLaunchRuleCommand = new RelayCommand(_ => Remove(LaunchRules, SelectedLaunchRule, x => SelectedLaunchRule = x));
+        MoveLaunchUpCommand = new RelayCommand(_ => Move(LaunchRules, SelectedLaunchRule, -1));
+        MoveLaunchDownCommand = new RelayCommand(_ => Move(LaunchRules, SelectedLaunchRule, +1));
+        ResetLaunchRulesCommand = new RelayCommand(_ => ReplaceRules(LaunchRules, RuleDefaults.Launch()));
+        AddDragRuleCommand = new RelayCommand(_ => Add(DragRules, new EditableRuleRow("*_Result.zip"), x => SelectedDragRule = x));
+        RemoveDragRuleCommand = new RelayCommand(_ => Remove(DragRules, SelectedDragRule, x => SelectedDragRule = x));
+        MoveDragUpCommand = new RelayCommand(_ => Move(DragRules, SelectedDragRule, -1));
+        MoveDragDownCommand = new RelayCommand(_ => Move(DragRules, SelectedDragRule, +1));
+        ResetDragRulesCommand = new RelayCommand(_ => ReplaceRules(DragRules, RuleDefaults.Drag()));
+        AddClassificationRuleCommand = new RelayCommand(_ => Add(ClassificationRules,
+            new EditableRuleRow("*.zip", "FileName", "我的分类", "70_Custom"), x => SelectedClassificationRule = x));
+        RemoveClassificationRuleCommand = new RelayCommand(_ => Remove(ClassificationRules, SelectedClassificationRule,
+            x => SelectedClassificationRule = x));
+        MoveClassificationUpCommand = new RelayCommand(_ => Move(ClassificationRules, SelectedClassificationRule, -1));
+        MoveClassificationDownCommand = new RelayCommand(_ => Move(ClassificationRules, SelectedClassificationRule, +1));
+        ResetClassificationRulesCommand = new RelayCommand(_ => ReplaceRules(ClassificationRules, RuleDefaults.Classification()));
+        PreviewLaunchCommand = new RelayCommand(_ => PreviewPattern(LaunchRules, "启动文件"));
+        PreviewDragCommand = new RelayCommand(_ => PreviewPattern(DragRules, "拖拽文件"));
+        PreviewClassificationCommand = new RelayCommand(_ => PreviewClassification());
+    }
+
+    private void PreviewPattern(IEnumerable<EditableRuleRow> rows, string label)
+    {
+        var matched = rows.FirstOrDefault(x => x.Enabled && RuleMatcher.Glob(x.Pattern, PreviewName));
+        PreviewSummary = matched is null ? $"{label}：无匹配，系统不会自行选择其他文件"
+            : $"{label}：匹配 {matched.Pattern}";
+    }
+
+    private void PreviewClassification()
+    {
+        var artifact = new ManifestService().InspectFilename(PreviewName);
+        var configured = ClassificationRules.Select(x => x.ToClassificationRule()).ToList();
+        var outcome = new ClassificationService(() => configured).Plan(artifact);
+        PreviewSummary = outcome.Category == "Unknown" ? "分类：未匹配，留在收件箱"
+            : $"分类：{outcome.Category} → {outcome.RelativeDirectory}";
+    }
+
+    private string? ValidateRules()
+    {
+        foreach (var (label, collection) in new[] { ("启动", LaunchRules), ("拖拽", DragRules), ("分类", ClassificationRules) })
+        {
+            foreach (var row in collection)
+            {
+                if (string.IsNullOrWhiteSpace(row.Pattern) || row.Pattern.Length > 256
+                    || row.Pattern.IndexOfAny(['/', '\\']) >= 0)
+                    return label + "规则的文件名模式不能为空、超过 256 字或包含路径分隔符";
+            }
+        }
+        foreach (var row in ClassificationRules)
+        {
+            if (!RuleFields.Contains(row.Field)) return "分类匹配字段无效";
+            if (string.IsNullOrWhiteSpace(row.Category) || row.Category.IndexOfAny(['/', '\\']) >= 0)
+                return "分类名称不能为空或包含路径分隔符";
+            if (RuleMatcher.ValidateFolder(row.Folder) is { } problem) return problem;
+        }
+        return null;
+    }
+
+    private static void ReplaceRules(ObservableCollection<EditableRuleRow> target, IEnumerable<FilePatternRule> rules)
+    {
+        target.Clear();
+        foreach (var rule in rules) target.Add(EditableRuleRow.From(rule));
+    }
+    private static void ReplaceRules(ObservableCollection<EditableRuleRow> target, IEnumerable<ClassificationRule> rules)
+    {
+        target.Clear();
+        foreach (var rule in rules) target.Add(EditableRuleRow.From(rule));
+    }
+    private static void Add(ObservableCollection<EditableRuleRow> target, EditableRuleRow value, Action<EditableRuleRow> selected)
+    {
+        target.Add(value);
+        selected(value);
+    }
+    private static void Remove(ObservableCollection<EditableRuleRow> target, EditableRuleRow? value,
+        Action<EditableRuleRow?> selected)
+    {
+        if (value is null || !target.Remove(value)) return;
+        selected(target.LastOrDefault());
+    }
+    private static void Move(ObservableCollection<EditableRuleRow> target, EditableRuleRow? value, int delta)
+    {
+        if (value is null) return;
+        var position = target.IndexOf(value);
+        var next = position + delta;
+        if (position >= 0 && next >= 0 && next < target.Count) target.Move(position, next);
     }
 
     private async Task OpenFilenameTermsAsync()
