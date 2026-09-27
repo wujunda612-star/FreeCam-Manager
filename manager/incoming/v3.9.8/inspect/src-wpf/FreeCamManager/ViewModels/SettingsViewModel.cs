@@ -1,5 +1,6 @@
 using System.IO;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using FreeCamManager.Core.Models;
 using FreeCamManager.Core.Services;
@@ -42,6 +43,10 @@ public sealed class SettingsViewModel : ObservableObject
     private string _managerUpdateStatusText = "GitHub 自动检查：每 30 分钟";
     private ManagerUpdateManifest? _availableManagerUpdate;
     private bool _loading = true;
+    private string _rulePreviewName = "WW36_Phase3_GICamera_Test3.1_Result.zip";
+    private string _rulePreviewBuildType = "";
+    private string _rulePreviewBranch = "";
+    private string _rulePreviewText = "输入文件名后点击“预览匹配”；Manifest 条件可填写构建类型和分支。";
 
     public SettingsViewModel(AppSettings settings, SettingsService settingsService, ThemeService theme, FilenameAliasService filenameAliases,
         Action<string> statusSink, Action<AppSettings>? onSaved = null, Action? onFilenameDisplayChanged = null,
@@ -62,6 +67,25 @@ public sealed class SettingsViewModel : ObservableObject
         _showFeatureAliases = settings.ShowFeatureAliases;
         _showStageAliases = settings.ShowStageAliases;
         if (localTermsState is not null) _termsSummary = $"版本：{localTermsState.Version} · {localTermsState.TermCount} 条";
+        LaunchRules = new ObservableCollection<FileRule>((settings.LaunchRules ?? RuleDefaults.Launch()).Select(x => x.Clone()));
+        DragRules = new ObservableCollection<FileRule>((settings.DragRules ?? RuleDefaults.Drag()).Select(x => x.Clone()));
+        ClassificationRules = new ObservableCollection<FileRule>((settings.ClassificationRules ?? RuleDefaults.Classification()).Select(x => x.Clone()));
+        AddLaunchRuleCommand = new RelayCommand(_ => LaunchRules.Add(new FileRule { Pattern = "Start*.cmd" }));
+        AddDragRuleCommand = new RelayCommand(_ => DragRules.Add(new FileRule { Pattern = "*_Result.zip" }));
+        AddClassificationRuleCommand = new RelayCommand(_ => ClassificationRules.Add(new FileRule { Pattern = "*.zip", Category = "新分类", Directory = "70_自定义" }));
+        MoveLaunchUpCommand = new RelayCommand(item => Move(LaunchRules, item as FileRule, -1));
+        MoveLaunchDownCommand = new RelayCommand(item => Move(LaunchRules, item as FileRule, 1));
+        RemoveLaunchCommand = new RelayCommand(item => Remove(LaunchRules, item as FileRule));
+        MoveDragUpCommand = new RelayCommand(item => Move(DragRules, item as FileRule, -1));
+        MoveDragDownCommand = new RelayCommand(item => Move(DragRules, item as FileRule, 1));
+        RemoveDragCommand = new RelayCommand(item => Remove(DragRules, item as FileRule));
+        MoveClassificationUpCommand = new RelayCommand(item => Move(ClassificationRules, item as FileRule, -1));
+        MoveClassificationDownCommand = new RelayCommand(item => Move(ClassificationRules, item as FileRule, 1));
+        RemoveClassificationCommand = new RelayCommand(item => Remove(ClassificationRules, item as FileRule));
+        ResetLaunchCommand = new RelayCommand(_ => Reset(LaunchRules, RuleDefaults.Launch()));
+        ResetDragCommand = new RelayCommand(_ => Reset(DragRules, RuleDefaults.Drag()));
+        ResetClassificationCommand = new RelayCommand(_ => Reset(ClassificationRules, RuleDefaults.Classification()));
+        PreviewRulesCommand = new RelayCommand(_ => PreviewRules());
         ChooseRootCommand = new RelayCommand(_ => ChooseFolder("选择 FreeCam 根目录", value => RootDir = value, RootDir));
         ChooseInboxCommand = new RelayCommand(_ => ChooseFolder("选择收件箱目录", value => InboxDir = value, InboxDir));
         ChooseBackupCommand = new RelayCommand(_ => ChooseFolder("选择 Stable Backup（稳定版备份盘）", value => StableBackupDir = value, StableBackupDir));
@@ -75,6 +99,31 @@ public sealed class SettingsViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
         _loading = false;
     }
+
+    public ObservableCollection<FileRule> LaunchRules { get; }
+    public ObservableCollection<FileRule> DragRules { get; }
+    public ObservableCollection<FileRule> ClassificationRules { get; }
+    public IReadOnlyList<string> ClassificationMatchFields { get; } = ["文件名", "构建类型", "分支", "产物类型", "发布状态"];
+    public string RulePreviewName { get => _rulePreviewName; set => SetProperty(ref _rulePreviewName, value); }
+    public string RulePreviewBuildType { get => _rulePreviewBuildType; set => SetProperty(ref _rulePreviewBuildType, value); }
+    public string RulePreviewBranch { get => _rulePreviewBranch; set => SetProperty(ref _rulePreviewBranch, value); }
+    public string RulePreviewText { get => _rulePreviewText; private set => SetProperty(ref _rulePreviewText, value); }
+    public ICommand AddLaunchRuleCommand { get; }
+    public ICommand AddDragRuleCommand { get; }
+    public ICommand AddClassificationRuleCommand { get; }
+    public ICommand MoveLaunchUpCommand { get; }
+    public ICommand MoveLaunchDownCommand { get; }
+    public ICommand RemoveLaunchCommand { get; }
+    public ICommand MoveDragUpCommand { get; }
+    public ICommand MoveDragDownCommand { get; }
+    public ICommand RemoveDragCommand { get; }
+    public ICommand MoveClassificationUpCommand { get; }
+    public ICommand MoveClassificationDownCommand { get; }
+    public ICommand RemoveClassificationCommand { get; }
+    public ICommand ResetLaunchCommand { get; }
+    public ICommand ResetDragCommand { get; }
+    public ICommand ResetClassificationCommand { get; }
+    public ICommand PreviewRulesCommand { get; }
 
     public IReadOnlyList<string> Themes { get; } = ["跟随系统", "深色模式", "浅色模式"];
     public IReadOnlyList<string> DiscardDeletePolicies { get; } = ["不自动删除", "1天", "3天", "7天", "30天"];
@@ -176,6 +225,20 @@ public sealed class SettingsViewModel : ObservableObject
 
     private async Task SaveAsync()
     {
+        try
+        {
+            FileRuleEngine.Validate(LaunchRules.ToList(), "启动");
+            FileRuleEngine.Validate(DragRules.ToList(), "拖拽");
+            FileRuleEngine.Validate(ClassificationRules.ToList(), "分类");
+        }
+        catch (Exception ex)
+        {
+            _statusSink("规则未保存：" + ex.Message);
+            return;
+        }
+        _settings.LaunchRules = LaunchRules.Select(x => x.Clone()).ToList();
+        _settings.DragRules = DragRules.Select(x => x.Clone()).ToList();
+        _settings.ClassificationRules = ClassificationRules.Select(x => x.Clone()).ToList();
         _settings.RootDir = RootDir.Trim();
         _settings.InboxDir = InboxDir.Trim();
         _settings.StableBackupDir = StableBackupDir.Trim();
@@ -193,7 +256,7 @@ public sealed class SettingsViewModel : ObservableObject
             await _settingsService.SaveAsync(AppPaths.SettingsFile, _settings);
             _settingsService.EnsureDirectories(_settings);
             _onSaved?.Invoke(_settings);
-            _statusSink("设置已保存；Manager 日志设置已立即生效");
+            _statusSink("设置及三套自定义规则已保存，新文件按新规则处理；已有归档不移动");
         }
         catch (Exception ex) { _statusSink("设置保存失败: " + ex.Message); }
     }
@@ -314,6 +377,42 @@ public sealed class SettingsViewModel : ObservableObject
         {
             _statusSink("Manager 日志设置保存失败: " + ex.Message);
         }
+    }
+
+    private static void Move(ObservableCollection<FileRule> rules, FileRule? rule, int delta)
+    {
+        if (rule is null) return;
+        var index = rules.IndexOf(rule);
+        var target = index + delta;
+        if (index >= 0 && target >= 0 && target < rules.Count) rules.Move(index, target);
+    }
+
+    private static void Remove(ObservableCollection<FileRule> rules, FileRule? rule)
+    {
+        if (rule is not null) rules.Remove(rule);
+    }
+
+    private static void Reset(ObservableCollection<FileRule> target, IReadOnlyList<FileRule> defaults)
+    {
+        target.Clear();
+        foreach (var rule in defaults) target.Add(rule.Clone());
+    }
+
+    private void PreviewRules()
+    {
+        try
+        {
+            var name = System.IO.Path.GetFileName(RulePreviewName.Trim());
+            var launch = LaunchRules.FirstOrDefault(r => r.Enabled && FileRuleEngine.Matches(r.Pattern, name));
+            var drag = DragRules.FirstOrDefault(r => r.Enabled && FileRuleEngine.Matches(r.Pattern, name));
+            var artifact = new ManifestService().InspectFilename(name);
+            artifact.Name = name;
+            if (!string.IsNullOrWhiteSpace(RulePreviewBuildType)) artifact.BuildType = RulePreviewBuildType.Trim();
+            if (!string.IsNullOrWhiteSpace(RulePreviewBranch)) artifact.Branch = RulePreviewBranch.Trim();
+            var classification = new ClassificationService(() => ClassificationRules.ToList()).Plan(artifact);
+            RulePreviewText = $"启动：{launch?.Pattern ?? "无匹配"}　拖拽：{drag?.Pattern ?? "无匹配"}\n分类：{(classification.Category == "Unknown" ? "留在收件箱" : classification.Category + " → " + classification.RelativeDirectory)}";
+        }
+        catch (Exception ex) { RulePreviewText = "预览失败：" + ex.Message; }
     }
 
     private static string ThemeLabel(string mode) => mode.ToLowerInvariant() switch
