@@ -2036,13 +2036,13 @@ internal static class Program
         var migrated = await service.LoadOrCreateAsync(path, root);
         Assert(migrated.LaunchRules?.Count == 8, "previous Start.cmd/Start*.exe fallback must become ordered edit rules");
         Assert(migrated.DragRules?.Count >= 2 &&
-            migrated.DragRules.All(x => !x.Pattern.Contains(".log", StringComparison.OrdinalIgnoreCase)),
+            migrated.DragRules!.All(x => !x.Pattern.Contains(".log", StringComparison.OrdinalIgnoreCase)),
             "default drag must exclude logs entirely");
         Assert(migrated.ClassificationRules?.Any(x => x.Pattern == "FreeCam_Manager_*") == true
             && migrated.ClassificationRules!.Any(x => x.Pattern == "WW底层索引_*")
             && migrated.ClassificationRules!.Any(x => x.MatchBy == "分支" && x.Pattern == "experiment/*"),
             "original Manager/index/branch classification must migrate without changing categories");
-        migrated.DragRules.Clear();
+        migrated.DragRules!.Clear();
         await service.SaveAsync(path, migrated);
         var reloaded = await service.LoadOrCreateAsync(path, root);
         Assert(reloaded.DragRules is { Count: 0 }, "deliberately empty rule list must persist and never reset to defaults");
