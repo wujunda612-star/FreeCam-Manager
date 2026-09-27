@@ -1,0 +1,35 @@
+name: Inspect Manager V3.9.7 Custom Rules Source
+on:
+  push:
+    branches: [feature/manager-v3.9.8-custom-rules]
+    paths: [.github/workflows/inspect-manager-v398.yml]
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.8-custom-rules
+      - name: Extract source for custom rules implementation
+        shell: python
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile
+          src=Path("manager/packages/FreeCam_Manager_V3.9.7_Source.zip")
+          dest=Path("manager/incoming/v3.9.8/inspect")
+          with ZipFile(src) as zip:
+              names=[n for n in zip.namelist() if n.startswith("src-wpf/") and n.endswith((".cs",".xaml",".json",".csproj",".ps1")) and "/obj/" not in n and "/bin/" not in n]
+              names+=["BUILD_MANIFEST.json"]
+              for name in names:
+                  p=dest/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(zip.read(name))
+              print("SOURCE_FILES",len(names))
+      - name: Commit temporary source inspection
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manager/incoming/v3.9.8/inspect
+          git commit -m 'chore: inspect V3.9.7 rule architecture'
+          git push
