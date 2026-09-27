@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Diagnostics;
 using System.Windows.Input;
 using FreeCamManager.Core.Models;
