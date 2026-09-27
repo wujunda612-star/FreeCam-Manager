@@ -1,0 +1,34 @@
+name: Inspect Manager 3.9.7 Complete Source
+on:
+  push:
+    branches: [feature/manager-v3.9.8-configurable-rules]
+    paths: [.github/workflows/inspect-manager-v398.yml]
+permissions: {contents: write}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: feature/manager-v3.9.8-configurable-rules}
+      - name: Extract source
+        shell: python
+        run: |
+          from pathlib import Path
+          import zipfile
+          package=Path("manager/packages/FreeCam_Manager_V3.9.7_Source.zip")
+          target=Path("manager/incoming/v3.9.8/workspace")
+          with zipfile.ZipFile(package) as z:
+              for name in z.namelist():
+                  if name.startswith("src-wpf/") and not name.endswith("/"):
+                      raw=z.read(name)
+                      dst=target/name
+                      dst.parent.mkdir(parents=True,exist_ok=True)
+                      dst.write_bytes(raw)
+                      print(name,len(raw))
+      - name: Commit sources for review
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.8/workspace
+          git commit -m "chore: stage V3.9.7 sources for V3.9.8 rule editor" || exit 0
+          git push
