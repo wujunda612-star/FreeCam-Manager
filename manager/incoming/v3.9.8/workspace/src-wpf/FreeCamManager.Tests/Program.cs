@@ -2052,7 +2052,7 @@ internal static class Program
         await service.SaveAsync(settingsFile, settings);
         var restored = await service.LoadOrCreateAsync(settingsFile);
         Assert(restored.ClassificationRules![0].Category == "SDK", "custom rule did not persist");
-        Assert(restored.ClassificationRules.Count >= 7, "saving must preserve original built-in rules");
+        Assert(restored.ClassificationRules!.Count >= 7, "saving must preserve original built-in rules");
     }
 
     private static Task V398CustomClassification()
