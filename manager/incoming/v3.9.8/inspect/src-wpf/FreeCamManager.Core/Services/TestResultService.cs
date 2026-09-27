@@ -96,9 +96,13 @@ public sealed class TestResultService(ManifestService manifestService)
         return string.IsNullOrWhiteSpace(log) ? null : new TestEvidence(log, "Log", File.GetLastWriteTimeUtc(log));
     }
 
-    public async Task<string> PreserveEvidenceAsync(string testingPath, Artifact build, string resultRoot, CancellationToken ct = default)
+    public async Task<string> PreserveEvidenceAsync(string testingPath, Artifact build, string resultRoot, CancellationToken ct = default, string? preferredPath = null)
     {
-        var evidence = await FindEvidenceAsync(testingPath, build, ct);
+        var evidence = !string.IsNullOrWhiteSpace(preferredPath) && File.Exists(preferredPath)
+            && IsInsideTestingWorkspace(preferredPath, testingPath)
+            && !IsExcludedEvidencePath(preferredPath, testingPath)
+                ? new TestEvidence(preferredPath, "UserRule", File.GetLastWriteTimeUtc(preferredPath))
+                : await FindEvidenceAsync(testingPath, build, ct);
         if (evidence is null || !File.Exists(evidence.Path)) return "";
 
         var evidenceFull = Path.GetFullPath(evidence.Path);
