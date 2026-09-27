@@ -328,7 +328,13 @@ public sealed class ArtifactRowViewModel : ObservableObject
     public string GetDraggableResultPath()
     {
         var current = _library.ByPath(Path) ?? _artifact;
-        return _results.ResolvePreferredDragPath(current, ResolveTestingPath(), _resultRoot());
+        if (Configuration is null)
+            return _results.ResolvePreferredDragPath(current, ResolveTestingPath(), _resultRoot());
+        var match = FileRuleSelector.FindDrag(current, ResolveTestingPath(), _resultRoot(),
+            Configuration.DragRules, Configuration.DragOverrides.GetValueOrDefault(Name));
+        if (string.IsNullOrWhiteSpace(match))
+            _dialogs.Info("没有匹配的拖拽文件", "当前版本没有符合自定义拖拽规则的文件。请到设置修改规则，或右键单独指定要拖出的文件。不会自动改为 .log。");
+        return match;
     }
 
     private async Task StartTestAsync()
@@ -355,11 +361,16 @@ public sealed class ArtifactRowViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(prepared.LaunchPath))
+        var launchPath = prepared.LaunchPath;
+        if (string.IsNullOrWhiteSpace(launchPath))
         {
-            _dialogs.Error("没有找到启动入口", "已经解压到 01_Testing，但没有找到 Start*.cmd / .bat / .ps1 / .exe。\n\n可以右键“打开测试目录”检查。 ");
-            await _refreshAll();
-            return;
+            launchPath = await SelectLaunchFileAsync(prepared.TestingPath);
+            if (string.IsNullOrWhiteSpace(launchPath))
+            {
+                _dialogs.Info("没有匹配的启动文件", "已解压到 01_Testing，但没有匹配的启动文件。可在设置中调整启动规则，或右键单独指定。");
+                await _refreshAll();
+                return;
+            }
         }
 
         try
@@ -367,8 +378,8 @@ public sealed class ArtifactRowViewModel : ObservableObject
             _library.MarkTestStarted(Path);
             _artifact.TestStatus = "测试中";
             await _library.SaveAsync();
-            Launch(prepared.LaunchPath);
-            _statusSink($"测试中: {Name} · {System.IO.Path.GetFileName(prepared.LaunchPath)}");
+            Launch(launchPath);
+            _statusSink($"测试中: {Name} · {System.IO.Path.GetFileName(launchPath)}");
             await _refreshAll();
         }
         catch (Exception ex)
