@@ -113,6 +113,9 @@ public sealed class LibraryService
             if (string.IsNullOrEmpty(incoming.Status)) incoming.Status = old.Status;
             if (string.IsNullOrEmpty(incoming.TestStatus)) incoming.TestStatus = old.TestStatus;
             if (string.IsNullOrEmpty(incoming.ManualStatus)) incoming.ManualStatus = old.ManualStatus;
+            if (string.IsNullOrEmpty(incoming.LaunchOverrideRelative)) incoming.LaunchOverrideRelative = old.LaunchOverrideRelative;
+            if (string.IsNullOrEmpty(incoming.DragOverridePath)) incoming.DragOverridePath = old.DragOverridePath;
+            if (string.IsNullOrEmpty(incoming.DragOverrideRelative)) incoming.DragOverrideRelative = old.DragOverrideRelative;
             if (string.IsNullOrEmpty(incoming.TestingPath)) incoming.TestingPath = old.TestingPath;
             if (string.IsNullOrEmpty(incoming.TestingRelativePath)) incoming.TestingRelativePath = old.TestingRelativePath;
             if (string.IsNullOrEmpty(incoming.ResultPath)) incoming.ResultPath = old.ResultPath;
@@ -211,6 +214,13 @@ public sealed class LibraryService
     }
 
     public bool SetTags(string path, IEnumerable<string> tags) => Mutate(path, a => a.Tags = UniqueTags(tags));
+    public bool SetLaunchOverride(string path, string relative) => Mutate(path, a => a.LaunchOverrideRelative = relative ?? "");
+    public bool SetDragOverride(string path, string absolute, string relative) => Mutate(path, a =>
+    {
+        a.DragOverridePath = absolute ?? "";
+        a.DragOverrideRelative = relative ?? "";
+    });
+
     public bool SetNotes(string path, string notes) => Mutate(path, a => a.Notes = notes ?? "");
     public bool SetTestingPath(string path, string testingPath, string root = "") => Mutate(path, a =>
     {
