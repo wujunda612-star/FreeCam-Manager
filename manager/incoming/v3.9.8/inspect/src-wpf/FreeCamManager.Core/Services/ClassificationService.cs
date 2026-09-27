@@ -19,23 +19,30 @@ public sealed class ClassificationService
 
     public ClassificationDecision Plan(Artifact a)
     {
-        // System-owned packages and stable freeze retain their original
-        // safety rules; only regular incoming builds use editable ordering.
-        if (Eq(a.ArtifactType, "Result"))
-            return new("Result", Path.Combine("40_Result", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
-        if (IsStableLike(a))
+        ClassificationDecision Result() =>
+            new("Result", Path.Combine("40_Result", Safe(a.Feature, "Unknown"), Safe(a.Stage, "Unstaged")));
+        ClassificationDecision StableCandidate()
         {
             var version = Safe(StableVersionResolver.Resolve(a), "Unknown");
             return new("StableCandidate", Path.Combine("90_Unknown", "Stable_Candidate", version), true);
         }
 
+        // Keep the original priority: Manager and index package name rules are
+        // evaluated before Stable; Result routing and Stable freeze still
+        // override ordinary feature/experiment/custom file rules.
         foreach (var rule in ConfiguredRules)
         {
             if (!FileRuleEngine.MatchesClassification(rule, a)) continue;
             var category = FileRuleEngine.PersistedCategory(rule.Category);
-            var directory = FileRuleEngine.FormatDirectory(rule.Directory, a);
-            return new(category, directory);
+            if (category is not "Manager" and not "IndexLibrary")
+            {
+                if (Eq(a.ArtifactType, "Result")) return Result();
+                if (IsStableLike(a)) return StableCandidate();
+            }
+            return new(category, FileRuleEngine.FormatDirectory(rule.Directory, a));
         }
+        if (Eq(a.ArtifactType, "Result")) return Result();
+        if (IsStableLike(a)) return StableCandidate();
         return new("Unknown", "90_Unknown");
     }
 
