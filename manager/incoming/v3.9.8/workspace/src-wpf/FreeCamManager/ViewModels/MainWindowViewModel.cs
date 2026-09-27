@@ -36,7 +36,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Func<Task> refresh = RefreshAllAsync;
 
         Home = new HomeViewModel(snapshot, classification, settings, filenameAliases);
-        var workspace = new TestWorkspaceService(extraction);
+        var workspace = new TestWorkspaceService(extraction) { Configuration = () => settings };
         Development = new DevelopmentViewModel(snapshot, library, organizer, classification, dialogs, workspace, results, refresh,
             () => settings.RootDir, () => SettingsService.TestingRoot(settings), () => SettingsService.ResultRoot(settings), status,
             settings, settingsService, filenameAliases, scanInboxNow);
