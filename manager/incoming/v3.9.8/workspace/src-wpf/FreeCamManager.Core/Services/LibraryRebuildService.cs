@@ -11,7 +11,8 @@ public sealed class LibraryRebuildService(
     LibraryService library,
     ManifestService manifest,
     HashService hash,
-    IAppLogger? log = null)
+    IAppLogger? log = null,
+    Func<IReadOnlyList<ClassificationRule>>? customRules = null)
 {
     private static readonly string[] ManagedRoots =
         new[] { "10_Stable", "20_Feature", "30_Experiment", "40_Result", "50_Manager", "60_索引库", "80_Archive", "90_Unknown" };
@@ -25,7 +26,12 @@ public sealed class LibraryRebuildService(
         var linked = 0;
         var failed = 0;
 
-        foreach (var managedRoot in ManagedRoots)
+        var userRoots = (customRules?.Invoke() ?? [])
+            .Where(rule => rule.Enabled && !RuleMatcher.IsBuiltInCategory(rule.Category)
+                && RuleMatcher.ValidateFolder(rule.Folder) is null)
+            .Select(rule => rule.Folder.Replace('\\', '/').Split('/')[0])
+            .Where(part => !string.IsNullOrWhiteSpace(part) && !part.Contains('{'));
+        foreach (var managedRoot in ManagedRoots.Concat(userRoots).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var directory = Path.Combine(root, managedRoot);
             if (!Directory.Exists(directory)) continue;
@@ -60,7 +66,7 @@ public sealed class LibraryRebuildService(
                     artifact.Path = path;
                     artifact.Name = Path.GetFileName(path);
                     artifact.RelativePath = PathRebaseService.TryMakeRelative(root, path);
-                    artifact.Category = CategoryFromPath(managedRoot, artifact.RelativePath);
+                    artifact.Category = ResolveRecoveredCategory(managedRoot, artifact.RelativePath, artifact);
                     artifact.Size = info.Exists ? info.Length : 0;
                     artifact.ImportedAt = info.Exists
                         ? new DateTimeOffset(info.LastWriteTimeUtc).ToString("O")
@@ -84,7 +90,8 @@ public sealed class LibraryRebuildService(
             }
         }
 
-        foreach (var build in library.Snapshot().Where(x => x.Category is "Feature" or "Experiment"))
+        foreach (var build in library.Snapshot().Where(x => x.Category is "Feature" or "Experiment"
+            || (!RuleMatcher.IsBuiltInCategory(x.Category) && new ExtractionService().ShouldExtract(x))))
         {
             ct.ThrowIfCancellationRequested();
             if (!string.IsNullOrWhiteSpace(build.TestingPath) && Directory.Exists(build.TestingPath)) continue;
@@ -108,6 +115,24 @@ public sealed class LibraryRebuildService(
         log?.Event("LIBRARY_REBUILD",
             ("root", root), ("added", added), ("testing_linked", linked), ("results_paired", paired), ("failed", failed));
         return result;
+    }
+
+    private string ResolveRecoveredCategory(string managedRoot, string relativePath, Artifact artifact)
+    {
+        if (customRules is not null)
+        {
+            foreach (var rule in customRules().Where(x => x.Enabled && !RuleMatcher.IsBuiltInCategory(x.Category)))
+            {
+                if (RuleMatcher.ValidateFolder(rule.Folder) is not null) continue;
+                var prefix = rule.Folder.Replace('\\', '/').Split('{')[0].TrimEnd('/');
+                if (string.IsNullOrWhiteSpace(prefix)) continue;
+                var folder = (Path.GetDirectoryName(relativePath) ?? "").Replace('\\', '/');
+                if (folder.Equals(prefix, StringComparison.OrdinalIgnoreCase)
+                    || folder.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
+                    return rule.Category.Trim();
+            }
+        }
+        return CategoryFromPath(managedRoot, relativePath);
     }
 
     private static bool ShouldIndex(string path, string managedRoot)
