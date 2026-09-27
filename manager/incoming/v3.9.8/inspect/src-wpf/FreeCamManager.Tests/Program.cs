@@ -72,6 +72,12 @@ internal static class Program
         await Run("V3.7 matched Result ZIP beats raw log", V37MatchedResultZipBeatsRawLog);
         await Run("V3.9.7 Phase3 WW index Result ZIP beats log", V397Phase3IndexResultZipBeatsLog);
         await Run("V3.9.7 stored Result ZIP beats workspace raw log", V397StoredResultZipBeatsLog);
+        await Run("V3.9.8 original rules migrate to editable settings", V398RuleMigration);
+        await Run("V3.9.8 classification priority and Stable protection", V398ClassificationPriority);
+        await Run("V3.9.8 drag obeys only user rules and never silently sends logs", V398RuleOnlyDrag);
+        await Run("V3.9.8 launch rules and original double-click extraction", V398LauncherPreservesExtraction);
+        await Run("V3.9.8 custom directory recovery and existing archive safety", V398CustomRecovery);
+        await Run("V3.9.8 settings and dedicated category page wiring", V398UiContract);
         await Run("V3.7 tested raw log upgrades when Result ZIP appears", V37RefreshUpgradesRawLogToResultZip);
         await Run("V3.7 tested status click opens Result location without breaking drag", V37TestedStatusClickContract);
         await Run("V3.7 Fix1 background refresh preserves manual conclusion interaction", V371BackgroundRefreshPreservesManualConclusionInteraction);
@@ -2006,6 +2012,185 @@ internal static class Program
         var chosen = new TestResultService(new ManifestService()).ResolvePreferredDragPath(build, testing, Path.Combine(dir, "40_Result"));
         Assert(string.Equals(chosen, storedZip, StringComparison.OrdinalIgnoreCase),
             "a previously linked Result ZIP under 40_Result must beat a workspace log");
+        return Task.CompletedTask;
+    }
+
+
+    private static async Task V398RuleMigration()
+    {
+        var root = TempDir();
+        var path = Path.Combine(root, "old_settings.json");
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new
+        {
+            root_dir = root, inbox_dir = Path.Combine(root, "00_Downloa"),
+            log_dir = Path.Combine(root, "Logs"), scan_seconds = 3
+        }));
+        var service = new SettingsService();
+        var migrated = await service.LoadOrCreateAsync(path, root);
+        Assert(migrated.LaunchRules?.Count == 8, "previous Start.cmd/Start*.exe fallback must become ordered edit rules");
+        Assert(migrated.DragRules?.Count >= 2 &&
+            migrated.DragRules.All(x => !x.Pattern.Contains(".log", StringComparison.OrdinalIgnoreCase)),
+            "default drag must exclude logs entirely");
+        Assert(migrated.ClassificationRules?.Any(x => x.Pattern == "FreeCam_Manager_*") == true
+            && migrated.ClassificationRules.Any(x => x.Pattern == "WW底层索引_*")
+            && migrated.ClassificationRules.Any(x => x.MatchBy == "分支" && x.Pattern == "experiment/*"),
+            "original Manager/index/branch classification must migrate without changing categories");
+        migrated.DragRules.Clear();
+        await service.SaveAsync(path, migrated);
+        var reloaded = await service.LoadOrCreateAsync(path, root);
+        Assert(reloaded.DragRules is { Count: 0 }, "deliberately empty rule list must persist and never reset to defaults");
+    }
+
+    private static Task V398ClassificationPriority()
+    {
+        var rules = new List<FileRule>
+        {
+            new() { Pattern = "SDK_*.zip", Category = "SDK", Directory = "70_SDK/{Feature}/{Stage}" },
+            new() { Pattern = "*.zip", Category = "Feature", Directory = "20_Feature/{Feature}/{Stage}" }
+        };
+        var classifier = new ClassificationService(() => rules);
+        var build = new Artifact { Name = "SDK_sample.zip", BuildType = "Experiment", Feature = "Docs", Stage = "Test1" };
+        var decision = classifier.Plan(build);
+        Assert(decision.Category == "Custom:SDK" && decision.RelativeDirectory == Path.Combine("70_SDK", "Docs", "Test1"),
+            "first enabled rule must win and route custom category under validated relative path");
+        rules[0].Enabled = false;
+        Assert(classifier.Plan(build).Category == "Feature", "disabled custom rule must be skipped");
+        rules[1].Enabled = false;
+        Assert(classifier.Plan(build).Category == "Unknown", "no matching rule must leave file in inbox");
+        build.ReleaseState = "Stable";
+        Assert(classifier.Plan(build).Category == "StableCandidate", "Stable safety must not be bypassed by edited rules");
+        build.ReleaseState = "";
+        build.ArtifactType = "Result";
+        Assert(classifier.Plan(build).Category == "Result", "legacy Result routing stays a separate system mechanism");
+        AssertThrows<InvalidDataException>(() => FileRuleEngine.FormatDirectory("../escape", build));
+        AssertThrows<InvalidDataException>(() => FileRuleEngine.FormatDirectory("C:/escaped", build));
+        return Task.CompletedTask;
+    }
+
+    private static Task V398RuleOnlyDrag()
+    {
+        var root = TempDir();
+        var testing = Path.Combine(root, "01_Testing", "WW36_Phase3_GICamera_Test3.1");
+        var results = Path.Combine(testing, "Results");
+        var prior = Path.Combine(testing, "Validation", "Prior_Runtime_Evidence");
+        Directory.CreateDirectory(results);
+        Directory.CreateDirectory(prior);
+        var log = Path.Combine(results, "GICamera.log");
+        File.WriteAllText(log, "newer log");
+        var priorZip = Path.Combine(prior, "WW36_GICamera_Test3.1_Result.zip");
+        using (ZipFile.Open(priorZip, ZipArchiveMode.Create)) { }
+        var result = Path.Combine(results, "WW36_GICamera_Test3.1_Result.zip");
+        using (ZipFile.Open(result, ZipArchiveMode.Create)) { }
+        var build = new Artifact { Name = "WW36_Phase3_GICamera_Test3.1.zip", BuildId = "GICAM-3.1", ResultPath = log };
+        var ruleOnly = new List<FileRule> { new() { Pattern = "*_Result.zip" } };
+        var selected = FileRuleEngine.FindDrag(build, testing, Path.Combine(root, "40_Result"), ruleOnly);
+        Assert(selected == result, "custom ZIP pattern must choose current Result ZIP even with shorter Phase-free filename");
+        File.Delete(result);
+        Assert(FileRuleEngine.FindDrag(build, testing, Path.Combine(root, "40_Result"), ruleOnly) == "",
+            "no current matching ZIP must never degrade to raw .log or prior reference ZIP");
+        var logRule = new List<FileRule> { new() { Pattern = "*.log" } };
+        Assert(FileRuleEngine.FindDrag(build, testing, Path.Combine(root, "40_Result"), logRule) == log,
+            "user may explicitly configure .log drag");
+        Assert(FileRuleEngine.FindDrag(build, testing, Path.Combine(root, "40_Result"), ruleOnly, log) == log,
+            "explicit per-build manual selection takes precedence over all global rules");
+
+        using (var zip = ZipFile.Open(result, ZipArchiveMode.Create))
+        {
+            var entry = zip.CreateEntry("RESULT_MANIFEST.json");
+            using var stream = entry.Open();
+            using var writer = new StreamWriter(stream);
+            writer.Write("{\"ForBuildId\":\"UNRELATED-BUILD\",\"ArtifactType\":\"Result\"}");
+        }
+        Assert(FileRuleEngine.FindDrag(build, testing, Path.Combine(root, "40_Result"), ruleOnly) == "",
+            "conflicting ForBuildId must reject stale foreign Result ZIP");
+        return Task.CompletedTask;
+    }
+
+    private static async Task V398LauncherPreservesExtraction()
+    {
+        var root = TempDir();
+        var zipPath = Path.Combine(root, "FreeCam_Demo_Probe1.zip");
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            foreach (var name in new[] { "Start1.cmd", "Start2.bat", "Validation/Prior_Runtime_Evidence/Start.cmd" })
+            {
+                var entry = zip.CreateEntry(name);
+                using var output = new StreamWriter(entry.Open());
+                output.Write("echo test");
+            }
+        }
+        var testingRoot = Path.Combine(root, "01_Testing");
+        var custom = new List<FileRule> { new() { Pattern = "Start*.bat" }, new() { Pattern = "Start*.cmd" } };
+        var workspace = new TestWorkspaceService(new ExtractionService(), () => custom);
+        var first = await workspace.PrepareAsync(zipPath, testingRoot);
+        Assert(first.ExtractionStatus == ExtractionStatus.Extracted
+               && first.LaunchPath.EndsWith("Start2.bat", StringComparison.OrdinalIgnoreCase),
+            "custom launcher priority must run after normal extraction and ignore prior evidence");
+        var again = await workspace.PrepareAsync(zipPath, testingRoot, manualRelativePath: "Start1.cmd");
+        Assert(again.ExtractionStatus == ExtractionStatus.AlreadyExists
+            && again.LaunchPath.EndsWith("Start1.cmd", StringComparison.OrdinalIgnoreCase),
+            "manual launcher must override global rules and reuse extracted directory");
+        custom.Clear();
+        var none = await workspace.PrepareAsync(zipPath, testingRoot);
+        Assert(none.LaunchPath == "" && Directory.Exists(none.TestingPath),
+            "no launcher rule must never break existing double-click extraction");
+    }
+
+    private static async Task V398CustomRecovery()
+    {
+        var root = TempDir();
+        var inbox = Path.Combine(root, "00_Downloa");
+        Directory.CreateDirectory(inbox);
+        var source = Path.Combine(inbox, "SDK_Demo.zip");
+        using (ZipFile.Open(source, ZipArchiveMode.Create)) { }
+        var rules = new List<FileRule>
+        {
+            new() { Pattern = "SDK_*.zip", Category = "SDK", Directory = "70_SDK/{Feature}" }
+        };
+        var classifier = new ClassificationService(() => rules);
+        var library = LibraryService.CreateInMemory();
+        var organizer = new OrganizerService(root, "", library, new ManifestService(), classifier, new HashService());
+        var archived = await organizer.ProcessAsync(source);
+        Assert(archived.Category == "Custom:SDK" && archived.Path.Contains(Path.Combine("70_SDK", "Unknown")),
+            "custom directory must be created from a user-defined rule");
+        var recovered = LibraryService.CreateInMemory();
+        var rebuild = new LibraryRebuildService(recovered, new ManifestService(), new HashService(), classification: classifier);
+        var result = await rebuild.ReconcileAsync(root);
+        Assert(result.Added == 1 && recovered.Snapshot().Single().Category == "Custom:SDK",
+            "recovery must discover the new managed custom folder and rebuild its classification");
+        var untouched = Path.Combine(root, "20_Feature", "untouched.zip");
+        Directory.CreateDirectory(Path.GetDirectoryName(untouched)!);
+        File.WriteAllText(untouched, "old");
+        rules.Clear();
+        var newSource = Path.Combine(inbox, "unmatched.zip");
+        using (ZipFile.Open(newSource, ZipArchiveMode.Create)) { }
+        var unknown = await organizer.ProcessAsync(newSource);
+        Assert(unknown.Category == "Unknown" && File.Exists(newSource),
+            "unmatched incoming file must remain in inbox without being moved or extracted");
+        Assert(File.Exists(untouched), "changing classification rules must not move already archived files");
+    }
+
+    private static Task V398UiContract()
+    {
+        var src = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+        var settings = File.ReadAllText(Path.Combine(src, "Views", "SettingsView.xaml"));
+        var sidebar = File.ReadAllText(Path.Combine(src, "MainWindow.xaml"));
+        var viewModel = File.ReadAllText(Path.Combine(src, "ViewModels", "SettingsViewModel.cs"));
+        var row = File.ReadAllText(Path.Combine(src, "ViewModels", "ArtifactRowViewModel.cs"));
+        var category = File.ReadAllText(Path.Combine(src, "Views", "CustomCategoryView.xaml"));
+        Assert(settings.Contains("ItemsSource=\"{Binding LaunchRules}\"") &&
+            settings.Contains("ItemsSource=\"{Binding DragRules}\"") &&
+            settings.Contains("ItemsSource=\"{Binding ClassificationRules}\"") &&
+            settings.Contains("恢复原分类") &&
+            viewModel.Contains("FileRuleEngine.Validate"),
+            "settings must expose edit, reordering, migration and save of all three rule types");
+        Assert(sidebar.Contains("CommandParameter=\"自定义分类\"") &&
+            category.Contains("SelectedCategory") && category.Contains("VersionList_MouseDoubleClick"),
+            "custom categories must have their own functional sidebar and double-click view");
+        Assert(row.Contains("FileRuleEngine.FindDrag") &&
+            row.Contains("SelectDragFileCommand") && row.Contains("SelectLaunchFileCommand") &&
+            !row.Contains("return _results.ResolvePreferredDragPath(current, ResolveTestingPath(), _resultRoot());"),
+            "drag must use ordered user rules or per-version override, never old hidden log fallback");
         return Task.CompletedTask;
     }
 
