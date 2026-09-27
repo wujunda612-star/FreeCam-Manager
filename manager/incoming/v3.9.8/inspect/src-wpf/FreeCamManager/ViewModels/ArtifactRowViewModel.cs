@@ -1,6 +1,7 @@
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Input;
+using Microsoft.Win32;
 using FreeCamManager.Core.Models;
 using FreeCamManager.Core.Services;
 using FreeCamManager.Services;
@@ -28,6 +29,7 @@ public sealed class ArtifactRowViewModel : ObservableObject
     private readonly Func<bool> _showFilenameAliases;
     private readonly Func<bool> _showFeatureAliases;
     private readonly Func<bool> _showStageAliases;
+    private readonly Func<AppSettings> _ruleSettings;
     private Artifact _artifact;
     private string _manualStatus;
     private int _rating;
@@ -72,7 +74,8 @@ public sealed class ArtifactRowViewModel : ObservableObject
         Func<string, string>? translateFilename = null,
         Func<bool>? showFilenameAliases = null,
         Func<bool>? showFeatureAliases = null,
-        Func<bool>? showStageAliases = null)
+        Func<bool>? showStageAliases = null,
+        Func<AppSettings>? ruleSettings = null)
     {
         _artifact = artifact.Clone();
         _library = library;
@@ -92,11 +95,19 @@ public sealed class ArtifactRowViewModel : ObservableObject
         _showFilenameAliases = showFilenameAliases ?? (() => false);
         _showFeatureAliases = showFeatureAliases ?? (() => false);
         _showStageAliases = showStageAliases ?? (() => false);
+        _ruleSettings = ruleSettings ?? (() => new AppSettings
+        {
+            LaunchRules = RuleDefaults.Launch(), DragRules = RuleDefaults.Drag()
+        });
         _manualStatus = string.IsNullOrWhiteSpace(_artifact.ManualStatus) ? "未标记" : _artifact.ManualStatus;
         _rating = Math.Clamp(_artifact.Rating, 0, 5);
         _isProtected = _artifact.Protected;
 
         StartTestCommand = new AsyncRelayCommand(_ => StartTestAsync());
+        SelectLaunchFileCommand = new AsyncRelayCommand(_ => SelectLaunchFileAsync());
+        ClearLaunchFileCommand = new AsyncRelayCommand(_ => ClearLaunchFileAsync());
+        SelectDragFileCommand = new AsyncRelayCommand(_ => SelectDragFileAsync());
+        ClearDragFileCommand = new AsyncRelayCommand(_ => ClearDragFileAsync());
         OpenLocationCommand = new RelayCommand(_ => OpenLocation());
         OpenTestingFolderCommand = new RelayCommand(_ => OpenTestingFolder());
         OpenResultCommand = new AsyncRelayCommand(_ => OpenResultAsync());
@@ -166,7 +177,9 @@ public sealed class ArtifactRowViewModel : ObservableObject
     public string TestingPath => _artifact.TestingPath;
     public string ResultPath => _artifact.ResultPath;
     public bool HasResult => !string.IsNullOrWhiteSpace(_artifact.ResultPath) && File.Exists(_artifact.ResultPath);
-    public string ResultHint => HasResult ? "拖动这个状态到 GPT，可直接发送本次 Result / 日志" : "检测到 Result / 日志后会自动变为已测试";
+    public string ResultHint => "按设置中的拖拽规则选择文件；找不到不会自动拖 .log。右键可以单独指定。";
+    public bool CanStartTest => Path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
+        && new ExtractionService().ShouldExtract(_artifact);
     public string TimeDisplay => FormatTime(_artifact.ImportedAt, _artifact.BuildDate);
     public bool IsDuplicate => string.Equals(_artifact.Category, "Duplicate", StringComparison.OrdinalIgnoreCase);
     public bool IsStable => string.Equals(_artifact.Category, "Stable", StringComparison.OrdinalIgnoreCase);
@@ -248,6 +261,10 @@ public sealed class ArtifactRowViewModel : ObservableObject
     }
 
     public ICommand StartTestCommand { get; }
+    public ICommand SelectLaunchFileCommand { get; }
+    public ICommand ClearLaunchFileCommand { get; }
+    public ICommand SelectDragFileCommand { get; }
+    public ICommand ClearDragFileCommand { get; }
     public ICommand OpenLocationCommand { get; }
     public ICommand OpenTestingFolderCommand { get; }
     public ICommand OpenResultCommand { get; }
@@ -302,6 +319,7 @@ public sealed class ArtifactRowViewModel : ObservableObject
         OnPropertyChanged(nameof(StageToolTip));
         OnPropertyChanged(nameof(NotesToolTip));
         OnPropertyChanged(nameof(IsExtracted));
+        OnPropertyChanged(nameof(CanStartTest));
         OnPropertyChanged(nameof(BuildId));
         OnPropertyChanged(nameof(Commit));
         OnPropertyChanged(nameof(TestingPath));
