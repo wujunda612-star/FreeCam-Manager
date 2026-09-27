@@ -1,1 +1,1 @@
-V3.9.8 Windows validation attempt 2: legacy rule parity and reflection constructor repairs.
+V3.9.8 validation attempt 3: Windows-safe settings migration, 72 regressions, WPF publish.
