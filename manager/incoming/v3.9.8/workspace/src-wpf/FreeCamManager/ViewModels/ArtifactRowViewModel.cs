@@ -407,16 +407,16 @@ public sealed class ArtifactRowViewModel : ObservableObject
             CheckFileExists = true
         };
         if (dialog.ShowDialog() != true) return "";
-        var relative = Path.GetRelativePath(testing, dialog.FileName);
-        if (Path.IsPathRooted(relative) || relative.Equals("..", StringComparison.Ordinal)
-            || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        var relative = System.IO.Path.GetRelativePath(testing, dialog.FileName);
+        if (System.IO.Path.IsPathRooted(relative) || relative.Equals("..", StringComparison.Ordinal)
+            || relative.StartsWith(".." + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
         {
             _dialogs.Error("不支持的文件位置", "启动文件必须位于当前版本的测试目录内。");
             return "";
         }
         Configuration.LaunchOverrides[Name] = relative;
         await SettingsPersistence.SaveAsync(AppPaths.SettingsFile, Configuration);
-        _statusSink("已记住此版本启动文件: " + Path.GetFileName(dialog.FileName));
+        _statusSink("已记住此版本启动文件: " + System.IO.Path.GetFileName(dialog.FileName));
         return dialog.FileName;
     }
 
@@ -435,8 +435,8 @@ public sealed class ArtifactRowViewModel : ObservableObject
     {
         if (Configuration is null || SettingsPersistence is null) return;
         var testing = ResolveTestingPath();
-        var initial = Directory.Exists(Path.Combine(testing, "Results"))
-            ? Path.Combine(testing, "Results")
+        var initial = Directory.Exists(System.IO.Path.Combine(testing, "Results"))
+            ? System.IO.Path.Combine(testing, "Results")
             : Directory.Exists(testing) ? testing : _resultRoot();
         var dialog = new OpenFileDialog
         {
@@ -449,20 +449,20 @@ public sealed class ArtifactRowViewModel : ObservableObject
         static bool Inside(string path, string folder)
         {
             if (string.IsNullOrWhiteSpace(folder)) return false;
-            var root = Path.GetFullPath(folder).TrimEnd(Path.DirectorySeparatorChar)
-                + Path.DirectorySeparatorChar;
-            return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+            var root = System.IO.Path.GetFullPath(folder).TrimEnd(System.IO.Path.DirectorySeparatorChar)
+                + System.IO.Path.DirectorySeparatorChar;
+            return System.IO.Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
         }
         var selected = dialog.FileName;
         if ((!Inside(selected, testing) && !Inside(selected, _resultRoot()))
-            || !new[] { ".zip", ".log", ".txt", ".json" }.Contains(Path.GetExtension(selected), StringComparer.OrdinalIgnoreCase))
+            || !new[] { ".zip", ".log", ".txt", ".json" }.Contains(System.IO.Path.GetExtension(selected), StringComparer.OrdinalIgnoreCase))
         {
             _dialogs.Error("文件位置不符合要求", "只能选择当前测试目录或 40_Result 下的结果文件。");
             return;
         }
         Configuration.DragOverrides[Name] = selected;
         await SettingsPersistence.SaveAsync(AppPaths.SettingsFile, Configuration);
-        _statusSink("已记住此版本拖拽文件: " + Path.GetFileName(selected));
+        _statusSink("已记住此版本拖拽文件: " + System.IO.Path.GetFileName(selected));
         OnPropertyChanged(nameof(ResultHint));
     }
 
