@@ -48,8 +48,11 @@ public sealed class SettingsService
             return created;
         }
 
-        await using var stream = File.OpenRead(file);
-        var cfg = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, ct) ?? new AppSettings();
+        AppSettings cfg;
+        await using (var stream = File.OpenRead(file))
+        {
+            cfg = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, ct) ?? new AppSettings();
+        }
         var fallback = CreateDefault(home);
         var changed = Normalize(cfg, fallback);
         if (changed) await SaveAsync(file, cfg, ct);
