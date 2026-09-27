@@ -112,7 +112,7 @@ public partial class App : Application
             var result = new TestResultService(manifest);
             var testRefresh = new TestStatusRefreshService(_library, result, () => settings.RootDir);
             var organizer = new OrganizerService(settings.RootDir, settings.StableBackupDir, _library, manifest, classification, hash);
-            var libraryRebuild = new LibraryRebuildService(_library, manifest, hash, _log);
+            var libraryRebuild = new LibraryRebuildService(_library, manifest, hash, _log, () => settings.ClassificationRules ?? RuleDefaults.Classification());
             var discardCleanup = new DiscardCleanupService(_library, organizer, result, () => settings.RootDir, () => SettingsService.ResultRoot(settings));
             startupTiming.Mark("SERVICES_READY");
             _filenameAliases = new FilenameAliasService(AppPaths.FilenameTermsFile);
