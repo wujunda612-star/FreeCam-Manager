@@ -32,6 +32,9 @@ public sealed class SettingsService
             HistoryFileColumnWidth = 0,
             HistoryFeatureColumnWidth = 104,
             HistoryStageColumnWidth = 74,
+            LaunchRules = RuleDefaults.Launch(),
+            DragRules = RuleDefaults.Drag(),
+            ClassificationRules = RuleDefaults.Classification(),
             Theme = "system"
         };
     }
@@ -120,6 +123,11 @@ public sealed class SettingsService
             cfg.Theme = fallback.Theme;
             changed = true;
         }
+        if (cfg.LaunchRules is null) { cfg.LaunchRules = RuleDefaults.Launch(); changed = true; }
+        if (cfg.DragRules is null) { cfg.DragRules = RuleDefaults.Drag(); changed = true; }
+        if (cfg.ClassificationRules is null) { cfg.ClassificationRules = RuleDefaults.Classification(); changed = true; }
+        if (cfg.LaunchOverrides is null) { cfg.LaunchOverrides = new(StringComparer.OrdinalIgnoreCase); changed = true; }
+        if (cfg.DragOverrides is null) { cfg.DragOverrides = new(StringComparer.OrdinalIgnoreCase); changed = true; }
         cfg.Theme = cfg.Theme.ToLowerInvariant();
         return changed;
     }
