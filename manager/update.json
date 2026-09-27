@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.7",
-  "displayVersion": "V3.9.7",
-  "sourceRef": "81e2ef7b8e122d3eaa0b09243c529c9d6502973b",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/81e2ef7b8e122d3eaa0b09243c529c9d6502973b/manager/packages/FreeCam_Manager_V3.9.7_Source.zip",
-  "sourceSha256": "8bd1d0f169a64485d999521c4ee4cafb23887dd3edd3e0c4985138b799995642",
-  "publishedAt": "2026-09-27T08:37:30.054184Z",
-  "notes": "V3.9.7：修复 WW 索引库测试目录含 Phase3、Result ZIP 文件名省略 Phase3 时拖拽错误选择 .log。优先使用当前测试目录 Results 下同项目/功能/Test 编号匹配的 Result.zip；拒绝 ForBuildId 明确不匹配的结果和 Prior_* 旧证据；已关联的 40_Result ZIP 也优先于 .log。"
+  "version": "3.9.8",
+  "displayVersion": "V3.9.8",
+  "sourceRef": "afa3f1b36c5397ba742a811c685125f6141c8036",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/afa3f1b36c5397ba742a811c685125f6141c8036/manager/packages/FreeCam_Manager_V3.9.8_Source.zip",
+  "sourceSha256": "7471817a6c83cbdfd700f67fd54f9cba020e605c036687a988cedd69a6009a3b",
+  "publishedAt": "2026-09-27T20:30:14.367973Z",
+  "notes": "V3.9.8：设置增加启动文件、拖拽文件、原有分类规则的可视化编辑、排序、启停、预览和恢复默认；拖拽完全按自定义规则匹配，默认只选 Result ZIP，缺失不再擅自选 .log，并支持每个版本右键手动指定；原有分类转换为可编辑规则，支持自建分类和安全目标目录，新增独立「自定义分类」页面；保留双击解压、Stable 保护，未匹配文件留在收件箱。"
 }
