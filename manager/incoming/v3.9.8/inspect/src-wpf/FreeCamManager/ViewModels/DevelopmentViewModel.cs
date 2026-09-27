@@ -172,7 +172,7 @@ public sealed class DevelopmentViewModel : ObservableObject
 
     private ArtifactRowViewModel CreateRow(Artifact a) => new(a, _library, _organizer, _classification, _dialogs, _workspace, _results, _root, _testingRoot, _resultRoot, _statusSink, _refreshAll,
         () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays, _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
-        () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
+        () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases, () => _settings);
 
     private async Task ManualRefreshAsync()
     {
