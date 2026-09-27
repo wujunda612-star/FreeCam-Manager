@@ -97,9 +97,16 @@ public sealed class HistoryViewModel : ObservableObject
             _ => query.OrderByDescending(a => ParseTime(a.ImportedAt, a.BuildDate))
         };
         Items.Clear();
-        foreach (var a in query) Items.Add(new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _statusSink, _refreshAll,
-            () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays, _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
-            () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases));
+        foreach (var a in query)
+        {
+            var row = new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _statusSink, _refreshAll,
+                () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays,
+                _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
+                () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
+            row.Configuration = _settings;
+            row.SettingsPersistence = _settingsService;
+            Items.Add(row);
+        }
         SelectedRow = Items.FirstOrDefault(x => string.Equals(x.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
     }
 
