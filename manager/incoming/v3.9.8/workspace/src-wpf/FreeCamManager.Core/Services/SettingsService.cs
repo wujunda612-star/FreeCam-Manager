@@ -48,8 +48,11 @@ public sealed class SettingsService
             return created;
         }
 
-        await using var stream = File.OpenRead(file);
-        var cfg = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, ct) ?? new AppSettings();
+        // Dispose the read stream before writing the migrated settings back.
+        // Windows denies File.Move(overwrite:true) while File.OpenRead is alive.
+        AppSettings cfg;
+        await using (var stream = File.OpenRead(file))
+            cfg = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, ct) ?? new AppSettings();
         var fallback = CreateDefault(home);
         var changed = Normalize(cfg, fallback);
         if (changed) await SaveAsync(file, cfg, ct);
