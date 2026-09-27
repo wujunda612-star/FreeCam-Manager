@@ -170,9 +170,17 @@ public sealed class DevelopmentViewModel : ObservableObject
         catch (Exception ex) { _statusSink("列宽保存失败: " + ex.Message); }
     }
 
-    private ArtifactRowViewModel CreateRow(Artifact a) => new(a, _library, _organizer, _classification, _dialogs, _workspace, _results, _root, _testingRoot, _resultRoot, _statusSink, _refreshAll,
-        () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays, _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
-        () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
+    private ArtifactRowViewModel CreateRow(Artifact a)
+    {
+        var row = new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _workspace, _results,
+            _root, _testingRoot, _resultRoot, _statusSink, _refreshAll,
+            () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays,
+            _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
+            () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
+        row.Configuration = _settings;
+        row.SettingsPersistence = _settingsService;
+        return row;
+    }
 
     private async Task ManualRefreshAsync()
     {
