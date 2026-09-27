@@ -106,7 +106,7 @@ public partial class App : Application
 
             stage = "创建应用服务";
             var manifest = new ManifestService();
-            var classification = new ClassificationService();
+            var classification = new ClassificationService(() => settings.ClassificationRules ?? RuleDefaults.Classification());
             var hash = new HashService();
             var extraction = new ExtractionService();
             var result = new TestResultService(manifest);
