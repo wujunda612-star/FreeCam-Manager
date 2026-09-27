@@ -18,6 +18,7 @@
         <DataTemplate DataType="{x:Type vm:StableViewModel}"><views:StableView/></DataTemplate>
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><views:HistoryView/></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView/></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CustomCategoryViewModel}"><views:CustomCategoryView/></DataTemplate>
     </Window.Resources>
 
     <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Background="{DynamicResource AppBackgroundBrush}" CornerRadius="10">
@@ -52,6 +53,9 @@
                         </RadioButton>
                         <RadioButton GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="开发中">
                             <StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconDevelopment}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" StrokeThickness="1.4" Width="17" Height="17" Stretch="Uniform"/><TextBlock Text="开发中" Margin="11,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="自定义分类">
+                            <StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconFolder}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" StrokeThickness="1.4" Width="17" Height="17" Stretch="Uniform"/><TextBlock Text="自定义分类" Margin="11,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
                         </RadioButton>
                         <RadioButton GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="稳定版">
                             <StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconStable}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" StrokeThickness="1.35" Width="17" Height="17" Stretch="Uniform"/><TextBlock Text="稳定版" Margin="11,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
