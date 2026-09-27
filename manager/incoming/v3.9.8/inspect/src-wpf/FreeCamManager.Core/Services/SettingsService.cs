@@ -32,6 +32,9 @@ public sealed class SettingsService
             HistoryFileColumnWidth = 0,
             HistoryFeatureColumnWidth = 104,
             HistoryStageColumnWidth = 74,
+            LaunchRules = RuleDefaults.Launch(),
+            DragRules = RuleDefaults.Drag(),
+            ClassificationRules = RuleDefaults.Classification(),
             Theme = "system"
         };
     }
@@ -56,6 +59,9 @@ public sealed class SettingsService
     public async Task SaveAsync(string file, AppSettings cfg, CancellationToken ct = default)
     {
         Normalize(cfg, CreateDefault());
+        FileRuleEngine.Validate(cfg.LaunchRules!, "启动");
+        FileRuleEngine.Validate(cfg.DragRules!, "拖拽");
+        FileRuleEngine.Validate(cfg.ClassificationRules!, "分类");
         var parent = Path.GetDirectoryName(file);
         if (!string.IsNullOrWhiteSpace(parent)) Directory.CreateDirectory(parent);
         var tmp = file + ".tmp";
@@ -120,6 +126,9 @@ public sealed class SettingsService
             cfg.Theme = fallback.Theme;
             changed = true;
         }
+        if (cfg.LaunchRules is null) { cfg.LaunchRules = RuleDefaults.Launch(); changed = true; }
+        if (cfg.DragRules is null) { cfg.DragRules = RuleDefaults.Drag(); changed = true; }
+        if (cfg.ClassificationRules is null) { cfg.ClassificationRules = RuleDefaults.Classification(); changed = true; }
         cfg.Theme = cfg.Theme.ToLowerInvariant();
         return changed;
     }
