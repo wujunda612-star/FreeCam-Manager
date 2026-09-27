@@ -139,14 +139,14 @@ public static class FileRuleEngine
             candidates.Add(build.ResultPath);
 
         var sorted = candidates.Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(p => !HasConflictingForBuildId(p, build.BuildId))
             .OrderBy(p => DragDirectoryRank(p, testingPath))
             .ThenBy(p => ResultNameRank(p, build.Name))
             .ThenByDescending(File.GetLastWriteTimeUtc)
             .ToArray();
         foreach (var rule in rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Pattern)))
         {
-            var chosen = sorted.FirstOrDefault(p => Matches(rule.Pattern, Path.GetFileName(p)));
+            var chosen = sorted.FirstOrDefault(p => Matches(rule.Pattern, Path.GetFileName(p))
+                && !HasConflictingForBuildId(p, build.BuildId));
             if (chosen is not null) return chosen;
         }
         return "";
