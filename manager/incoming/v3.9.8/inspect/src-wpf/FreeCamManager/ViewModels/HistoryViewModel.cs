@@ -18,6 +18,8 @@ public sealed class HistoryViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly SettingsService _settingsService;
     private readonly FilenameAliasService _filenameAliases;
+    private readonly TestWorkspaceService _workspace;
+    private readonly TestResultService _results;
     private string _searchText = "";
     private string _sortMode = "最新优先";
     private ArtifactRowViewModel? _selectedRow;
@@ -28,10 +30,12 @@ public sealed class HistoryViewModel : ObservableObject
 
     public HistoryViewModel(Func<IReadOnlyList<Artifact>> snapshot, LibraryService library, OrganizerService organizer,
         ClassificationService classification, UserDialogService dialogs, Func<Task> refreshAll, Action<string> statusSink,
-        AppSettings settings, SettingsService settingsService, FilenameAliasService filenameAliases)
+        AppSettings settings, SettingsService settingsService, FilenameAliasService filenameAliases,
+        TestWorkspaceService workspace, TestResultService results)
     {
         _snapshot = snapshot; _library = library; _organizer = organizer; _classification = classification;
         _dialogs = dialogs; _refreshAll = refreshAll; _statusSink = statusSink; _settings = settings; _settingsService = settingsService; _filenameAliases = filenameAliases;
+        _workspace = workspace; _results = results;
         _fileColumnCustomized = settings.HistoryFileColumnWidth >= 180;
         _fileColumnWidth = _fileColumnCustomized ? settings.HistoryFileColumnWidth : 180;
         _featureColumnWidth = Math.Max(60, settings.HistoryFeatureColumnWidth);
@@ -97,9 +101,11 @@ public sealed class HistoryViewModel : ObservableObject
             _ => query.OrderByDescending(a => ParseTime(a.ImportedAt, a.BuildDate))
         };
         Items.Clear();
-        foreach (var a in query) Items.Add(new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _statusSink, _refreshAll,
-            () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays, _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
-            () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases));
+        foreach (var a in query) Items.Add(new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _workspace, _results,
+            () => _settings.RootDir, () => SettingsService.TestingRoot(_settings), () => SettingsService.ResultRoot(_settings),
+            _statusSink, _refreshAll, () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays,
+            _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
+            () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases, () => _settings));
         SelectedRow = Items.FirstOrDefault(x => string.Equals(x.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
     }
 
