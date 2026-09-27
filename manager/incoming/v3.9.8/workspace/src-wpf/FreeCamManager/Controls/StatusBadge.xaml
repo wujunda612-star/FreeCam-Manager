@@ -1,0 +1,8 @@
+<UserControl x:Class="FreeCamManager.Controls.StatusBadge"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False">
+    <Border x:Name="BadgeBorder" CornerRadius="8" Padding="8,3" HorizontalAlignment="Left" Background="{DynamicResource PanelElevatedBrush}">
+        <TextBlock x:Name="BadgeText" FontSize="11.5" Foreground="{DynamicResource BadgeTextBrush}"/>
+    </Border>
+</UserControl>
