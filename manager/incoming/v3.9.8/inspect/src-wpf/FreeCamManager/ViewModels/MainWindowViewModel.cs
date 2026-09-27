@@ -91,6 +91,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Development.Refresh();
         Stable.Refresh();
         History.Refresh();
+        CustomCategories.Refresh();
     }
 
     public void NotifyTermsSync(TermsUpdateResult result)
