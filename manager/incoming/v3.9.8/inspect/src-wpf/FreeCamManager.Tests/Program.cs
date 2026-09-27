@@ -2016,6 +2016,13 @@ internal static class Program
     }
 
 
+    private static void AssertThrows<T>(Action action) where T : Exception
+    {
+        try { action(); }
+        catch (T) { return; }
+        throw new Exception("Expected exception: " + typeof(T).Name);
+    }
+
     private static async Task V398RuleMigration()
     {
         var root = TempDir();
