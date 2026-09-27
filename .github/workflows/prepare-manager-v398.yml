@@ -1,0 +1,109 @@
+name: Prepare Manager V3.9.8 Configurable Rules
+
+on:
+  push:
+    branches: [feature/manager-v3.9.8-configurable-rules]
+    paths:
+      - .github/workflows/prepare-manager-v398.yml
+      - manager/incoming/v3.9.8/workspace/**
+permissions:
+  contents: write
+
+jobs:
+  build-and-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.8-configurable-rules
+
+      - name: Assemble final source ZIP from V3.9.7 plus audited V3.9.8 changes
+        shell: python
+        run: |
+          import hashlib,json,zipfile
+          from pathlib import Path
+          source=Path("manager/packages/FreeCam_Manager_V3.9.7_Source.zip")
+          workspace=Path("manager/incoming/v3.9.8/workspace")
+          target=Path("manager/packages/FreeCam_Manager_V3.9.8_Source.zip")
+          additions=[]
+          with zipfile.ZipFile(source) as old, zipfile.ZipFile(target,"w",zipfile.ZIP_DEFLATED,compresslevel=9) as new:
+              originals={name for name in old.namelist() if not name.endswith("/")}
+              for name in sorted(originals):
+                  current=workspace/name
+                  data=current.read_bytes() if current.exists() else old.read(name)
+                  if name=="BUILD_MANIFEST.json":
+                      obj=json.loads(data)
+                      obj.update({
+                          "Version":"V3.9.8",
+                          "BuildName":"FreeCam_Manager_V3.9.8",
+                          "Base":"FreeCam_Manager_V3.9.7",
+                          "Branch":"feature/manager-v3.9.8-configurable-rules",
+                          "Feature":"Editable launch, drag and legacy classification rules; separate custom category page",
+                          "BuildId":"MANAGER-V398-20260928"
+                      })
+                      data=(json.dumps(obj,ensure_ascii=False,indent=2)+"\n").encode("utf-8")
+                  new.writestr(name,data)
+              for path in sorted((workspace/"src-wpf").rglob("*")):
+                  if not path.is_file() or any(p.lower() in ("obj","bin","buildoutput") for p in path.parts):
+                      continue
+                  name=path.relative_to(workspace).as_posix()
+                  if name not in originals:
+                      additions.append(name)
+                      new.write(path,name)
+          print("V3.9.8 source ZIP",target,target.stat().st_size,"new files",additions)
+          with zipfile.ZipFile(target) as z:
+              assert "src-wpf/FreeCamManager.Core/Models/CustomRules.cs" in z.namelist()
+              assert "src-wpf/FreeCamManager.Core/Services/FileRuleSelector.cs" in z.namelist()
+              assert "src-wpf/FreeCamManager/Views/RuleEditorView.xaml" in z.namelist()
+              assert "src-wpf/FreeCamManager/Views/CustomCategoryView.xaml" in z.namelist()
+              assert b"<Version>3.9.8</Version>" in z.read("src-wpf/FreeCamManager/FreeCamManager.csproj")
+
+      - name: Build full source on Windows and run complete regression tests
+        shell: pwsh
+        run: |
+          & .\manager\incoming\v3.9.8\workspace\src-wpf\Build_v3_On_Windows.ps1 -NoLaunch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify actual self-contained output and source ZIP
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path manager\incoming\v3.9.8\workspace\src-wpf -Recurse -Filter FreeCam_Manager.exe | Select-Object -First 1
+          if (-not $exe) { throw 'V3.9.8 WPF self-contained EXE was not produced' }
+          Write-Host "Windows executable OK: $($exe.FullName)"
+          $package = 'manager/packages/FreeCam_Manager_V3.9.8_Source.zip'
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $package))
+          try {
+            if (-not ($archive.Entries | Where-Object FullName -eq 'src-wpf/Apply_Manager_Update.ps1')) {
+              throw 'missing updater from V3.9.8 source ZIP'
+            }
+          } finally { $archive.Dispose() }
+
+      - name: Record final package hash
+        shell: python
+        run: |
+          import hashlib,json,datetime
+          from pathlib import Path
+          pkg=Path("manager/packages/FreeCam_Manager_V3.9.8_Source.zip")
+          meta={
+            "version":"3.9.8",
+            "displayVersion":"V3.9.8",
+            "packageName":pkg.name,
+            "sourceSha256":hashlib.sha256(pkg.read_bytes()).hexdigest(),
+            "size":pkg.stat().st_size,
+            "branch":"feature/manager-v3.9.8-configurable-rules",
+            "generatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00","Z")
+          }
+          dest=Path("manager/incoming/v3.9.8/candidate.json")
+          dest.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          print(json.dumps(meta,ensure_ascii=False))
+
+      - name: Commit tested final source package
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/packages/FreeCam_Manager_V3.9.8_Source.zip manager/incoming/v3.9.8/candidate.json
+          git commit -m "build: Windows verified Manager V3.9.8 full source"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
