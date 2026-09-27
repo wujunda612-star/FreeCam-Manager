@@ -26,7 +26,7 @@ public sealed class ClassificationService
         {
             if (!rule.Enabled || string.IsNullOrWhiteSpace(rule.Category)
                 || !Matches(rule, a, name)) continue;
-            if (stable && !Eq(rule.Category, "StableCandidate")) continue;
+            if (stable && !Eq(rule.Category, "StableCandidate") && !Eq(rule.Category, "Manager") && !Eq(rule.Category, "IndexLibrary")) continue;
             try
             {
                 var dir = RuleMatcher.ResolveFolder(rule.Folder,
