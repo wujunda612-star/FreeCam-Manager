@@ -1,6 +1,7 @@
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Input;
+using Microsoft.Win32;
 using FreeCamManager.Core.Models;
 using FreeCamManager.Core.Services;
 using FreeCamManager.Services;
@@ -10,6 +11,9 @@ namespace FreeCamManager.ViewModels;
 public sealed class ArtifactRowViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<string> ManualStatusOptions = ["未标记", "通过", "失败", "待复测", "已废弃"];
+
+    public AppSettings? Configuration { get; set; }
+    public SettingsService? SettingsPersistence { get; set; }
 
     private readonly LibraryService _library;
     private readonly OrganizerService _organizer;
@@ -97,6 +101,10 @@ public sealed class ArtifactRowViewModel : ObservableObject
         _isProtected = _artifact.Protected;
 
         StartTestCommand = new AsyncRelayCommand(_ => StartTestAsync());
+        SelectLaunchCommand = new AsyncRelayCommand(_ => SelectLaunchAsync());
+        ClearLaunchOverrideCommand = new AsyncRelayCommand(_ => ClearOverrideAsync(true));
+        SelectDragCommand = new AsyncRelayCommand(_ => SelectDragAsync());
+        ClearDragOverrideCommand = new AsyncRelayCommand(_ => ClearOverrideAsync(false));
         OpenLocationCommand = new RelayCommand(_ => OpenLocation());
         OpenTestingFolderCommand = new RelayCommand(_ => OpenTestingFolder());
         OpenResultCommand = new AsyncRelayCommand(_ => OpenResultAsync());
@@ -248,6 +256,10 @@ public sealed class ArtifactRowViewModel : ObservableObject
     }
 
     public ICommand StartTestCommand { get; }
+    public ICommand SelectLaunchCommand { get; }
+    public ICommand SelectDragCommand { get; }
+    public ICommand ClearLaunchOverrideCommand { get; }
+    public ICommand ClearDragOverrideCommand { get; }
     public ICommand OpenLocationCommand { get; }
     public ICommand OpenTestingFolderCommand { get; }
     public ICommand OpenResultCommand { get; }
@@ -365,6 +377,87 @@ public sealed class ArtifactRowViewModel : ObservableObject
             _artifact.TestStatus = "待测试";
             await _library.SaveAsync();
             _dialogs.Error("启动测试失败", ex.Message);
+        }
+    }
+
+    private async Task<string> SelectLaunchFileAsync(string testing)
+    {
+        if (Configuration is null || SettingsPersistence is null || !Directory.Exists(testing)) return "";
+        var dialog = new OpenFileDialog
+        {
+            Title = "为此版本指定启动文件",
+            InitialDirectory = testing,
+            Filter = "启动文件|*.cmd;*.bat;*.ps1;*.exe",
+            CheckFileExists = true
+        };
+        if (dialog.ShowDialog() != true) return "";
+        var relative = Path.GetRelativePath(testing, dialog.FileName);
+        if (Path.IsPathRooted(relative) || relative.Equals("..", StringComparison.Ordinal)
+            || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            _dialogs.Error("不支持的文件位置", "启动文件必须位于当前版本的测试目录内。");
+            return "";
+        }
+        Configuration.LaunchOverrides[Name] = relative;
+        await SettingsPersistence.SaveAsync(AppPaths.SettingsFile, Configuration);
+        _statusSink("已记住此版本启动文件: " + Path.GetFileName(dialog.FileName));
+        return dialog.FileName;
+    }
+
+    private async Task SelectLaunchAsync()
+    {
+        var testing = ResolveTestingPath();
+        if (string.IsNullOrWhiteSpace(testing))
+        {
+            _dialogs.Info("尚未解压", "请先双击此版本，软件解压完成后即可指定启动文件。");
+            return;
+        }
+        await SelectLaunchFileAsync(testing);
+    }
+
+    private async Task SelectDragAsync()
+    {
+        if (Configuration is null || SettingsPersistence is null) return;
+        var testing = ResolveTestingPath();
+        var initial = Directory.Exists(Path.Combine(testing, "Results"))
+            ? Path.Combine(testing, "Results")
+            : Directory.Exists(testing) ? testing : _resultRoot();
+        var dialog = new OpenFileDialog
+        {
+            Title = "为此版本指定拖拽文件",
+            InitialDirectory = initial,
+            Filter = "结果及日志|*.zip;*.log;*.txt;*.json|所有文件|*.*",
+            CheckFileExists = true
+        };
+        if (dialog.ShowDialog() != true) return;
+        static bool Inside(string path, string folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder)) return false;
+            var root = Path.GetFullPath(folder).TrimEnd(Path.DirectorySeparatorChar)
+                + Path.DirectorySeparatorChar;
+            return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+        }
+        var selected = dialog.FileName;
+        if ((!Inside(selected, testing) && !Inside(selected, _resultRoot()))
+            || !new[] { ".zip", ".log", ".txt", ".json" }.Contains(Path.GetExtension(selected), StringComparer.OrdinalIgnoreCase))
+        {
+            _dialogs.Error("文件位置不符合要求", "只能选择当前测试目录或 40_Result 下的结果文件。");
+            return;
+        }
+        Configuration.DragOverrides[Name] = selected;
+        await SettingsPersistence.SaveAsync(AppPaths.SettingsFile, Configuration);
+        _statusSink("已记住此版本拖拽文件: " + Path.GetFileName(selected));
+        OnPropertyChanged(nameof(ResultHint));
+    }
+
+    private async Task ClearOverrideAsync(bool launch)
+    {
+        if (Configuration is null || SettingsPersistence is null) return;
+        var removed = launch ? Configuration.LaunchOverrides.Remove(Name) : Configuration.DragOverrides.Remove(Name);
+        if (removed)
+        {
+            await SettingsPersistence.SaveAsync(AppPaths.SettingsFile, Configuration);
+            _statusSink(launch ? "已恢复此版本的全局启动规则" : "已恢复此版本的全局拖拽规则");
         }
     }
 
