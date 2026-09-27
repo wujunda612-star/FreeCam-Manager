@@ -334,11 +334,121 @@ public sealed class ArtifactRowViewModel : ObservableObject
     public string GetDraggableResultPath()
     {
         var current = _library.ByPath(Path) ?? _artifact;
-        return _results.ResolvePreferredDragPath(current, ResolveTestingPath(), _resultRoot());
+        var manual = File.Exists(current.DragOverridePath) ? current.DragOverridePath : "";
+        if (string.IsNullOrWhiteSpace(manual) && !string.IsNullOrWhiteSpace(current.DragOverrideRelative))
+        {
+            var relocated = System.IO.Path.Combine(_root(), current.DragOverrideRelative);
+            if (File.Exists(relocated)) manual = relocated;
+        }
+        return FileRuleEngine.FindDrag(current, ResolveTestingPath(), _resultRoot(),
+            _ruleSettings().DragRules ?? RuleDefaults.Drag(), manual);
+    }
+
+    public void NotifyDragNotFound() =>
+        _statusSink("未找到符合拖拽规则的文件；请在设置中修改规则，或右键为此版本指定文件。");
+
+    private async Task SelectLaunchFileAsync()
+    {
+        try
+        {
+            var testing = ResolveTestingPath();
+            if (string.IsNullOrWhiteSpace(testing))
+            {
+                if (!CanStartTest || !File.Exists(Path))
+                {
+                    _dialogs.Info("无法指定启动文件", "没有测试目录。请先使用可测试 ZIP 准备测试目录。");
+                    return;
+                }
+                var prepared = await _workspace.PrepareAsync(Path, _testingRoot());
+                testing = prepared.TestingPath;
+                _artifact.TestingPath = testing;
+                _library.SetTestingPath(Path, testing, _root());
+            }
+            var chosen = ChooseLaunchFile(testing);
+            if (string.IsNullOrWhiteSpace(chosen)) return;
+            var relative = System.IO.Path.GetRelativePath(testing, chosen);
+            _library.SetLaunchOverride(Path, relative);
+            _artifact.LaunchOverrideRelative = relative;
+            await _library.SaveAsync();
+            _statusSink("已指定启动文件: " + System.IO.Path.GetFileName(chosen));
+            await _refreshAll();
+        }
+        catch (Exception ex) { _dialogs.Error("指定启动文件失败", ex.Message); }
+    }
+
+    private string? ChooseLaunchFile(string testing)
+    {
+        var picker = new OpenFileDialog
+        {
+            Title = "选择本版本的启动文件",
+            Filter = "启动文件 (*.cmd;*.bat;*.ps1;*.exe)|*.cmd;*.bat;*.ps1;*.exe",
+            InitialDirectory = testing,
+            CheckFileExists = true
+        };
+        if (picker.ShowDialog() != true) return null;
+        if (!FileRuleEngine.IsInside(picker.FileName, testing))
+        {
+            _dialogs.Error("路径不合法", "启动文件只能选择当前版本测试目录内的文件。");
+            return null;
+        }
+        return picker.FileName;
+    }
+
+    private async Task ClearLaunchFileAsync()
+    {
+        _library.SetLaunchOverride(Path, "");
+        _artifact.LaunchOverrideRelative = "";
+        await _library.SaveAsync();
+        _statusSink("此版本已恢复使用全局启动规则");
+    }
+
+    private async Task SelectDragFileAsync()
+    {
+        try
+        {
+            var testing = ResolveTestingPath();
+            var resultRoot = _resultRoot();
+            var picker = new OpenFileDialog
+            {
+                Title = "为本版本指定拖拽文件",
+                Filter = "结果与日志 (*.zip;*.log;*.txt;*.json)|*.zip;*.log;*.txt;*.json|所有文件 (*.*)|*.*",
+                InitialDirectory = Directory.Exists(testing) ? testing : resultRoot,
+                CheckFileExists = true
+            };
+            if (picker.ShowDialog() != true) return;
+            var chosen = picker.FileName;
+            if (!FileRuleEngine.IsInside(chosen, testing) && !FileRuleEngine.IsInside(chosen, resultRoot))
+            {
+                _dialogs.Error("路径不合法", "只能指定当前测试目录或 40_Result 中的文件。");
+                return;
+            }
+            var relative = PathRebaseService.TryMakeRelative(_root(), chosen);
+            _library.SetDragOverride(Path, chosen, relative);
+            _artifact.DragOverridePath = chosen;
+            _artifact.DragOverrideRelative = relative;
+            await _library.SaveAsync();
+            _statusSink("已指定拖拽文件: " + System.IO.Path.GetFileName(chosen));
+            await _refreshAll();
+        }
+        catch (Exception ex) { _dialogs.Error("指定拖拽文件失败", ex.Message); }
+    }
+
+    private async Task ClearDragFileAsync()
+    {
+        _library.SetDragOverride(Path, "", "");
+        _artifact.DragOverridePath = "";
+        _artifact.DragOverrideRelative = "";
+        await _library.SaveAsync();
+        _statusSink("此版本已恢复使用全局拖拽规则");
     }
 
     private async Task StartTestAsync()
     {
+        if (!CanStartTest)
+        {
+            _dialogs.Info("此文件不是测试包", "普通资料包或源码包不自动解压启动。");
+            return;
+        }
         if (!File.Exists(Path))
         {
             _dialogs.Info("原始 ZIP 不存在", "这个版本的原始 ZIP 已经不在磁盘上，无法一键测试。");
@@ -349,7 +459,7 @@ public sealed class ArtifactRowViewModel : ObservableObject
         try
         {
             _statusSink("正在准备测试: " + Name);
-            prepared = await _workspace.PrepareAsync(Path, _testingRoot());
+            prepared = await _workspace.PrepareAsync(Path, _testingRoot(), manualRelativePath: _artifact.LaunchOverrideRelative);
             _artifact.TestingPath = prepared.TestingPath;
             _artifact.TestingRelativePath = PathRebaseService.TryMakeRelative(_root(), prepared.TestingPath);
             _library.SetTestingPath(Path, prepared.TestingPath, _root());
@@ -363,9 +473,14 @@ public sealed class ArtifactRowViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(prepared.LaunchPath))
         {
-            _dialogs.Error("没有找到启动入口", "已经解压到 01_Testing，但没有找到 Start*.cmd / .bat / .ps1 / .exe。\n\n可以右键“打开测试目录”检查。 ");
-            await _refreshAll();
-            return;
+            _dialogs.Info("按规则没有找到启动文件", "测试包已解压。请手动指定本版本的启动文件。");
+            var manuallyChosen = ChooseLaunchFile(prepared.TestingPath);
+            if (string.IsNullOrWhiteSpace(manuallyChosen)) { await _refreshAll(); return; }
+            prepared = prepared with { LaunchPath = manuallyChosen };
+            var relative = System.IO.Path.GetRelativePath(prepared.TestingPath, manuallyChosen);
+            _library.SetLaunchOverride(Path, relative);
+            _artifact.LaunchOverrideRelative = relative;
+            await _library.SaveAsync();
         }
 
         try
@@ -402,7 +517,7 @@ public sealed class ArtifactRowViewModel : ObservableObject
 
     private async Task OpenResultAsync()
     {
-        var path = await ResolveResultPathAsync();
+        var path = GetDraggableResultPath();
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
             _dialogs.Info("还没有 Result / 日志", "测试完成并生成 Result 或 .log 日志后，系统会自动显示“已测试”。");
@@ -517,7 +632,7 @@ public sealed class ArtifactRowViewModel : ObservableObject
         var testing = ResolveTestingPath();
         if (string.IsNullOrWhiteSpace(testing) || !Directory.Exists(testing)) return ExistingResultPath();
         var current = _library.ByPath(Path) ?? _artifact;
-        var preserved = await _results.PreserveEvidenceAsync(testing, current, _resultRoot());
+        var preserved = await _results.PreserveEvidenceAsync(testing, current, _resultRoot(), preferredPath: GetDraggableResultPath());
         if (string.IsNullOrWhiteSpace(preserved)) return ExistingResultPath();
         _library.SetTestEvidence(Path, preserved, _root(), current.LastTestedAt);
         _artifact.ResultPath = preserved;
