@@ -4,19 +4,27 @@ public sealed record TestPreparation(string TestingPath, ExtractionStatus Extrac
 
 public sealed class TestWorkspaceService(ExtractionService extraction)
 {
+    public Func<FreeCamManager.Core.Models.AppSettings>? Configuration { get; set; }
+
     private static readonly string[] Extensions = [".cmd", ".bat", ".ps1", ".exe"];
 
     public async Task<TestPreparation> PrepareAsync(string zipPath, string testingRoot, CancellationToken ct = default)
     {
         if (!File.Exists(zipPath)) throw new FileNotFoundException("原始测试 ZIP 不存在", zipPath);
         var extracted = await extraction.ExtractToTestingAsync(zipPath, testingRoot, ct);
-        var launchPath = FindLaunchEntry(extracted.Destination);
+        var settings = Configuration?.Invoke();
+        var launchPath = settings is null
+            ? FindLaunchEntry(extracted.Destination)
+            : FileRuleSelector.FindLaunch(extracted.Destination, settings.LaunchRules,
+                settings.LaunchOverrides.GetValueOrDefault(Path.GetFileName(zipPath)));
         return new TestPreparation(extracted.Destination, extracted.Status, launchPath);
     }
 
     public string FindLaunchEntry(string testingPath)
     {
         if (string.IsNullOrWhiteSpace(testingPath) || !Directory.Exists(testingPath)) return "";
+        if (Configuration is { } configure)
+            return FileRuleSelector.FindLaunch(testingPath, configure().LaunchRules);
 
         foreach (var exact in new[] { "Start.cmd", "Start.bat", "Start.ps1", "Start.exe" })
         {
