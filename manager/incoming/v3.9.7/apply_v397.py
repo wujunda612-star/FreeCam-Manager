@@ -102,7 +102,7 @@ service=replace_once(service,
 
     private static string NormalizePhaseTokens(string stem)
     {
-        var unnumbered = Regex.Replace(stem, @" \\\\(\\\\d+\\\\)$", "", RegexOptions.CultureInvariant);
+        var unnumbered = Regex.Replace(stem, @" \(\d+\)$", "", RegexOptions.CultureInvariant);
         return string.Join("_", unnumbered.Split('_', StringSplitOptions.RemoveEmptyEntries)
             .Where(part => !(part.Length > 5
                 && part.StartsWith("Phase", StringComparison.OrdinalIgnoreCase)
@@ -146,7 +146,6 @@ service=replace_once(service,
     private static bool IsFresh''',
     "phase-tolerant names and explicit BuildId guard")
 # Correct the inserted Python raw string regex to standard C# verbatim text.
-service=service.replace('@" \\\\\\\\(\\\\\\\\d+\\\\\\\\)$"', '@" \\\\(\\\\d+\\\\)$"')
 # The normalizer for actualStem and expectedStem keeps '_Result' so both sides align.
 save(p,service)
 p,tests=load("src-wpf/FreeCamManager.Tests/Program.cs")
