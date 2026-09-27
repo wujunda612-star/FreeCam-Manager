@@ -155,7 +155,7 @@ public partial class App : Application
                     if (_startupMaintenanceTask is not null)
                         await _startupMaintenanceTask.ConfigureAwait(false);
                     return await watcher.ScanNowAsync(_shutdown.Token).ConfigureAwait(false);
-                }, cfg => ApplyRuntimeSettings(cfg), localTermsState,
+                }, cfg => { ApplyRuntimeSettings(cfg); watcher.InvalidateUnrecognizedCache(); }, localTermsState,
                 () => CheckTermsUpdateAndApplyAsync(CancellationToken.None),
                 () => CheckManagerUpdateAsync(CancellationToken.None),
                 manifest => StageAndLaunchManagerUpdateAsync(manifest));
