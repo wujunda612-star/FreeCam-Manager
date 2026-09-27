@@ -1,11 +1,11 @@
 {
   "Project": "FreeCam_Manager",
   "ArtifactType": "Source",
-  "Version": "V3.9.7",
-  "BuildName": "FreeCam_Manager_V3.9.7",
-  "Base": "FreeCam_Manager_V3.9.6",
-  "Branch": "feature/manager-v3.9.7-resultzip-priority",
-  "Feature": "Result ZIP priority for Phase3 WW index testing",
+  "Version": "V3.9.8",
+  "BuildName": "FreeCam_Manager_V3.9.8",
+  "Base": "FreeCam_Manager_V3.9.7",
+  "Branch": "feature/manager-v3.9.8-custom-rules",
+  "Feature": "Editable launch, drag and classification rules plus custom category page",
   "Stage": "Release",
-  "BuildId": "MANAGER-V397-WW-RESULT-20260927"
+  "BuildId": "MANAGER-V398-RULES-20260928"
 }
