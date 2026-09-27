@@ -17,6 +17,7 @@
         <DataTemplate DataType="{x:Type vm:DevelopmentViewModel}"><views:DevelopmentView/></DataTemplate>
         <DataTemplate DataType="{x:Type vm:StableViewModel}"><views:StableView/></DataTemplate>
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><views:HistoryView/></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CustomCategoryViewModel}"><views:CustomCategoryView/></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView/></DataTemplate>
     </Window.Resources>
 
@@ -58,6 +59,9 @@
                         </RadioButton>
                         <RadioButton GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="历史">
                             <StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconHistory}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" StrokeThickness="1.45" Width="17" Height="17" Stretch="Uniform"/><TextBlock Text="历史" Margin="11,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="自定义分类">
+                            <StackPanel Orientation="Horizontal"><Path Data="{StaticResource IconFolder}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" StrokeThickness="1.4" Width="17" Height="17" Stretch="Uniform"/><TextBlock Text="自定义分类" Margin="11,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
                         </RadioButton>
                     </StackPanel>
                     <RadioButton Grid.Row="2" GroupName="Nav" Style="{StaticResource NavRadioButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="设置">
