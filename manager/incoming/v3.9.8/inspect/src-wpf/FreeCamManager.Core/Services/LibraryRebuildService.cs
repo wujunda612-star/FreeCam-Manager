@@ -14,6 +14,12 @@ public sealed class LibraryRebuildService(
     IAppLogger? log = null,
     ClassificationService? classification = null)
 {
+    // Older callers use reflection to construct this original four-argument
+    // signature; retain it while allowing an optional classification engine.
+    public LibraryRebuildService(LibraryService library, ManifestService manifest,
+        HashService hash, IAppLogger? log)
+        : this(library, manifest, hash, log, null) { }
+
     private static readonly string[] ManagedRoots =
         new[] { "10_Stable", "20_Feature", "30_Experiment", "40_Result", "50_Manager", "60_索引库", "80_Archive", "90_Unknown" };
 
