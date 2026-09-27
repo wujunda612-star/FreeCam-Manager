@@ -1,0 +1,107 @@
+name: Prepare Manager V3.9.8 Custom Rules
+on:
+  push:
+    branches: [feature/manager-v3.9.8-custom-rules]
+    paths:
+      - .github/workflows/prepare-manager-v398.yml
+      - manager/incoming/v3.9.8/rebuild.txt
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.8-custom-rules
+      - name: Overlay complete original package with exact new sources
+        shell: python
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile
+          import shutil
+          stage=Path("_v398_stage")
+          overlay=Path("manager/incoming/v3.9.8/inspect")
+          if stage.exists(): shutil.rmtree(stage)
+          stage.mkdir()
+          with ZipFile("manager/packages/FreeCam_Manager_V3.9.7_Source.zip") as z:
+              z.extractall(stage)
+          files=0
+          for src in overlay.rglob("*"):
+              if not src.is_file(): continue
+              target=stage/src.relative_to(overlay)
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(src,target)
+              files+=1
+          print("OVERLAY_FILES",files)
+
+      - name: Validate final sources on Windows (full regressions and self-contained WPF)
+        shell: pwsh
+        run: |
+          & .\_v398_stage\src-wpf\Build_v3_On_Windows.ps1 -NoLaunch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path .\_v398_stage\src-wpf\BuildOutput\publish\FreeCam_Manager.exe)) {
+            throw "Published EXE not found"
+          }
+
+      - name: Package only sources validated by Windows runner
+        shell: python
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          import json,hashlib,datetime
+          stage=Path("_v398_stage")
+          target=Path("manager/packages/FreeCam_Manager_V3.9.8_Source.zip")
+          excluded={".vs","obj","bin","BuildOutput","TestResults","__pycache__"}
+          with ZipFile(target,"w",ZIP_DEFLATED,compresslevel=9) as out:
+              count=0
+              for path in sorted(stage.rglob("*")):
+                  if not path.is_file(): continue
+                  rel=path.relative_to(stage)
+                  if any(part in excluded for part in rel.parts): continue
+                  out.write(path,rel.as_posix())
+                  count+=1
+          with ZipFile(target) as zip:
+              names=set(zip.namelist())
+              needed={
+                "BUILD_MANIFEST.json",
+                "src-wpf/BUILD_MANIFEST.json",
+                "src-wpf/Build_v3_On_Windows.ps1",
+                "src-wpf/Apply_Manager_Update.ps1",
+                "src-wpf/FreeCamManager/FreeCamManager.csproj",
+                "src-wpf/FreeCamManager/Views/SettingsView.xaml",
+                "src-wpf/FreeCamManager/Views/CustomCategoryView.xaml",
+                "src-wpf/FreeCamManager.Core/Services/FileRuleEngine.cs",
+                "src-wpf/FreeCamManager.Core/Services/ClassificationService.cs",
+                "src-wpf/FreeCamManager.Tests/Program.cs"
+              }
+              if needed-names: raise SystemExit("Missing package files "+repr(needed-names))
+              if json.loads(zip.read("BUILD_MANIFEST.json"))["Version"]!="V3.9.8":
+                  raise SystemExit("Incorrect root build manifest")
+              if b"<Version>3.9.8</Version>" not in zip.read("src-wpf/FreeCamManager/FreeCamManager.csproj"):
+                  raise SystemExit("Incorrect assembly version")
+          metadata={
+            "version":"3.9.8",
+            "displayVersion":"V3.9.8",
+            "packageName":target.name,
+            "sourceSha256":hashlib.sha256(target.read_bytes()).hexdigest(),
+            "size":target.stat().st_size,
+            "base":"V3.9.7",
+            "purpose":"Editable launch drag and classification rules; independent custom category page",
+            "generatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00","Z")
+          }
+          candidate=Path("manager/incoming/v3.9.8/candidate.json")
+          candidate.write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          print("SOURCE_FILES",count)
+          print(json.dumps(metadata,ensure_ascii=False))
+
+      - name: Commit verified final source ZIP and candidate metadata
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/packages/FreeCam_Manager_V3.9.8_Source.zip manager/incoming/v3.9.8/candidate.json
+          git commit -m "build: add Windows-verified Manager V3.9.8 custom rules source package"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
