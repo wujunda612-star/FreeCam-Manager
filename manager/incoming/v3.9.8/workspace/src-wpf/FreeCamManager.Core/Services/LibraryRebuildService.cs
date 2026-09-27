@@ -14,6 +14,11 @@ public sealed class LibraryRebuildService(
     IAppLogger? log = null,
     Func<IReadOnlyList<ClassificationRule>>? customRules = null)
 {
+    // Preserve the original four-parameter constructor for legacy integration
+    // tests and existing consumer builds using reflection.
+    public LibraryRebuildService(LibraryService library, ManifestService manifest,
+        HashService hash, IAppLogger? log) : this(library, manifest, hash, log, null) { }
+
     private static readonly string[] ManagedRoots =
         new[] { "10_Stable", "20_Feature", "30_Experiment", "40_Result", "50_Manager", "60_索引库", "80_Archive", "90_Unknown" };
 
