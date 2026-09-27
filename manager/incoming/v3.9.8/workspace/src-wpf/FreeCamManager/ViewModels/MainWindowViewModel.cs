@@ -41,6 +41,8 @@ public sealed class MainWindowViewModel : ObservableObject
             () => settings.RootDir, () => SettingsService.TestingRoot(settings), () => SettingsService.ResultRoot(settings), status,
             settings, settingsService, filenameAliases, scanInboxNow);
         Stable = new StableViewModel(snapshot, organizer, dialogs, refresh, status);
+        CustomCategories = new CustomCategoryViewModel(snapshot, settings, settingsService, library,
+            organizer, classification, dialogs, workspace, results, filenameAliases, refresh, status);
         History = new HistoryViewModel(snapshot, library, organizer, classification, dialogs, refresh, status, settings, settingsService, filenameAliases);
 
         Settings = new SettingsViewModel(settings, settingsService, theme, filenameAliases, status, cfg =>
@@ -65,6 +67,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public HomeViewModel Home { get; }
     public DevelopmentViewModel Development { get; }
     public StableViewModel Stable { get; }
+    public CustomCategoryViewModel CustomCategories { get; }
     public HistoryViewModel History { get; }
     public SettingsViewModel Settings { get; }
     public ICommand NavigateCommand { get; }
@@ -78,6 +81,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Home.Refresh();
         Development.Refresh();
         History.Refresh();
+        CustomCategories.Refresh();
     }
 
     public async Task RefreshAllAsync()
@@ -87,6 +91,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Development.Refresh();
         Stable.Refresh();
         History.Refresh();
+        CustomCategories.Refresh();
     }
 
     public void NotifyTermsSync(TermsUpdateResult result)
@@ -106,6 +111,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             "开发中" => Development,
             "稳定版" => Stable,
+            "自定义分类" => CustomCategories,
             "历史" => History,
             "设置" => Settings,
             _ => Home
