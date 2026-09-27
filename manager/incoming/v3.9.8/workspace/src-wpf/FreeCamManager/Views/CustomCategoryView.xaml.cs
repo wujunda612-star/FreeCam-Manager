@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using FreeCamManager.ViewModels;
+using FreeCamManager.Controls;
 
 namespace FreeCamManager.Views;
 
@@ -18,7 +19,7 @@ public partial class CustomCategoryView : UserControl
         if (e.ChangedButton != MouseButton.Left) return;
         if (FindAncestor<ListViewItem>(e.OriginalSource as DependencyObject)?.DataContext
             is not ArtifactRowViewModel row) return;
-        if (FindAncestor<StatusBadgeMarker>(e.OriginalSource as DependencyObject) is not null) return;
+        if (FindAncestor<StatusBadge>(e.OriginalSource as DependencyObject) is not null) return;
         CustomList.SelectedItem = row;
         if (row.StartTestCommand.CanExecute(null)) row.StartTestCommand.Execute(null);
         e.Handled = true;
@@ -71,6 +72,4 @@ public partial class CustomCategoryView : UserControl
         }
         return null;
     }
-    // Only prevents double-click launching when the gesture is on the status badge.
-    private sealed class StatusBadgeMarker : DependencyObject { }
 }
