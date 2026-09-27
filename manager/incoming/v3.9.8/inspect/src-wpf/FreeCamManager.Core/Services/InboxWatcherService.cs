@@ -59,6 +59,11 @@ public sealed class InboxWatcherService
         }
     }
 
+    public void RulesChanged()
+    {
+        lock (_gate) { _unrecognized.Clear(); _seen.Clear(); }
+    }
+
     public Task<bool> ScanOnceAsync(CancellationToken ct = default) => ScanCoreAsync(manual: false, ct);
 
     /// <summary>
