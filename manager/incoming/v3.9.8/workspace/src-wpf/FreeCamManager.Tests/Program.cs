@@ -82,6 +82,12 @@ internal static class Program
         await Run("V3.7 Fix1 startup and manual refresh wire recovery reconciliation", V371RecoveryWiringContract);
         await Run("V3.9.6 first frame precedes background reconciliation", V396FirstFrameStartupContract);
         await Run("V3.9.6 version strings use three numeric components", V396ThreePartVersionDisplay);
+        await Run("V3.9.8 original classifications migrate without changing behavior", V398LegacyRulesMigration);
+        await Run("V3.9.8 custom classification and safe directory", V398CustomClassification);
+        await Run("V3.9.8 configurable launch priority and override", V398LaunchRules);
+        await Run("V3.9.8 strict result ZIP drag never falls back to logs", V398StrictDragRules);
+        await Run("V3.9.8 rebuild restores a custom classification directory", V398CustomDirectoryRecovery);
+        await Run("V3.9.8 WPF settings, custom category and row wiring", V398WpfRuleEditorContract);
 
         Console.WriteLine($"\nTests: {_passed} passed, {_failed} failed");
         return _failed == 0 ? 0 : 1;
@@ -2006,6 +2012,173 @@ internal static class Program
         var chosen = new TestResultService(new ManifestService()).ResolvePreferredDragPath(build, testing, Path.Combine(dir, "40_Result"));
         Assert(string.Equals(chosen, storedZip, StringComparison.OrdinalIgnoreCase),
             "a previously linked Result ZIP under 40_Result must beat a workspace log");
+        return Task.CompletedTask;
+    }
+
+    private static async Task V398LegacyRulesMigration()
+    {
+        var dir = TempDir();
+        var settingsFile = Path.Combine(dir, "settings.json");
+        var root = Path.Combine(dir, "root");
+        var inbox = Path.Combine(dir, "inbox");
+        await File.WriteAllTextAsync(settingsFile, JsonSerializer.Serialize(new
+        {
+            root_dir = root,
+            inbox_dir = inbox,
+            theme = "dark",
+            scan_seconds = 3
+        }));
+        var service = new SettingsService();
+        var settings = await service.LoadOrCreateAsync(settingsFile);
+        Assert(settings.Theme == "dark" && settings.ScanSeconds == 3, "migration must retain existing settings");
+        Assert(settings.LaunchRules is { Count: >= 8 }, "legacy launch priority should become editable rules");
+        Assert(settings.DragRules is { Count: >= 2 } && settings.DragRules.All(x => !x.Pattern.Contains(".log", StringComparison.OrdinalIgnoreCase)),
+            "default drag must only match result ZIPs");
+        Assert(settings.ClassificationRules is { Count: >= 6 }, "all legacy category rules must be migrated");
+        var classification = new ClassificationService(() => settings.ClassificationRules!);
+        var manager = classification.Plan(new Artifact
+        {
+            Name = "FreeCam_Manager_v3.0_Source.zip", BuildType = "Stable", ArtifactType = "Source"
+        });
+        Assert(manager.Category == "Manager" && manager.RelativeDirectory == "50_Manager", "manager precedent regressed");
+        var index = classification.Plan(new Artifact { Name = "WW底层索引库_Fix21.zip", BuildType = "Probe" });
+        Assert(index.Category == "IndexLibrary" && index.RelativeDirectory == "60_索引库", "index precedent regressed");
+        var stable = classification.Plan(new Artifact { Name = "FreeCam_R40.zip", BuildType = "Stable", Version = "R40", ArtifactType = "Runtime" });
+        Assert(stable.Category == "StableCandidate" && stable.NeedsStableConfirmation, "stable confirmation lost");
+        settings.ClassificationRules.Insert(0, new ClassificationRule
+        {
+            Field = "FileName", Pattern = "SDK_*.zip", Category = "SDK", Folder = "70_SDK"
+        });
+        await service.SaveAsync(settingsFile, settings);
+        var restored = await service.LoadOrCreateAsync(settingsFile);
+        Assert(restored.ClassificationRules![0].Category == "SDK", "custom rule did not persist");
+        Assert(restored.ClassificationRules.Count >= 7, "saving must preserve original built-in rules");
+    }
+
+    private static Task V398CustomClassification()
+    {
+        var rules = RuleDefaults.Classification();
+        rules.Insert(0, new ClassificationRule
+        {
+            Field = "FileName", Pattern = "WW36_SDK_*.zip",
+            Category = "SDK", Folder = "70_SDK/{Feature}", Enabled = true
+        });
+        var classifier = new ClassificationService(() => rules);
+        var custom = classifier.Plan(new Artifact { Name = "WW36_SDK_Test1.zip", Feature = "Camera", BuildType = "Probe" });
+        Assert(custom.Category == "SDK" && custom.RelativeDirectory == Path.Combine("70_SDK", "Camera"),
+            "custom rule must win precedence and expand Feature");
+        Assert(classifier.CategoryLabel(new Artifact { Category = "SDK" }) == "SDK", "custom category label missing");
+        Assert(classifier.Plan(new Artifact { Name = "free-form.bin" }).Category == "Unknown", "unmatched files must remain in inbox");
+        var stable = classifier.Plan(new Artifact
+        {
+            Name = "WW36_SDK_Test1.zip", BuildType = "Stable", ArtifactType = "Runtime", Version = "R41"
+        });
+        Assert(stable.Category == "StableCandidate", "custom filename rule cannot bypass stable gate");
+        Assert(RuleMatcher.ValidateFolder("../escape") is not null, "parent traversal must be rejected");
+        Assert(RuleMatcher.ValidateFolder("C:\\Windows\\System32") is not null, "absolute folder must be rejected");
+        Assert(RuleMatcher.Glob("Start*.cmd", "start_WW36.cmd")
+            && !RuleMatcher.Glob("Start*.cmd", "StartWW36.exe"), "glob must be case insensitive and extension-specific");
+        return Task.CompletedTask;
+    }
+
+    private static Task V398LaunchRules()
+    {
+        var dir = TempDir();
+        var sub = Path.Combine(dir, "launch");
+        Directory.CreateDirectory(sub);
+        var bat = Path.Combine(dir, "Start.bat");
+        var cmd = Path.Combine(sub, "Start_WW36.cmd");
+        File.WriteAllText(bat, "echo bat");
+        File.WriteAllText(cmd, "echo cmd");
+        var defaults = RuleDefaults.Launch();
+        Assert(FileRuleSelector.FindLaunch(dir, defaults) == bat, "original launch priority should use root Start.bat");
+        var rules = new List<FilePatternRule> {
+            new() { Pattern = "Start*.cmd" }, new() { Pattern = "Start*.bat" }
+        };
+        Assert(FileRuleSelector.FindLaunch(dir, rules) == cmd, "user rule priority should override original extension order");
+        Assert(FileRuleSelector.FindLaunch(dir, rules, "Start.bat") == bat, "per-version manual override should win");
+        Assert(FileRuleSelector.FindLaunch(dir, [], "") == "", "empty rule set must not auto-launch");
+        Assert(FileRuleSelector.FindLaunch(dir, rules, "../outside.exe") == cmd, "manual path traversal must be ignored");
+        return Task.CompletedTask;
+    }
+
+    private static async Task V398StrictDragRules()
+    {
+        var dir = TempDir();
+        var testing = Path.Combine(dir, "01_Testing", "WW36_Phase3_GICamera_Test3.1");
+        var results = Path.Combine(testing, "Results");
+        Directory.CreateDirectory(results);
+        var log = Path.Combine(testing, "WS15.log");
+        await File.WriteAllTextAsync(log, "runtime log");
+        var zip = Path.Combine(results, "WW36_GICamera_Test3.1_Result.zip");
+        using (ZipFile.Open(zip, ZipArchiveMode.Create)) { }
+        var build = new Artifact
+        {
+            Name = "WW36_Phase3_GICamera_Test3.1.zip",
+            Path = Path.Combine(dir, "WW36_Phase3_GICamera_Test3.1.zip"),
+            TestingPath = testing,
+            ResultPath = log
+        };
+        var configured = RuleDefaults.Drag();
+        var chosen = FileRuleSelector.FindDrag(build, testing, Path.Combine(dir, "40_Result"), configured);
+        Assert(chosen == zip, "configured result ZIP must beat existing log association");
+        File.Delete(zip);
+        chosen = FileRuleSelector.FindDrag(build, testing, Path.Combine(dir, "40_Result"), configured);
+        Assert(string.IsNullOrEmpty(chosen), "absent ZIP must not silently return log");
+        configured.Add(new FilePatternRule { Pattern = "*.log" });
+        chosen = FileRuleSelector.FindDrag(build, testing, Path.Combine(dir, "40_Result"), configured);
+        Assert(chosen == log, "user should be able to explicitly enable .log drag");
+        var current = Path.Combine(results, "Results(3).zip");
+        using (var archive = ZipFile.Open(current, ZipArchiveMode.Create))
+        {
+            var entry = archive.CreateEntry("RESULT_MANIFEST.json");
+            await using var stream = entry.Open();
+            await JsonSerializer.SerializeAsync(stream, new
+            {
+                ArtifactType = "Result", ForBuildId = "SOME-OTHER-BUILD"
+            });
+        }
+        build.BuildId = "CURRENT-BUILD";
+        configured.Insert(0, new FilePatternRule { Pattern = "*Results*.zip" });
+        chosen = FileRuleSelector.FindDrag(build, testing, Path.Combine(dir, "40_Result"), configured);
+        Assert(chosen == log, "foreign ForBuildId must be ignored even under broad user ZIP rule");
+    }
+
+    private static async Task V398CustomDirectoryRecovery()
+    {
+        var dir = TempDir();
+        var root = Path.Combine(dir, "root");
+        var custom = Path.Combine(root, "70_SDK");
+        Directory.CreateDirectory(custom);
+        var zip = Path.Combine(custom, "WW36_SDK_Probe1.zip");
+        await File.WriteAllTextAsync(zip, "legacy zip content");
+        var library = await LibraryService.LoadAsync(Path.Combine(dir, "library.json"));
+        var rules = RuleDefaults.Classification();
+        rules.Insert(0, new ClassificationRule {
+            Field = "FileName", Pattern = "WW36_SDK_*.zip", Category = "SDK", Folder = "70_SDK"
+        });
+        var rebuild = new LibraryRebuildService(library, new ManifestService(), new HashService(), null, () => rules);
+        var result = await rebuild.ReconcileAsync(root);
+        Assert(result.Added == 1, "new custom root must be indexed on reconciliation");
+        Assert(library.ByPath(zip)?.Category == "SDK", "custom category must survive library recovery");
+    }
+
+    private static Task V398WpfRuleEditorContract()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FreeCamManager"));
+        var settings = File.ReadAllText(Path.Combine(root, "Views", "SettingsView.xaml"));
+        var editor = File.ReadAllText(Path.Combine(root, "Views", "RuleEditorView.xaml"));
+        var main = File.ReadAllText(Path.Combine(root, "MainWindow.xaml"));
+        var viewModel = File.ReadAllText(Path.Combine(root, "ViewModels", "MainWindowViewModel.cs"));
+        var dev = File.ReadAllText(Path.Combine(root, "Views", "DevelopmentView.xaml"));
+        Assert(settings.Contains("views:RuleEditorView") && editor.Contains("ClassificationRules")
+            && editor.Contains("DragRules") && editor.Contains("LaunchRules"), "all rule types must be editable in Settings");
+        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")
+            && editor.Contains("PreviewClassificationCommand"), "restore, precedence and preview controls missing");
+        Assert(main.Contains("CustomCategoryViewModel") && main.Contains("CommandParameter=\"自定义分类\"")
+            && viewModel.Contains("CustomCategories.Refresh()"), "custom category must be a separate live-updating page");
+        Assert(dev.Contains("SelectLaunchCommand") && dev.Contains("SelectDragCommand"),
+            "per-version manual overrides must be reachable through existing context menus");
         return Task.CompletedTask;
     }
 
