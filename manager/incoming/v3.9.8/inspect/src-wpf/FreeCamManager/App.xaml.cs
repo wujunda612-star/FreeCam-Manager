@@ -106,13 +106,13 @@ public partial class App : Application
 
             stage = "创建应用服务";
             var manifest = new ManifestService();
-            var classification = new ClassificationService();
+            var classification = new ClassificationService(() => settings.ClassificationRules ?? RuleDefaults.Classification());
             var hash = new HashService();
             var extraction = new ExtractionService();
             var result = new TestResultService(manifest);
             var testRefresh = new TestStatusRefreshService(_library, result, () => settings.RootDir);
             var organizer = new OrganizerService(settings.RootDir, settings.StableBackupDir, _library, manifest, classification, hash);
-            var libraryRebuild = new LibraryRebuildService(_library, manifest, hash, _log);
+            var libraryRebuild = new LibraryRebuildService(_library, manifest, hash, _log, classification);
             var discardCleanup = new DiscardCleanupService(_library, organizer, result, () => settings.RootDir, () => SettingsService.ResultRoot(settings));
             startupTiming.Mark("SERVICES_READY");
             _filenameAliases = new FilenameAliasService(AppPaths.FilenameTermsFile);
@@ -155,7 +155,7 @@ public partial class App : Application
                     if (_startupMaintenanceTask is not null)
                         await _startupMaintenanceTask.ConfigureAwait(false);
                     return await watcher.ScanNowAsync(_shutdown.Token).ConfigureAwait(false);
-                }, cfg => ApplyRuntimeSettings(cfg), localTermsState,
+                }, cfg => { watcher.RulesChanged(); ApplyRuntimeSettings(cfg); }, localTermsState,
                 () => CheckTermsUpdateAndApplyAsync(CancellationToken.None),
                 () => CheckManagerUpdateAsync(CancellationToken.None),
                 manifest => StageAndLaunchManagerUpdateAsync(manifest));
