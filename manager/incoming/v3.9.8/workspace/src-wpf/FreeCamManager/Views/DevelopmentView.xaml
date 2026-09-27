@@ -142,6 +142,10 @@
                         <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                             <MenuItem Header="开始测试（双击）" Command="{Binding SelectedRow.StartTestCommand}"/>
                             <MenuItem Header="打开测试目录" Command="{Binding SelectedRow.OpenTestingFolderCommand}"/>
+                            <MenuItem Header="为此版本指定启动文件" Command="{Binding SelectedRow.SelectLaunchCommand}"/>
+                            <MenuItem Header="恢复全局启动规则" Command="{Binding SelectedRow.ClearLaunchOverrideCommand}"/>
+                            <MenuItem Header="为此版本指定拖拽文件" Command="{Binding SelectedRow.SelectDragCommand}"/>
+                            <MenuItem Header="恢复全局拖拽规则" Command="{Binding SelectedRow.ClearDragOverrideCommand}"/>
                             <MenuItem Header="打开 / 定位 Result 日志" Command="{Binding SelectedRow.OpenResultCommand}"/>
                             <MenuItem Header="重新解压" Command="{Binding SelectedRow.ReextractCommand}"/>
                             <Separator/>
