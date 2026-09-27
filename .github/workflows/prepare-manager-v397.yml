@@ -1,0 +1,112 @@
+name: Prepare Manager V3.9.7 WW Result ZIP
+
+on:
+  push:
+    branches:
+      - feature/manager-v3.9.7-resultzip-priority
+    paths:
+      - .github/workflows/prepare-manager-v397.yml
+      - manager/incoming/v3.9.7/apply_v397.py
+      - manager/incoming/v3.9.7/test_v397_contract.py
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/manager-v3.9.7-resultzip-priority
+
+      - name: Show V3.9.6 misses new Result ZIP contract (RED)
+        shell: python
+        run: |
+          import subprocess,sys
+          test = subprocess.run([sys.executable,"manager/incoming/v3.9.7/test_v397_contract.py","manager/packages/FreeCam_Manager_V3.9.6_Source.zip"])
+          if test.returncode == 0:
+              raise SystemExit("V3.9.6 baseline unexpectedly passed the new Result ZIP contract")
+          print("RED PASS: baseline has no Phase3-compatible Result ZIP priority")
+
+      - name: Patch existing V3.9.6 source and create final V3.9.7 ZIP
+        shell: python
+        run: |
+          import shutil,subprocess,sys,zipfile
+          from pathlib import Path
+          source=Path("manager/packages/FreeCam_Manager_V3.9.6_Source.zip")
+          stage=Path("_v397_stage")
+          target=Path("manager/packages/FreeCam_Manager_V3.9.7_Source.zip")
+          if stage.exists(): shutil.rmtree(stage)
+          stage.mkdir()
+          with zipfile.ZipFile(source) as zf: zf.extractall(stage)
+          subprocess.run([sys.executable,"manager/incoming/v3.9.7/apply_v397.py",str(stage)],check=True)
+          if target.exists(): target.unlink()
+          with zipfile.ZipFile(target,"w",zipfile.ZIP_DEFLATED,compresslevel=9) as zf:
+              for path in sorted(stage.rglob("*")):
+                  if path.is_file(): zf.write(path,path.relative_to(stage).as_posix())
+          print("Created",target,target.stat().st_size)
+
+      - name: Validate exact final ZIP structure and Result ZIP contract (GREEN)
+        shell: python
+        run: |
+          import subprocess,sys,zipfile
+          pkg="manager/packages/FreeCam_Manager_V3.9.7_Source.zip"
+          subprocess.run([sys.executable,"manager/incoming/v3.9.7/test_v397_contract.py",pkg],check=True)
+          required={
+            "BUILD_MANIFEST.json",
+            "src-wpf/Build_v3_On_Windows.ps1",
+            "src-wpf/Apply_Manager_Update.ps1",
+            "src-wpf/FreeCamManager.sln",
+            "src-wpf/FreeCamManager/FreeCamManager.csproj",
+            "src-wpf/FreeCamManager.Tests/Program.cs",
+            "src-wpf/FreeCamManager.Core/Services/TestResultService.cs"
+          }
+          with zipfile.ZipFile(pkg) as z: actual=set(z.namelist())
+          if required-actual: raise SystemExit("Missing: "+repr(required-actual))
+          print("Package layout PASS")
+
+      - name: Run Windows real build and full regression
+        shell: pwsh
+        run: |
+          & .\_v397_stage\src-wpf\Build_v3_On_Windows.ps1 -NoLaunch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Confirm self-contained EXE output
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path _v397_stage\src-wpf -Recurse -Filter FreeCam_Manager.exe | Select-Object -First 1
+          if (-not $exe) { throw 'No FreeCam_Manager.exe from build' }
+          Write-Host "EXE PASS: $($exe.FullName)"
+
+      - name: Write release candidate metadata
+        shell: python
+        run: |
+          from pathlib import Path
+          import hashlib,json,datetime
+          pkg=Path("manager/packages/FreeCam_Manager_V3.9.7_Source.zip")
+          meta={
+            "version":"3.9.7",
+            "displayVersion":"V3.9.7",
+            "packageName":pkg.name,
+            "sourceSha256":hashlib.sha256(pkg.read_bytes()).hexdigest(),
+            "size":pkg.stat().st_size,
+            "base":"V3.9.6",
+            "branch":"feature/manager-v3.9.7-resultzip-priority",
+            "purpose":"WW Phase3 Result ZIP priority over raw log",
+            "generatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00","Z")
+          }
+          target=Path("manager/incoming/v3.9.7/candidate.json")
+          target.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          print(json.dumps(meta,ensure_ascii=False))
+
+      - name: Commit Windows-verified V3.9.7 ZIP
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/packages/FreeCam_Manager_V3.9.7_Source.zip manager/incoming/v3.9.7/candidate.json
+          git commit -m "build: add Windows-verified Manager V3.9.7 source ZIP"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
