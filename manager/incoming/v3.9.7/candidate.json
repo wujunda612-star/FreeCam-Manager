@@ -1,0 +1,11 @@
+{
+  "version": "3.9.7",
+  "displayVersion": "V3.9.7",
+  "packageName": "FreeCam_Manager_V3.9.7_Source.zip",
+  "sourceSha256": "8bd1d0f169a64485d999521c4ee4cafb23887dd3edd3e0c4985138b799995642",
+  "size": 237662,
+  "base": "V3.9.6",
+  "branch": "feature/manager-v3.9.7-resultzip-priority",
+  "purpose": "WW Phase3 Result ZIP priority over raw log",
+  "generatedAt": "2026-09-27T08:35:05.567690Z"
+}
