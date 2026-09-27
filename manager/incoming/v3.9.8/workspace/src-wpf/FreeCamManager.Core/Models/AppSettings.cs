@@ -21,5 +21,11 @@ public sealed class AppSettings
     [JsonPropertyName("history_file_column_width")] public double HistoryFileColumnWidth { get; set; } = 0;
     [JsonPropertyName("history_feature_column_width")] public double HistoryFeatureColumnWidth { get; set; } = 104;
     [JsonPropertyName("history_stage_column_width")] public double HistoryStageColumnWidth { get; set; } = 74;
+    // Null means settings from before V3.9.8; migration preserves every original default.
+    [JsonPropertyName("launch_rules")] public List<FilePatternRule>? LaunchRules { get; set; }
+    [JsonPropertyName("drag_rules")] public List<FilePatternRule>? DragRules { get; set; }
+    [JsonPropertyName("classification_rules")] public List<ClassificationRule>? ClassificationRules { get; set; }
+    [JsonPropertyName("launch_overrides")] public Dictionary<string,string> LaunchOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    [JsonPropertyName("drag_overrides")] public Dictionary<string,string> DragOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     [JsonPropertyName("theme")] public string Theme { get; set; } = "system";
 }
