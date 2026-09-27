@@ -80,7 +80,7 @@ public sealed class ClassificationService
     {
         var category = (a.Category ?? "").Trim().ToLowerInvariant();
         var buildType = (a.BuildType ?? "").Trim().ToLowerInvariant();
-        if (FileRuleEngine.IsCustomCategory(a.Category ?? "")) return a.Category["Custom:".Length..];
+        if (FileRuleEngine.IsCustomCategory(a.Category ?? "")) return (a.Category ?? "")["Custom:".Length..];
         return category switch
         {
             "feature" => IsTest(a) ? "正式功能 · 测试" : "正式功能",
