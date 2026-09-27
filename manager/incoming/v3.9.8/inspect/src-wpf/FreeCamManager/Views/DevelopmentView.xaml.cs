@@ -83,10 +83,15 @@ public partial class DevelopmentView : UserControl
         var current = e.GetPosition(this);
         if (Math.Abs(current.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
             Math.Abs(current.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-        var path = _dragRow.GetDraggableResultPath();
+        var row = _dragRow;
+        var path = row.GetDraggableResultPath();
         _resultDragStarted = true;
         _dragRow = null;
-        if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path)) return;
+        if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+        {
+            row.NotifyDragNotFound();
+            return;
+        }
         var data = new DataObject(DataFormats.FileDrop, new[] { path });
         DragDrop.DoDragDrop((DependencyObject)sender, data, DragDropEffects.Copy);
         e.Handled = true;
