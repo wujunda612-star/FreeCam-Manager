@@ -49,6 +49,12 @@ public sealed class InboxWatcherService
         _rebuild = rebuild;
     }
 
+    /// <summary>Revisit files kept in the inbox when the user edits classification rules.</summary>
+    public void InvalidateUnrecognizedCache()
+    {
+        lock (_gate) _unrecognized.Clear();
+    }
+
     public async Task StartAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
