@@ -2,6 +2,7 @@ param([Parameter(Mandatory=$true)][string]$SourceRoot)
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 $Utf8 = New-Object System.Text.UTF8Encoding($true)
+$nl = [Environment]::NewLine
 function Write-Utf8([string]$p,[string]$t){ [IO.File]::WriteAllText($p,$t,$Utf8) }
 function Replace-One([string]$p,[string]$old,[string]$new,[string]$label){
  $t=[IO.File]::ReadAllText($p); $i=$t.IndexOf($old,[StringComparison]::Ordinal)
@@ -13,18 +14,8 @@ $Src = if(Test-Path (Join-Path $SourceRoot 'src-wpf\FreeCamManager\FreeCamManage
 
 # 1) Scoped active-test evidence monitor. This replaces the removed global high-frequency refresh.
 $row = Join-Path $Src 'FreeCamManager\ViewModels\ArtifactRowViewModel.cs'
-Replace-One $row '    private bool _isProtected;' ('    private bool _isProtected;' + "`r`n" + '    private int _testMonitorGeneration;') 'add scoped test monitor generation'
-Replace-One $row @'
-            Launch(launchPath);
-            _statusSink($"测试中: {Name} · {System.IO.Path.GetFileName(launchPath)}");
-            await _refreshAll();
-'@ @'
-            Launch(launchPath);
-            var monitorGeneration = ++_testMonitorGeneration;
-            _ = MonitorTestCompletionAsync(prepared.TestingPath, monitorGeneration);
-            _statusSink($"测试中: {Name} · {System.IO.Path.GetFileName(launchPath)}");
-            await _refreshAll();
-'@ 'start scoped test monitor after launch'
+Replace-One $row '    private bool _isProtected;' ('    private bool _isProtected;' + $nl + '    private int _testMonitorGeneration;') 'add scoped test monitor generation'
+Replace-One $row '            Launch(launchPath);' ('            Launch(launchPath);' + $nl + '            var monitorGeneration = ++_testMonitorGeneration;' + $nl + '            _ = MonitorTestCompletionAsync(prepared.TestingPath, monitorGeneration);') 'start scoped test monitor after launch'
 $monitor=@'
     private async Task MonitorTestCompletionAsync(string testingPath, int generation)
     {
@@ -83,8 +74,8 @@ Replace-One $devVm '_statusSink("立即扫描失败: " + ex.Message);' '_statusS
 # 3) Final version metadata.
 $csproj = Join-Path $Src 'FreeCamManager\FreeCamManager.csproj'
 Replace-One $csproj '<Version>3.9.9</Version>' '<Version>3.9.10</Version>' 'version 3.9.10'
-$manifest = Join-Path $Src 'BUILD_MANIFEST.json'
-if(Test-Path $manifest){
+$manifestCandidates = @((Join-Path $SourceRoot 'BUILD_MANIFEST.json'), (Join-Path $Src 'BUILD_MANIFEST.json')) | Where-Object { Test-Path -LiteralPath $_ }
+foreach($manifest in $manifestCandidates){
  $m=Get-Content -Raw -LiteralPath $manifest | ConvertFrom-Json
  $m.Version='V3.9.10'; $m.BuildName='FreeCam_Manager_V3.9.10'; $m.Base='FreeCam_Manager_V3.9.8'
  $m.Branch='release/manager-v3.9.10'; $m.Feature='Stable recovery + inbox performance + RC recognition + rule UI cleanup + scoped test status monitor + manual inbox reorganize'
