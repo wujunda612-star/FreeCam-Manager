@@ -1,0 +1,133 @@
+name: Prepare FreeCam Manager V3.9.10
+
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.10/trigger.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: manager-v3.9.10-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct tested V3.9.9 builder
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $partsDir = Join-Path $env:GITHUB_WORKSPACE 'manager\incoming\v3.9.10\builder-parts'
+          $b64 = (Get-ChildItem -LiteralPath $partsDir -Filter 'part*.txt' | Sort-Object Name | ForEach-Object {
+            (Get-Content -Raw -LiteralPath $_.FullName).Trim()
+          }) -join ''
+          $zip = Join-Path $env:RUNNER_TEMP 'FreeCam_Manager_V3.9.9_TestBuilder3_EncodingFix2.zip'
+          [IO.File]::WriteAllBytes($zip, [Convert]::FromBase64String($b64))
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+          $expected = 'c322dea9354a79d389ce0d38c240772eab5aa75d262a665da31d81ceef010949'
+          if ($actual -ne $expected) { throw "Builder SHA mismatch: $actual" }
+          $dst = Join-Path $env:RUNNER_TEMP 'manager-v3910-builder'
+          Expand-Archive -LiteralPath $zip -DestinationPath $dst -Force
+          $script = Get-ChildItem -Path $dst -Filter 'Build_V3.9.9_Test.ps1' -File -Recurse | Select-Object -First 1
+          if ($null -eq $script) { throw 'Build_V3.9.9_Test.ps1 not found after reconstruction' }
+          "BUILDER_DIR=$($script.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BUILDER_SCRIPT=$($script.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Rebuild verified V3.9.9 source baseline
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.8_Source.zip'
+          if (-not (Test-Path -LiteralPath $base)) { throw 'Official V3.9.8 source package missing' }
+          Copy-Item -Force -LiteralPath $base -Destination (Join-Path $env:BUILDER_DIR 'FreeCam_Manager_V3.9.8_Source.zip')
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:BUILDER_SCRIPT -NoLaunch
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.9 builder failed: $LASTEXITCODE" }
+          $sourceRoot = Join-Path $env:BUILDER_DIR '_work\source'
+          if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'src-wpf\FreeCamManager\FreeCamManager.csproj'))) {
+            $candidate = Get-ChildItem -LiteralPath $sourceRoot -Directory | Where-Object {
+              Test-Path -LiteralPath (Join-Path $_.FullName 'src-wpf\FreeCamManager\FreeCamManager.csproj')
+            } | Select-Object -First 1
+            if ($null -eq $candidate) { throw 'Rebuilt source root not found' }
+            $sourceRoot = $candidate.FullName
+          }
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Apply V3.9.10 fixes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $patch = Join-Path $env:GITHUB_WORKSPACE 'manager\incoming\v3.9.10\Apply_V3.9.10.ps1'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $patch -SourceRoot $env:SOURCE_ROOT
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.10 patch failed: $LASTEXITCODE" }
+
+      - name: Clean source-only tree and create deterministic package
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          Get-ChildItem -LiteralPath $src -Directory -Recurse -Force |
+            Where-Object { $_.Name -in @('bin','obj','BuildOutput','BuildOutput_ReleaseGate') } |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+          $package = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.10_Source.zip'
+          $env:FC_SOURCE_ROOT = $env:SOURCE_ROOT
+          $env:FC_PACKAGE = $package
+          @'
+import os, pathlib, zipfile
+root = pathlib.Path(os.environ["FC_SOURCE_ROOT"])
+out = pathlib.Path(os.environ["FC_PACKAGE"])
+out.parent.mkdir(parents=True, exist_ok=True)
+if out.exists():
+    out.unlink()
+files = sorted(p for p in root.rglob("*") if p.is_file())
+with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    for p in files:
+        rel = p.relative_to(root).as_posix()
+        info = zipfile.ZipInfo(rel, (1980,1,1,0,0,0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o100644 << 16
+        z.writestr(info, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+'@ | python -
+          $sha = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
+          "PACKAGE_PATH=$package" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "PACKAGE_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "V3.9.10 source SHA256=$sha"
+
+      - name: Final Windows release gate
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'manager\release\Validate_Manager_Source_Package.ps1') -PackagePath $env:PACKAGE_PATH -ExpectedSha256 $env:PACKAGE_SHA -ExpectedVersion '3.9.10'
+          if ($LASTEXITCODE -ne 0) { throw "Final release gate failed: $LASTEXITCODE" }
+
+      - name: Publish package request
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishPath = Join-Path $env:GITHUB_WORKSPACE 'manager\publish.json'
+          $publish = [ordered]@{
+            schemaVersion = 1
+            version = '3.9.10'
+            displayVersion = 'V3.9.10'
+            packageName = 'FreeCam_Manager_V3.9.10_Source.zip'
+            sourceSha256 = $env:PACKAGE_SHA
+            notes = 'V3.9.10：修复 Stable 冻结残留旧路径/Result 误分类并补齐 SHA256 与备份校验；支持 RC/source-full 与根 Manifest 优先；优化收件箱自动扫描性能；测试启动后改为仅监控当前版本并自动从“测试中”更新为“已测试”；开发中页面新增“重新整理收件箱”；自定义规则字段中文化、分类标签可选/可自定义，修复深色模式与空状态并移除预览区。'
+            publishRevision = 12
+          }
+          $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $publishPath -Encoding UTF8
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'manager/packages/FreeCam_Manager_V3.9.10_Source.zip' 'manager/publish.json'
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'Nothing staged for V3.9.10 publish' }
+          git commit -m 'Publish FreeCam Manager V3.9.10 source package'
+          git push origin HEAD:main
