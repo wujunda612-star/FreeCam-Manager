@@ -6,8 +6,8 @@ $nl = [Environment]::NewLine
 function Write-Utf8([string]$p,[string]$t){ [IO.File]::WriteAllText($p,$t,$Utf8) }
 function Replace-One([string]$p,[string]$old,[string]$new,[string]$label){
  $t=[IO.File]::ReadAllText($p); $i=$t.IndexOf($old,[StringComparison]::Ordinal)
- if($i -lt 0){ throw "$label: marker not found in $p" }
- if($t.IndexOf($old,$i+$old.Length,[StringComparison]::Ordinal) -ge 0){ throw "$label: marker not unique in $p" }
+ if($i -lt 0){ throw "${label}: marker not found in $p" }
+ if($t.IndexOf($old,$i+$old.Length,[StringComparison]::Ordinal) -ge 0){ throw "${label}: marker not unique in $p" }
  Write-Utf8 $p ($t.Substring(0,$i)+$new+$t.Substring($i+$old.Length))
 }
 $Src = if(Test-Path (Join-Path $SourceRoot 'src-wpf\FreeCamManager\FreeCamManager.csproj')) { Join-Path $SourceRoot 'src-wpf' } elseif(Test-Path (Join-Path $SourceRoot 'FreeCamManager\FreeCamManager.csproj')) { $SourceRoot } else { throw "src-wpf not found under $SourceRoot" }
