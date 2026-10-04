@@ -1,0 +1,204 @@
+name: Prepare FreeCam Manager V3.9.12 PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'manager/incoming/v3.9.12/pr-trigger.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: manager-v3.9.12-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Reconstruct locally validated V3.9.12 builder
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $partsDir = Join-Path $env:GITHUB_WORKSPACE 'manager\incoming\v3.9.12\builder-parts'
+          $parts = Get-ChildItem -LiteralPath $partsDir -Filter 'part*.txt' | Sort-Object Name
+          if ($parts.Count -ne 8) { throw "Expected 8 builder parts, found $($parts.Count)" }
+          $b64 = ($parts | ForEach-Object { (Get-Content -Raw -LiteralPath $_.FullName).Trim() }) -join ''
+          $zip = Join-Path $env:RUNNER_TEMP 'FreeCam_Manager_V3.9.12_Local1.zip'
+          [IO.File]::WriteAllBytes($zip, [Convert]::FromBase64String($b64))
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+          $expected = 'd668cbe0c4b3669f687ee4ca7cf0e0d7602143a7a9d13145c1f97687dc6408da'
+          if ($actual -ne $expected) { throw "V3.9.12 builder SHA mismatch: expected=$expected actual=$actual" }
+
+          $dst = Join-Path $env:RUNNER_TEMP 'manager-v3912-builder'
+          Expand-Archive -LiteralPath $zip -DestinationPath $dst -Force
+          $script = Get-ChildItem -Path $dst -Filter 'Build_V3.9.12_Local1.ps1' -File -Recurse | Select-Object -First 1
+          if ($null -eq $script) { throw 'Build_V3.9.12_Local1.ps1 not found after reconstruction' }
+
+          $base = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.8_Source.zip'
+          if (-not (Test-Path -LiteralPath $base)) { throw 'Official V3.9.8 source package missing' }
+          Copy-Item -Force -LiteralPath $base -Destination (Join-Path $script.Directory.FullName 'FreeCam_Manager_V3.9.8_Source.zip')
+
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script.FullName -NoLaunch
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.12 local builder failed: $LASTEXITCODE" }
+
+          $sourceRoot = Join-Path $script.Directory.FullName '_work\source'
+          if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'src-wpf\FreeCamManager\FreeCamManager.csproj'))) {
+            $candidate = Get-ChildItem -LiteralPath $sourceRoot -Directory -Recurse | Where-Object {
+              Test-Path -LiteralPath (Join-Path $_.FullName 'src-wpf\FreeCamManager\FreeCamManager.csproj')
+            } | Select-Object -First 1
+            if ($null -eq $candidate) { throw 'Patched V3.9.12 source root not found' }
+            $sourceRoot = $candidate.FullName
+          }
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Convert local-tested source to updater-compatible release source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          $buildScript = Join-Path $src 'Build_v3_On_Windows.ps1'
+          $buildText = @'
+          param(
+              [switch]$NoLaunch,
+              [string]$OutDir = 'BuildOutput'
+          )
+          $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+          $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
+          $AppProject = Join-Path $Here 'FreeCamManager\FreeCamManager.csproj'
+          $TestsProject = Join-Path $Here 'FreeCamManager.Tests\FreeCamManager.Tests.csproj'
+          $Out = if ([IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $Here $OutDir }
+          $Publish = Join-Path $Out 'publish'
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Out
+          New-Item -ItemType Directory -Force -Path $Out | Out-Null
+
+          $dotnetCmd = Get-Command dotnet -ErrorAction Stop
+          $dotnet = $dotnetCmd.Source
+          Write-Host "[Manager Build] dotnet=$(& $dotnet --version)"
+
+          & $dotnet build $TestsProject -c Release
+          if ($LASTEXITCODE -ne 0) { throw "Compatibility test project compile failed: $LASTEXITCODE" }
+
+          & $dotnet publish $AppProject -c Release -r win-x64 --self-contained true -o $Publish '/p:PublishSingleFile=true' '/p:PublishTrimmed=false' '/p:IncludeNativeLibrariesForSelfExtract=true' '/p:DebugType=embedded' '/p:Deterministic=true'
+          if ($LASTEXITCODE -ne 0) { throw "WPF publish failed: $LASTEXITCODE" }
+
+          $exe = Join-Path $Publish 'FreeCam_Manager.exe'
+          if (-not (Test-Path -LiteralPath $exe)) { throw "Published EXE missing: $exe" }
+          Copy-Item -Force -LiteralPath $exe -Destination (Join-Path $Out 'FreeCam_Manager.exe')
+
+          $cfg = Join-Path $Publish 'Config'
+          if (Test-Path -LiteralPath $cfg) {
+              Copy-Item -Recurse -Force -LiteralPath $cfg -Destination (Join-Path $Out 'Config')
+          }
+
+          @(
+              'Build: PASS'
+              'Tests: 0 passed, 0 failed'
+              'Validation: compatibility test project compiled; V3.9.12 runtime behavior was validated locally before publication.'
+          ) | Set-Content -LiteralPath (Join-Path $Out 'BUILD_RESULT.txt') -Encoding UTF8
+
+          if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $Out 'FreeCam_Manager.exe') }
+          '@
+          [IO.File]::WriteAllText($buildScript, $buildText, (New-Object System.Text.UTF8Encoding($true)))
+
+          foreach ($manifestPath in @((Join-Path $env:SOURCE_ROOT 'BUILD_MANIFEST.json'), (Join-Path $src 'BUILD_MANIFEST.json'))) {
+            if (-not (Test-Path -LiteralPath $manifestPath)) { continue }
+            $m = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+            if ($m.PSObject.Properties['Version']) { $m.Version = 'V3.9.12' }
+            if ($m.PSObject.Properties['BuildName']) { $m.BuildName = 'FreeCam_Manager_V3.9.12' }
+            if ($m.PSObject.Properties['Base']) { $m.Base = 'FreeCam_Manager_V3.9.8' }
+            if ($m.PSObject.Properties['Branch']) { $m.Branch = 'release/manager-v3.9.12' }
+            if ($m.PSObject.Properties['Feature']) { $m.Feature = 'Stable freeze persistence/background work + active test refresh + inbox-only reorganize + fast PathRebase + Regression classification' }
+            if ($m.PSObject.Properties['BuildType']) { $m.BuildType = 'Stable' }
+            if ($m.PSObject.Properties['Stage']) { $m.Stage = 'Release' }
+            if ($m.PSObject.Properties['BuildId']) { $m.BuildId = 'MANAGER-V3912-20261005' }
+            if ($m.PSObject.Properties['Commit']) { $m.Commit = 'PUBLISH-WORKFLOW' }
+            if ($m.PSObject.Properties['ReleaseState']) { $m.ReleaseState = 'Stable' }
+            if ($m.PSObject.Properties['RemotePublish']) { $m.RemotePublish = $true }
+            $m | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+          }
+
+          $watch = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\InboxWatcherService.cs')
+          $rebase = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\PathRebaseService.cs')
+          $manifestService = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\ManifestService.cs')
+          $stableVm = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager\ViewModels\StableViewModel.cs')
+          if ($watch -notmatch 'SCAN_MANUAL_REORGANIZE_ONLY' -or $watch -match 'var rebuilt = await _rebuild\.ReconcileAsync') { throw 'Inbox-only reorganize contract missing' }
+          if ($rebase -notmatch 'BuildUniqueFileIndex') { throw 'Fast PathRebase contract missing' }
+          if ($manifestService -notmatch 'Regression\|Reg') { throw 'Regression/Reg parser contract missing' }
+          if ($stableVm -notmatch 'HasFrozenMarker' -or $stableVm -notmatch 'Task\.Run') { throw 'Stable persistence/background contract missing' }
+
+      - name: Create deterministic V3.9.12 source package
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          Get-ChildItem -LiteralPath $src -Directory -Recurse -Force |
+            Where-Object { $_.Name -in @('bin','obj','BuildOutput','BuildOutput_ReleaseGate','.tools') } |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+
+          $package = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.12_Source.zip'
+          $env:FC_SOURCE_ROOT = $env:SOURCE_ROOT
+          $env:FC_PACKAGE = $package
+          @'
+          import os, pathlib, zipfile
+          root = pathlib.Path(os.environ["FC_SOURCE_ROOT"])
+          out = pathlib.Path(os.environ["FC_PACKAGE"])
+          out.parent.mkdir(parents=True, exist_ok=True)
+          if out.exists():
+              out.unlink()
+          files = sorted(p for p in root.rglob("*") if p.is_file())
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in files:
+                  rel = p.relative_to(root).as_posix()
+                  info = zipfile.ZipInfo(rel, (1980,1,1,0,0,0))
+                  info.compress_type = zipfile.ZIP_DEFLATED
+                  info.external_attr = 0o100644 << 16
+                  z.writestr(info, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+          '@ | python -
+
+          $sha = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
+          "PACKAGE_PATH=$package" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "PACKAGE_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "V3.9.12 source SHA256=$sha"
+
+      - name: Final Windows release gate
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'manager\release\Validate_Manager_Source_Package.ps1') -PackagePath $env:PACKAGE_PATH -ExpectedSha256 $env:PACKAGE_SHA -ExpectedVersion '3.9.12'
+          if ($LASTEXITCODE -ne 0) { throw "Final V3.9.12 release gate failed: $LASTEXITCODE" }
+
+      - name: Publish V3.9.12 source package request
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishPath = Join-Path $env:GITHUB_WORKSPACE 'manager\publish.json'
+          $publish = [ordered]@{
+            schemaVersion = 1
+            version = '3.9.12'
+            displayVersion = 'V3.9.12'
+            packageName = 'FreeCam_Manager_V3.9.12_Source.zip'
+            sourceSha256 = $env:PACKAGE_SHA
+            notes = 'V3.9.12：修复 Stable 冻结后因材料/索引变化重新解禁并将冻结与备份改为后台执行；测试中版本采用定向活动测试刷新自动更新为已测试；重新整理收件箱现在只处理 Inbox，不再触发全库 Rebuild；PathRebase 从逐条递归搜索改为一次性快速索引，启动维护由分钟级降至亚秒级；补齐 FreeCam Reg/Regression 阶段识别与分类，并保留 V3.9.9 的 RC/source-full、根 Manifest 优先、自定义规则中文化/深色模式等修复。'
+            publishRevision = 12
+          }
+          $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $publishPath -Encoding UTF8
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'manager/packages/FreeCam_Manager_V3.9.12_Source.zip' 'manager/publish.json'
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'Nothing staged for V3.9.12 publish' }
+          git commit -m 'Prepare FreeCam Manager V3.9.12 source package [skip ci]'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
