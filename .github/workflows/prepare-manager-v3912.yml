@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Reconstruct locally validated V3.9.12 builder
+      - name: Reconstruct validated V3.9.12 local builder
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -45,10 +45,16 @@ jobs:
           if (-not (Test-Path -LiteralPath $base)) { throw 'Official V3.9.8 source package missing' }
           Copy-Item -Force -LiteralPath $base -Destination (Join-Path $script.Directory.FullName 'FreeCam_Manager_V3.9.8_Source.zip')
 
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script.FullName -NoLaunch
-          if ($LASTEXITCODE -ne 0) { throw "V3.9.12 local builder failed: $LASTEXITCODE" }
+          "BUILDER_DIR=$($script.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BUILDER_SCRIPT=$($script.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          $sourceRoot = Join-Path $script.Directory.FullName '_work\source'
+      - name: Build exactly the locally validated V3.9.12 source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:BUILDER_SCRIPT -NoLaunch
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.12 local builder failed: $LASTEXITCODE" }
+          $sourceRoot = Join-Path $env:BUILDER_DIR '_work\source'
           if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'src-wpf\FreeCamManager\FreeCamManager.csproj'))) {
             $candidate = Get-ChildItem -LiteralPath $sourceRoot -Directory -Recurse | Where-Object {
               Test-Path -LiteralPath (Join-Path $_.FullName 'src-wpf\FreeCamManager\FreeCamManager.csproj')
@@ -58,83 +64,88 @@ jobs:
           }
           "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Convert local-tested source to updater-compatible release source
+      - name: Convert local validation tree to release tree
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
-          $buildScript = Join-Path $src 'Build_v3_On_Windows.ps1'
-          $buildText = @'
-          param(
-              [switch]$NoLaunch,
-              [string]$OutDir = 'BuildOutput'
-          )
-          $ErrorActionPreference = 'Stop'
-          Set-StrictMode -Version Latest
-          $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
-          $AppProject = Join-Path $Here 'FreeCamManager\FreeCamManager.csproj'
-          $TestsProject = Join-Path $Here 'FreeCamManager.Tests\FreeCamManager.Tests.csproj'
-          $Out = if ([IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $Here $OutDir }
-          $Publish = Join-Path $Out 'publish'
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Out
-          New-Item -ItemType Directory -Force -Path $Out | Out-Null
+          $program = Join-Path $src 'FreeCamManager.Tests\Program.cs'
+          $t = [IO.File]::ReadAllText($program)
 
-          $dotnetCmd = Get-Command dotnet -ErrorAction Stop
-          $dotnet = $dotnetCmd.Source
-          Write-Host "[Manager Build] dotnet=$(& $dotnet --version)"
+          $old1 = @'
+        Assert(app.Contains("LibraryRebuildService", StringComparison.Ordinal)
+            && app.Contains("ReconcileAsync(settings.RootDir", StringComparison.Ordinal),
+            "startup must reconcile already-classified files from the configured FreeCam root");
+        Assert(watcher.Contains("manual && _rebuild is not null", StringComparison.Ordinal)
+            && watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal),
+            "manual Refresh must reconcile the managed root as well as scan the inbox");
+'@
+          $new1 = @'
+        Assert(app.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)
+            && !app.Contains("await libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal),
+            "startup must defer the expensive full-library rebuild");
+        Assert(!watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal)
+            && watcher.Contains("RefreshActiveAsync", StringComparison.Ordinal),
+            "manual inbox reorganization must remain inbox-only while automatic scan refreshes active tests");
+'@
+          if (-not $t.Contains($old1)) { throw 'V371 recovery contract anchor missing' }
+          $t = $t.Replace($old1, $new1)
 
-          & $dotnet build $TestsProject -c Release
-          if ($LASTEXITCODE -ne 0) { throw "Compatibility test project compile failed: $LASTEXITCODE" }
+          $old2 = @'
+        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
+            && source.Contains("libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal)
+            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),
+            "background repair must still reconcile the library and record completion");
+'@
+          $new2 = @'
+        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
+            && source.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)
+            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),
+            "background maintenance must defer full rebuild and still record completion");
+'@
+          if (-not $t.Contains($old2)) { throw 'V396 startup contract anchor missing' }
+          $t = $t.Replace($old2, $new2)
 
-          & $dotnet publish $AppProject -c Release -r win-x64 --self-contained true -o $Publish '/p:PublishSingleFile=true' '/p:PublishTrimmed=false' '/p:IncludeNativeLibrariesForSelfExtract=true' '/p:DebugType=embedded' '/p:Deterministic=true'
-          if ($LASTEXITCODE -ne 0) { throw "WPF publish failed: $LASTEXITCODE" }
+          $old3 = @'
+        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")
+            && editor.Contains("PreviewClassificationCommand"), "restore, precedence and preview controls missing");
+'@
+          $new3 = @'
+        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")
+            && !editor.Contains("PreviewClassificationCommand"), "restore/precedence controls missing or removed preview returned");
+'@
+          if (-not $t.Contains($old3)) { throw 'V398 rule-editor contract anchor missing' }
+          $t = $t.Replace($old3, $new3)
 
-          $exe = Join-Path $Publish 'FreeCam_Manager.exe'
-          if (-not (Test-Path -LiteralPath $exe)) { throw "Published EXE missing: $exe" }
-          Copy-Item -Force -LiteralPath $exe -Destination (Join-Path $Out 'FreeCam_Manager.exe')
+          [IO.File]::WriteAllText($program, $t, (New-Object System.Text.UTF8Encoding($true)))
 
-          $cfg = Join-Path $Publish 'Config'
-          if (Test-Path -LiteralPath $cfg) {
-              Copy-Item -Recurse -Force -LiteralPath $cfg -Destination (Join-Path $Out 'Config')
-          }
-
-          @(
-              'Build: PASS'
-              'Tests: 0 passed, 0 failed'
-              'Validation: compatibility test project compiled; V3.9.12 runtime behavior was validated locally before publication.'
-          ) | Set-Content -LiteralPath (Join-Path $Out 'BUILD_RESULT.txt') -Encoding UTF8
-
-          if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $Out 'FreeCam_Manager.exe') }
-          '@
-          [IO.File]::WriteAllText($buildScript, $buildText, (New-Object System.Text.UTF8Encoding($true)))
-
-          foreach ($manifestPath in @((Join-Path $env:SOURCE_ROOT 'BUILD_MANIFEST.json'), (Join-Path $src 'BUILD_MANIFEST.json'))) {
-            if (-not (Test-Path -LiteralPath $manifestPath)) { continue }
-            $m = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+          foreach ($manifest in @((Join-Path $env:SOURCE_ROOT 'BUILD_MANIFEST.json'), (Join-Path $src 'BUILD_MANIFEST.json'))) {
+            if (-not (Test-Path -LiteralPath $manifest)) { continue }
+            $m = Get-Content -Raw -LiteralPath $manifest | ConvertFrom-Json
             if ($m.PSObject.Properties['Version']) { $m.Version = 'V3.9.12' }
             if ($m.PSObject.Properties['BuildName']) { $m.BuildName = 'FreeCam_Manager_V3.9.12' }
             if ($m.PSObject.Properties['Base']) { $m.Base = 'FreeCam_Manager_V3.9.8' }
             if ($m.PSObject.Properties['Branch']) { $m.Branch = 'release/manager-v3.9.12' }
-            if ($m.PSObject.Properties['Feature']) { $m.Feature = 'Stable freeze persistence/background work + active test refresh + inbox-only reorganize + fast PathRebase + Regression classification' }
+            if ($m.PSObject.Properties['Feature']) { $m.Feature = 'Stable persistence + targeted test refresh + inbox-only reorganize + fast path rebase + Regression classification' }
             if ($m.PSObject.Properties['BuildType']) { $m.BuildType = 'Stable' }
             if ($m.PSObject.Properties['Stage']) { $m.Stage = 'Release' }
             if ($m.PSObject.Properties['BuildId']) { $m.BuildId = 'MANAGER-V3912-20261005' }
             if ($m.PSObject.Properties['Commit']) { $m.Commit = 'PUBLISH-WORKFLOW' }
             if ($m.PSObject.Properties['ReleaseState']) { $m.ReleaseState = 'Stable' }
             if ($m.PSObject.Properties['RemotePublish']) { $m.RemotePublish = $true }
-            $m | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+            $m | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifest -Encoding UTF8
           }
 
           $watch = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\InboxWatcherService.cs')
           $rebase = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\PathRebaseService.cs')
           $manifestService = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager.Core\Services\ManifestService.cs')
           $stableVm = Get-Content -Raw -LiteralPath (Join-Path $src 'FreeCamManager\ViewModels\StableViewModel.cs')
-          if ($watch -notmatch 'SCAN_MANUAL_REORGANIZE_ONLY' -or $watch -match 'var rebuilt = await _rebuild\.ReconcileAsync') { throw 'Inbox-only reorganize contract missing' }
+          if ($watch -match '_rebuild\.ReconcileAsync\(cfg\.RootDir' -or $watch -notmatch 'RefreshActiveAsync') { throw 'Inbox-only reorganize contract missing' }
           if ($rebase -notmatch 'BuildUniqueFileIndex') { throw 'Fast PathRebase contract missing' }
           if ($manifestService -notmatch 'Regression\|Reg') { throw 'Regression/Reg parser contract missing' }
           if ($stableVm -notmatch 'HasFrozenMarker' -or $stableVm -notmatch 'Task\.Run') { throw 'Stable persistence/background contract missing' }
 
-      - name: Create deterministic V3.9.12 source package
+      - name: Clean source tree and create deterministic source package
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -148,21 +159,21 @@ jobs:
           $env:FC_SOURCE_ROOT = $env:SOURCE_ROOT
           $env:FC_PACKAGE = $package
           @'
-          import os, pathlib, zipfile
-          root = pathlib.Path(os.environ["FC_SOURCE_ROOT"])
-          out = pathlib.Path(os.environ["FC_PACKAGE"])
-          out.parent.mkdir(parents=True, exist_ok=True)
-          if out.exists():
-              out.unlink()
-          files = sorted(p for p in root.rglob("*") if p.is_file())
-          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-              for p in files:
-                  rel = p.relative_to(root).as_posix()
-                  info = zipfile.ZipInfo(rel, (1980,1,1,0,0,0))
-                  info.compress_type = zipfile.ZIP_DEFLATED
-                  info.external_attr = 0o100644 << 16
-                  z.writestr(info, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
-          '@ | python -
+import os, pathlib, zipfile
+root = pathlib.Path(os.environ["FC_SOURCE_ROOT"])
+out = pathlib.Path(os.environ["FC_PACKAGE"])
+out.parent.mkdir(parents=True, exist_ok=True)
+if out.exists():
+    out.unlink()
+files = sorted(p for p in root.rglob("*") if p.is_file())
+with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    for p in files:
+        rel = p.relative_to(root).as_posix()
+        info = zipfile.ZipInfo(rel, (1980,1,1,0,0,0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o100644 << 16
+        z.writestr(info, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+'@ | python -
 
           $sha = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
           "PACKAGE_PATH=$package" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
@@ -187,7 +198,7 @@ jobs:
             displayVersion = 'V3.9.12'
             packageName = 'FreeCam_Manager_V3.9.12_Source.zip'
             sourceSha256 = $env:PACKAGE_SHA
-            notes = 'V3.9.12：修复 Stable 冻结后因材料/索引变化重新解禁并将冻结与备份改为后台执行；测试中版本采用定向活动测试刷新自动更新为已测试；重新整理收件箱现在只处理 Inbox，不再触发全库 Rebuild；PathRebase 从逐条递归搜索改为一次性快速索引，启动维护由分钟级降至亚秒级；补齐 FreeCam Reg/Regression 阶段识别与分类，并保留 V3.9.9 的 RC/source-full、根 Manifest 优先、自定义规则中文化/深色模式等修复。'
+            notes = 'V3.9.12：Stable 冻结状态持久化并后台执行冻结/备份；测试完成使用活动测试定向刷新自动更新为“已测试”；“重新整理收件箱”仅处理 Inbox，不再触发全库重建；PathRebase 改为快速路径与一次性文件索引，启动维护由分钟级降至毫秒级；补齐 Reg/Regression 开发包识别与分类，并保留 RC/source-full、根 Manifest 优先、自定义规则中文化/深色模式等修复。'
             publishRevision = 12
           }
           $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $publishPath -Encoding UTF8
