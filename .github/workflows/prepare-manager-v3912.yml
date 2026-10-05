@@ -160,6 +160,13 @@ jobs:
           if ($manifestService -notmatch 'Regression\|Reg') { throw 'Regression/Reg parser contract missing' }
           if ($stableVm -notmatch 'HasFrozenMarker' -or $stableVm -notmatch 'Task\.Run') { throw 'Stable persistence/background contract missing' }
 
+      - name: Patch remaining V3.2 refresh test contract
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'manager\incoming\v3.9.12\PatchReleaseTests.ps1') -SourceRoot $env:SOURCE_ROOT
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.12 release test patch failed: $LASTEXITCODE" }
+
       - name: Clean source tree and create source package
         shell: powershell
         run: |
