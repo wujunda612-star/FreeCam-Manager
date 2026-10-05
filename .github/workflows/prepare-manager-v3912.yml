@@ -202,7 +202,7 @@ jobs:
             displayVersion = 'V3.9.12'
             packageName = 'FreeCam_Manager_V3.9.12_Source.zip'
             sourceSha256 = $env:PACKAGE_SHA
-            notes = 'V3.9.12：Stable 冻结状态持久化并后台执行冻结/备份；测试完成使用活动测试定向刷新自动更新为“已测试”；“重新整理收件箱”仅处理 Inbox，不再触发全库重建；PathRebase 改为快速路径与一次性文件索引，启动维护由分钟级降至毫秒级；补齐 Reg/Regression 开发包识别与分类，并保留 RC/source-full、根 Manifest 优先、自定义规则中文化/深色模式等修复。'
+            notes = 'V3.9.12: persistent Stable freeze state and background freeze/backup; targeted active-test refresh; inbox-only manual reorganization; fast PathRebase startup maintenance; Reg/Regression package recognition and classification; preserves RC/source-full, root Manifest priority, localized rule editor and dark-mode fixes.'
             publishRevision = 12
           }
           $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $publishPath -Encoding UTF8
