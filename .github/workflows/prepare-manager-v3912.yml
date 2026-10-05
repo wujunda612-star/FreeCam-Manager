@@ -72,48 +72,50 @@ jobs:
           $program = Join-Path $src 'FreeCamManager.Tests\Program.cs'
           $t = [IO.File]::ReadAllText($program)
 
-          $old1 = @'
-        Assert(app.Contains("LibraryRebuildService", StringComparison.Ordinal)
-            && app.Contains("ReconcileAsync(settings.RootDir", StringComparison.Ordinal),
-            "startup must reconcile already-classified files from the configured FreeCam root");
-        Assert(watcher.Contains("manual && _rebuild is not null", StringComparison.Ordinal)
-            && watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal),
-            "manual Refresh must reconcile the managed root as well as scan the inbox");
-'@
-          $new1 = @'
-        Assert(app.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)
-            && !app.Contains("await libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal),
-            "startup must defer the expensive full-library rebuild");
-        Assert(!watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal)
-            && watcher.Contains("RefreshActiveAsync", StringComparison.Ordinal),
-            "manual inbox reorganization must remain inbox-only while automatic scan refreshes active tests");
-'@
+          $nl = if ($t.Contains("`r`n")) { "`r`n" } else { "`n" }
+
+          $old1 = @(
+            '        Assert(app.Contains("LibraryRebuildService", StringComparison.Ordinal)'
+            '            && app.Contains("ReconcileAsync(settings.RootDir", StringComparison.Ordinal),'
+            '            "startup must reconcile already-classified files from the configured FreeCam root");'
+            '        Assert(watcher.Contains("manual && _rebuild is not null", StringComparison.Ordinal)'
+            '            && watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal),'
+            '            "manual Refresh must reconcile the managed root as well as scan the inbox");'
+          ) -join $nl
+          $new1 = @(
+            '        Assert(app.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)'
+            '            && !app.Contains("await libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal),'
+            '            "startup must defer the expensive full-library rebuild");'
+            '        Assert(!watcher.Contains("_rebuild.ReconcileAsync(cfg.RootDir", StringComparison.Ordinal)'
+            '            && watcher.Contains("RefreshActiveAsync", StringComparison.Ordinal),'
+            '            "manual inbox reorganization must remain inbox-only while automatic scan refreshes active tests");'
+          ) -join $nl
           if (-not $t.Contains($old1)) { throw 'V371 recovery contract anchor missing' }
           $t = $t.Replace($old1, $new1)
 
-          $old2 = @'
-        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
-            && source.Contains("libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal)
-            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),
-            "background repair must still reconcile the library and record completion");
-'@
-          $new2 = @'
-        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)
-            && source.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)
-            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),
-            "background maintenance must defer full rebuild and still record completion");
-'@
+          $old2 = @(
+            '        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)'
+            '            && source.Contains("libraryRebuild.ReconcileAsync(settings.RootDir, ct)", StringComparison.Ordinal)'
+            '            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),'
+            '            "background repair must still reconcile the library and record completion");'
+          ) -join $nl
+          $new2 = @(
+            '        Assert(source.Contains("RunStartupMaintenanceAsync(", StringComparison.Ordinal)'
+            '            && source.Contains("LIBRARY_REBUILD_STARTUP_DEFERRED", StringComparison.Ordinal)'
+            '            && source.Contains("BACKGROUND_MAINTENANCE_DONE", StringComparison.Ordinal),'
+            '            "background maintenance must defer full rebuild and still record completion");'
+          ) -join $nl
           if (-not $t.Contains($old2)) { throw 'V396 startup contract anchor missing' }
           $t = $t.Replace($old2, $new2)
 
-          $old3 = @'
-        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")
-            && editor.Contains("PreviewClassificationCommand"), "restore, precedence and preview controls missing");
-'@
-          $new3 = @'
-        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")
-            && !editor.Contains("PreviewClassificationCommand"), "restore/precedence controls missing or removed preview returned");
-'@
+          $old3 = @(
+            '        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")'
+            '            && editor.Contains("PreviewClassificationCommand"), "restore, precedence and preview controls missing");'
+          ) -join $nl
+          $new3 = @(
+            '        Assert(editor.Contains("ResetClassificationRulesCommand") && editor.Contains("MoveDragUpCommand")'
+            '            && !editor.Contains("PreviewClassificationCommand"), "restore/precedence controls missing or removed preview returned");'
+          ) -join $nl
           if (-not $t.Contains($old3)) { throw 'V398 rule-editor contract anchor missing' }
           $t = $t.Replace($old3, $new3)
           [IO.File]::WriteAllText($program, $t, (New-Object System.Text.UTF8Encoding($true)))
