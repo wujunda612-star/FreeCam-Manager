@@ -14,7 +14,7 @@ if ($t.Contains($replacement)) {
     exit 0
 }
 
-$pattern = 'Assert\(devVm\.Contains\("ManualRefreshAsync", StringComparison\.Ordinal\).*?"development refresh must trigger real inbox scan"\);'
+$pattern = 'Assert\(devVm\.Contains\("ManualRefreshAsync", StringComparison\.Ordinal\).*?"development (?:refresh must trigger real inbox scan|manual action must trigger inbox reorganization)"\);'
 $matches = [regex]::Matches($t, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
 if ($matches.Count -ne 1) { throw "V32 refresh contract match count=$($matches.Count)" }
 $m = $matches[0]
