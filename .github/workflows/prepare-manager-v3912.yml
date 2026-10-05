@@ -118,7 +118,20 @@ jobs:
           ) -join $nl
           if (-not $t.Contains($old3)) { throw 'V398 rule-editor contract anchor missing' }
           $t = $t.Replace($old3, $new3)
+
+          $old4 = '        Assert(devVm.Contains("ManualRefreshAsync", StringComparison.Ordinal) && devVm.Contains("正在扫描收件箱", StringComparison.Ordinal), "development refresh must trigger real inbox scan");'
+          $new4 = '        Assert(devVm.Contains("ManualRefreshAsync", StringComparison.Ordinal) && devVm.Contains("正在重新整理收件箱", StringComparison.Ordinal), "development manual action must trigger inbox reorganization");'
+          if (-not $t.Contains($old4)) { throw 'V32 refresh contract anchor missing' }
+          $t = $t.Replace($old4, $new4)
           [IO.File]::WriteAllText($program, $t, (New-Object System.Text.UTF8Encoding($true)))
+
+          $classificationPath = Join-Path $src 'FreeCamManager.Core\Services\ClassificationService.cs'
+          $classificationText = [IO.File]::ReadAllText($classificationPath)
+          $featureOld = '"FeatureLike" => !IsExperimentStage(a.Stage) && ('
+          $featureNew = '"FeatureLike" => ('
+          if (-not $classificationText.Contains($featureOld)) { throw 'FeatureLike compatibility anchor missing' }
+          $classificationText = $classificationText.Replace($featureOld, $featureNew)
+          [IO.File]::WriteAllText($classificationPath, $classificationText, (New-Object System.Text.UTF8Encoding($true)))
 
           foreach ($manifest in @((Join-Path $env:SOURCE_ROOT 'BUILD_MANIFEST.json'), (Join-Path $src 'BUILD_MANIFEST.json'))) {
             if (-not (Test-Path -LiteralPath $manifest)) { continue }
