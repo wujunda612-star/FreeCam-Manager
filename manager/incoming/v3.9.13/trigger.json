@@ -1,0 +1,7 @@
+{
+  "version": "3.9.13",
+  "requestedAt": "2026-10-06",
+  "baseVersion": "3.9.12",
+  "reason": "move lightweight metadata persistence off UI thread",
+  "attempt": 1
+}
