@@ -15,25 +15,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $src 'FreeCamManager\FreeCamManager.
 
 $row = Join-Path $src 'FreeCamManager\ViewModels\ArtifactRowViewModel.cs'
 $t = [IO.File]::ReadAllText($row)
-$pattern = '(?s)    private async Task SaveMetadataAsync\(string message\)\s*\{\s*try\s*\{\s*await _library\.SaveAsync\(\);\s*_statusSink\(message\);\s*\}\s*catch \(Exception ex\) \{ _statusSink\("保存失败: " \+ ex\.Message\); \}\s*\}'
-$replacement = @'
-    private async Task SaveMetadataAsync(string message)
-    {
-        try
-        {
-            // LibraryService.SaveAsync snapshots the whole artifact library before
-            // persistence. Run that snapshot/write path off the WPF UI thread so
-            // light metadata actions (manual conclusion, rating, protection, notes)
-            // do not cause a visible input hitch.
-            await Task.Run(() => _library.SaveAsync());
-            _statusSink(message);
-        }
-        catch (Exception ex) { _statusSink("保存失败: " + ex.Message); }
-    }
-'@
+$pattern = '(?s)(private async Task SaveMetadataAsync\\(string message\\).*?)(await _library\\.SaveAsync\\(\\);)'
 $matches = [regex]::Matches($t, $pattern)
 if ($matches.Count -ne 1) { throw "SaveMetadataAsync patch anchor count=$($matches.Count)" }
-$t = [regex]::Replace($t, $pattern, $replacement, 1)
+$t = [regex]::Replace(
+    $t,
+    $pattern,
+    '$1await Task.Run(() => _library.SaveAsync());',
+    1
+)
 Write-Utf8 $row $t
 
 $csproj = Join-Path $src 'FreeCamManager\FreeCamManager.csproj'
