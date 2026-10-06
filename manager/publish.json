@@ -1,9 +1,9 @@
-{
-  "schemaVersion": 1,
-  "version": "3.9.8",
-  "displayVersion": "V3.9.8",
-  "packageName": "FreeCam_Manager_V3.9.8_Source.zip",
-  "sourceSha256": "7471817a6c83cbdfd700f67fd54f9cba020e605c036687a988cedd69a6009a3b",
-  "notes": "V3.9.8：设置增加启动文件、拖拽文件、原有分类规则的可视化编辑、排序、启停、预览和恢复默认；拖拽完全按自定义规则匹配，默认只选 Result ZIP，缺失不再擅自选 .log，并支持每个版本右键手动指定；原有分类转换为可编辑规则，支持自建分类和安全目标目录，新增独立「自定义分类」页面；保留双击解压、Stable 保护，未匹配文件留在收件箱。",
-  "publishRevision": 11
+﻿{
+    "schemaVersion":  1,
+    "version":  "3.9.12",
+    "displayVersion":  "V3.9.12",
+    "packageName":  "FreeCam_Manager_V3.9.12_Source.zip",
+    "sourceSha256":  "80bf72c12f40774e9ae7d2ef7c7526a20e805902f85f73bd88e408081336806b",
+    "notes":  "V3.9.12: persistent Stable freeze state and background freeze/backup; targeted active-test refresh; inbox-only manual reorganization; fast PathRebase startup maintenance; Reg/Regression package recognition and classification; preserves RC/source-full, root Manifest priority, localized rule editor and dark-mode fixes.",
+    "publishRevision":  12
 }
