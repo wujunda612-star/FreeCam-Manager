@@ -15,15 +15,21 @@ if (-not (Test-Path -LiteralPath (Join-Path $src 'FreeCamManager\FreeCamManager.
 
 $row = Join-Path $src 'FreeCamManager\ViewModels\ArtifactRowViewModel.cs'
 $t = [IO.File]::ReadAllText($row)
-$pattern = '(?s)(private async Task SaveMetadataAsync\\(string message\\).*?)(await _library\\.SaveAsync\\(\\);)'
-$matches = [regex]::Matches($t, $pattern)
-if ($matches.Count -ne 1) { throw "SaveMetadataAsync patch anchor count=$($matches.Count)" }
-$t = [regex]::Replace(
-    $t,
-    $pattern,
-    '$1await Task.Run(() => _library.SaveAsync());',
-    1
-)
+$methodMarker = '    private async Task SaveMetadataAsync(string message)'
+$methodStart = $t.IndexOf($methodMarker, [StringComparison]::Ordinal)
+if ($methodStart -lt 0) { throw 'SaveMetadataAsync method marker not found' }
+
+$oldSave = '            await _library.SaveAsync();'
+$saveIndex = $t.IndexOf($oldSave, $methodStart, [StringComparison]::Ordinal)
+if ($saveIndex -lt 0) { throw 'SaveMetadataAsync direct SaveAsync call not found' }
+
+$nextMethod = $t.IndexOf('    private ', $methodStart + $methodMarker.Length, [StringComparison]::Ordinal)
+if ($nextMethod -ge 0 -and $saveIndex -ge $nextMethod) {
+    throw 'SaveMetadataAsync SaveAsync call escaped method boundary'
+}
+
+$newSave = '            await Task.Run(() => _library.SaveAsync());'
+$t = $t.Substring(0, $saveIndex) + $newSave + $t.Substring($saveIndex + $oldSave.Length)
 Write-Utf8 $row $t
 
 $csproj = Join-Path $src 'FreeCamManager\FreeCamManager.csproj'
