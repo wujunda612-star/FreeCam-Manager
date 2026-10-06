@@ -1,9 +1,9 @@
-﻿{
-    "schemaVersion":  1,
-    "version":  "3.9.13",
-    "displayVersion":  "V3.9.13",
-    "packageName":  "FreeCam_Manager_V3.9.13_Source.zip",
-    "sourceSha256":  "b85a1035021067f4477064c8873f9c15e705099537c95cbca415fd3d40f3f875",
-    "notes":  "V3.9.13: removes the short UI hitch after changing manual conclusion/rating/protection/notes by moving whole-library metadata snapshot persistence off the WPF UI thread. Based on the released V3.9.12 source and preserves all V3.9.12 behavior.",
-    "publishRevision":  13
+{
+  "schemaVersion": 1,
+  "version": "3.9.13",
+  "displayVersion": "V3.9.13",
+  "packageName": "FreeCam_Manager_V3.9.13_Source.zip",
+  "sourceSha256": "b85a1035021067f4477064c8873f9c15e705099537c95cbca415fd3d40f3f875",
+  "notes": "V3.9.13: removes the short UI hitch after changing manual conclusion/rating/protection/notes by moving whole-library metadata snapshot persistence off the WPF UI thread. Based on the released V3.9.12 source and preserves all V3.9.12 behavior.",
+  "publishRevision": 13
 }
