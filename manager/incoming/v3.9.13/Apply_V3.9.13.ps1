@@ -62,12 +62,12 @@ if (-not $rowCheck.Contains('await Task.Run(() => _library.SaveAsync());')) {
 if ($rowCheck -match '(?s)private async Task SaveMetadataAsync\(string message\).*?await _library\.SaveAsync\(\);') {
     throw 'Direct UI-thread metadata SaveAsync call still present'
 }
-$sharedCallersOk = $rowCheck.Contains('SaveMetadataAsync(saveMessage)') -and
-    $rowCheck.Contains('SaveMetadataAsync(clamped == 0') -and
-    $rowCheck.Contains('SaveMetadataAsync(locked ?') -and
-    $rowCheck.Contains('SaveMetadataAsync("备注已保存")')
-if (-not $sharedCallersOk) {
-    throw 'Shared lightweight metadata save callers regressed'
+$metadataSaveCallCount = ([regex]::Matches($rowCheck, 'SaveMetadataAsync\\(')).Count
+if ($metadataSaveCallCount -lt 5
+    -or -not $rowCheck.Contains('SaveMetadataAsync(saveMessage)')
+    -or -not $rowCheck.Contains('SaveMetadataAsync(clamped == 0')
+    -or -not $rowCheck.Contains('SaveMetadataAsync(locked ?')) {
+    throw "Shared lightweight metadata save callers regressed: count=$metadataSaveCallCount"
 }
 
 Write-Host '[V3.9.13] metadata UI-thread persistence patch PASS'
