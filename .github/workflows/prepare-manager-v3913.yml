@@ -1,0 +1,106 @@
+name: Prepare FreeCam Manager V3.9.13
+
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.13/trigger.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: manager-v3.9.13-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct V3.9.12 source baseline
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $package = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.12_Source.zip'
+          if (-not (Test-Path -LiteralPath $package)) { throw 'Official V3.9.12 source package missing' }
+
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
+          $expected = '80bf72c12f40774e9ae7d2ef7c7526a20e805902f85f73bd88e408081336806b'
+          if ($actual -ne $expected) { throw "V3.9.12 baseline SHA mismatch: expected=$expected actual=$actual" }
+
+          $sourceRoot = Join-Path $env:RUNNER_TEMP 'manager-v3913-source'
+          if (Test-Path -LiteralPath $sourceRoot) { Remove-Item -Recurse -Force -LiteralPath $sourceRoot }
+          New-Item -ItemType Directory -Force -Path $sourceRoot | Out-Null
+          Expand-Archive -LiteralPath $package -DestinationPath $sourceRoot -Force
+
+          if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'src-wpf\FreeCamManager\FreeCamManager.csproj'))) {
+            throw 'V3.9.12 source baseline layout invalid'
+          }
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Apply V3.9.13 UI-thread persistence fix
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'manager\incoming\v3.9.13\Apply_V3.9.13.ps1') -SourceRoot $env:SOURCE_ROOT
+          if ($LASTEXITCODE -ne 0) { throw "V3.9.13 patch failed: $LASTEXITCODE" }
+
+      - name: Clean source tree and create source package
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          Get-ChildItem -LiteralPath $src -Directory -Recurse -Force |
+            Where-Object { $_.Name -in @('bin','obj','BuildOutput','BuildOutput_ReleaseGate','.tools') } |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+
+          $package = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.13_Source.zip'
+          Remove-Item -Force -ErrorAction SilentlyContinue $package
+          Compress-Archive -Path (Join-Path $env:SOURCE_ROOT '*') -DestinationPath $package -CompressionLevel Optimal
+          $sha = (Get-FileHash -Algorithm SHA256 -LiteralPath $package).Hash.ToLowerInvariant()
+
+          "PACKAGE_PATH=$package" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "PACKAGE_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "V3.9.13 source SHA256=$sha"
+
+      - name: Final Windows release gate
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'manager\release\Validate_Manager_Source_Package.ps1') `
+            -PackagePath $env:PACKAGE_PATH `
+            -ExpectedSha256 $env:PACKAGE_SHA `
+            -ExpectedVersion '3.9.13'
+          if ($LASTEXITCODE -ne 0) { throw "Final V3.9.13 release gate failed: $LASTEXITCODE" }
+
+      - name: Publish V3.9.13 source package request
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishPath = Join-Path $env:GITHUB_WORKSPACE 'manager\publish.json'
+          $publish = [ordered]@{
+            schemaVersion = 1
+            version = '3.9.13'
+            displayVersion = 'V3.9.13'
+            packageName = 'FreeCam_Manager_V3.9.13_Source.zip'
+            sourceSha256 = $env:PACKAGE_SHA
+            notes = 'V3.9.13: removes the short UI hitch after changing manual conclusion/rating/protection/notes by moving whole-library metadata snapshot persistence off the WPF UI thread. Based on the released V3.9.12 source and preserves all V3.9.12 behavior.'
+            publishRevision = 13
+          }
+          $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $publishPath -Encoding UTF8
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'manager/packages/FreeCam_Manager_V3.9.13_Source.zip' 'manager/publish.json'
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'Nothing staged for V3.9.13 publish' }
+
+          git commit -m 'Publish FreeCam Manager V3.9.13 source package'
+          git pull --rebase origin main
+          git push origin HEAD:main
