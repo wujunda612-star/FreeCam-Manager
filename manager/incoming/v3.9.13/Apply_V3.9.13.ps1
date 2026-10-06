@@ -63,10 +63,8 @@ if ($rowCheck -match '(?s)private async Task SaveMetadataAsync\(string message\)
     throw 'Direct UI-thread metadata SaveAsync call still present'
 }
 $metadataSaveCallCount = ([regex]::Matches($rowCheck, 'SaveMetadataAsync\\(')).Count
-if ($metadataSaveCallCount -lt 5
-    -or -not $rowCheck.Contains('SaveMetadataAsync(saveMessage)')
-    -or -not $rowCheck.Contains('SaveMetadataAsync(clamped == 0')
-    -or -not $rowCheck.Contains('SaveMetadataAsync(locked ?')) {
+$sharedCallersOk = ($metadataSaveCallCount -ge 5) -and $rowCheck.Contains('SaveMetadataAsync(saveMessage)') -and $rowCheck.Contains('SaveMetadataAsync(clamped == 0') -and $rowCheck.Contains('SaveMetadataAsync(locked ?')
+if (-not $sharedCallersOk) {
     throw "Shared lightweight metadata save callers regressed: count=$metadataSaveCallCount"
 }
 
