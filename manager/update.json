@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.12",
-  "displayVersion": "V3.9.12",
-  "sourceRef": "2197cdd60980d1d1d0d05a4461dc0038ac704710",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/2197cdd60980d1d1d0d05a4461dc0038ac704710/manager/packages/FreeCam_Manager_V3.9.12_Source.zip",
-  "sourceSha256": "80bf72c12f40774e9ae7d2ef7c7526a20e805902f85f73bd88e408081336806b",
-  "publishedAt": "2026-10-06T03:08:19.549658Z",
-  "notes": "V3.9.12: persistent Stable freeze state and background freeze/backup; targeted active-test refresh; inbox-only manual reorganization; fast PathRebase startup maintenance; Reg/Regression package recognition and classification; preserves RC/source-full, root Manifest priority, localized rule editor and dark-mode fixes."
+  "version": "3.9.13",
+  "displayVersion": "V3.9.13",
+  "sourceRef": "dfe5408572f764ec47cb7bcc3e1a34399969b193",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/dfe5408572f764ec47cb7bcc3e1a34399969b193/manager/packages/FreeCam_Manager_V3.9.13_Source.zip",
+  "sourceSha256": "b85a1035021067f4477064c8873f9c15e705099537c95cbca415fd3d40f3f875",
+  "publishedAt": "2026-10-06T05:12:17.176131Z",
+  "notes": "V3.9.13: removes the short UI hitch after changing manual conclusion/rating/protection/notes by moving whole-library metadata snapshot persistence off the WPF UI thread. Based on the released V3.9.12 source and preserves all V3.9.12 behavior."
 }
