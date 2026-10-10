@@ -12,6 +12,7 @@ public sealed class ProductionManagerSqliteLibrarySession
     private readonly ProductionDataSafetyBoundary _safety;
     private readonly SqliteMigrationStore _store;
     private readonly SemaphoreSlim _saveGate = new(1, 1);
+    private Dictionary<string, string> _persistedRows = new(StringComparer.OrdinalIgnoreCase);
 
     private ProductionManagerSqliteLibrarySession(
         ProductionStoragePaths paths,
@@ -25,6 +26,7 @@ public sealed class ProductionManagerSqliteLibrarySession
         _safety = safety;
         _store = store;
         Items = items.Select(x => x.Clone()).ToList();
+        _persistedRows = Items.ToDictionary(a => a.Path, a => JsonSerializer.Serialize(a), StringComparer.OrdinalIgnoreCase);
         RecoverySource = recoverySource;
         MigrationBackupDirectory = migrationBackupDirectory;
     }
@@ -101,15 +103,30 @@ public sealed class ProductionManagerSqliteLibrarySession
         await _saveGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
+            // Comparing serialised row payloads is O(n) in memory, but SQLite
+            // now writes only changed paths rather than DELETE + INSERT for
+            // every one of the thousands of unrelated historical rows.
+            var current = items.ToDictionary(a => a.Path,
+                a => JsonSerializer.Serialize(a), StringComparer.OrdinalIgnoreCase);
+            var changed = current.Where(pair =>
+                !_persistedRows.TryGetValue(pair.Key, out var old) ||
+                !string.Equals(old, pair.Value, StringComparison.Ordinal))
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+            var removed = _persistedRows.Keys.Where(path => !current.ContainsKey(path)).ToList();
+
+            if (changed.Count == 0 && removed.Count == 0) return;
             if (File.Exists(_paths.DatabaseFile))
             {
                 var integrity = await _store.CheckIntegrityAsync(false, ct).ConfigureAwait(false);
-                if (!integrity.IsOk) throw new InvalidDataException($"SQLite quick_check failed before save: {integrity.Message}");
+                if (!integrity.IsOk)
+                    throw new InvalidDataException($"SQLite quick_check failed before save: {integrity.Message}");
+                // The original safety policy is retained: backup BEFORE each
+                // mutation, even on the fast delta path.
                 await CreateRollingBackupAsync(ct).ConfigureAwait(false);
             }
 
             var fingerprint = ArtifactSnapshotFingerprint.Compute(items);
-            await _store.SaveSnapshotAsync(items, new Dictionary<string, string>
+            await _store.ApplyDeltaAsync(changed, removed, new Dictionary<string, string>
             {
                 ["manager_storage"] = "sqlite-v38-rc1",
                 ["saved_at_utc"] = DateTimeOffset.UtcNow.ToString("O"),
@@ -118,13 +135,14 @@ public sealed class ProductionManagerSqliteLibrarySession
             }, ct).ConfigureAwait(false);
 
             var check = await _store.CheckIntegrityAsync(false, ct).ConfigureAwait(false);
-            if (!check.IsOk) throw new InvalidDataException($"SQLite quick_check failed after save: {check.Message}");
-            var loaded = await _store.LoadSnapshotAsync(ct).ConfigureAwait(false);
-            var loadedFingerprint = ArtifactSnapshotFingerprint.Compute(loaded);
-            if (!string.Equals(fingerprint, loadedFingerprint, StringComparison.Ordinal))
-                throw new InvalidDataException($"SQLite snapshot verification failed after save. expected={fingerprint}, actual={loadedFingerprint}");
-
+            if (!check.IsOk)
+                throw new InvalidDataException($"SQLite quick_check failed after save: {check.Message}");
+            // Transaction commit + check + changed-row verification ensures
+            // the update is valid without reloading and rehashing 3,000 rows.
+            await _store.VerifyDeltaAsync(changed, removed, items.Count, ct).ConfigureAwait(false);
+            // Preserve the existing on-every-save disaster recovery JSON policy.
             await WriteRecoveryExportAsync(_paths, _safety, items, ct).ConfigureAwait(false);
+            _persistedRows = current;
         }
         finally
         {
