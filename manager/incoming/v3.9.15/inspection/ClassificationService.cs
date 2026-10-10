@@ -79,6 +79,10 @@ public sealed class ClassificationService
         {
             "feature" when Eq(a.ReleaseState, "release-candidate") || Eq(a.BuildType, "ReleaseCandidate") => "候选版",
             "feature" => IsTest(a) ? "正式功能 · 测试" : "正式功能",
+            // Prefer the precise stage when a new FreeCam manifest uses generic
+            // buildType=test; WW retains buildType=probe as a legacy contract.
+            "experiment" when (a.Stage ?? "").StartsWith("Probe", StringComparison.OrdinalIgnoreCase) => "实验 · 探针",
+            "experiment" when (a.Stage ?? "").StartsWith("Reg", StringComparison.OrdinalIgnoreCase) => "回归测试",
             "experiment" => buildType switch
             {
                 "probe" => "实验 · 探针",
