@@ -21,12 +21,14 @@ public static partial class StableVersionResolver
     private static string Normalize(string value)
     {
         var trimmed = (value ?? "").Trim();
-        return ReleaseVersionRegex().IsMatch(trimmed) ? trimmed : "";
+        if (ReleaseVersionRegex().IsMatch(trimmed)) return trimmed;
+        var match = StableNameRegex().Match(trimmed);
+        return match.Success ? match.Groups[1].Value : "";
     }
 
     [GeneratedRegex(@"^R[0-9]+(?:\.[0-9]+){0,2}$", RegexOptions.IgnoreCase)]
     private static partial Regex ReleaseVersionRegex();
 
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_(?:Source|Repo|SHA256|RELEASE_NOTE))?(?:\.(?:zip|bundle|txt|md))?$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?(?:_(?:Source|Repo|SHA256|RELEASE_NOTE))?(?:\.(?:zip|bundle|txt|md))?$", RegexOptions.IgnoreCase)]
     private static partial Regex StableNameRegex();
 }
