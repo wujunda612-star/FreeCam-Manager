@@ -67,15 +67,25 @@ public sealed partial class ManifestService
                       ?? throw new InvalidDataException($"Empty manifest: {entry.FullName}");
             var a = fallback;
             a.SchemaVersion = raw.SchemaVersion;
-            a.Project = First(raw.Project, a.Project);
+            // The package's root manifest is authoritative. A valid buildName is
+            // only used as fallback if the physical filename is ambiguous.
+            var named = InspectFilename(First(raw.BuildName, Path.GetFileNameWithoutExtension(path)) + ".zip");
+            a.Project = First(raw.Project, First(named.Project, a.Project));
             a.Version = First(raw.FreeCamVersion, First(raw.Version, a.Version));
             a.BuildName = First(raw.BuildName, a.BuildName);
             a.Base = First(raw.Base, a.Base);
             a.Branch = First(raw.Branch, a.Branch);
-            a.Feature = First(raw.Feature, a.Feature);
+            a.Feature = First(raw.Feature, First(named.Feature, a.Feature));
             a.BuildType = First(raw.BuildType, a.BuildType);
             a.ArtifactType = First(raw.ArtifactType, First(PackageRoleToArtifactType(raw.PackageRole), a.ArtifactType));
-            a.Stage = CanonicalStage(First(raw.Stage, a.Stage));
+            // Historical packs wrote pipeline descriptions into stage. Do not
+            // mistake a technical description for the standard stage token.
+            // Recover the canonical token from the actual Build name instead.
+            var declaredStage = CanonicalStage(raw.Stage);
+            a.Stage = IsStandardStage(declaredStage)
+                ? declaredStage
+                : First(named.Stage, a.Stage);
+            if (!IsStandardStage(a.Stage)) a.Stage = "";
             NormalizeStageBuildType(a);
             a.BuildId = First(raw.BuildId, a.BuildId);
             a.ParentBuildId = First(raw.ParentBuildId, a.ParentBuildId);
@@ -98,7 +108,7 @@ public sealed partial class ManifestService
 
     public Artifact InspectFilename(string name)
     {
-        var a = new Artifact { Name = name, Project = "FreeCam", Status = "待测试" };
+        var a = new Artifact { Name = name, Status = "待测试" };
         var stem = StripDuplicateSuffix(StripKnownExtension(name));
         if (stem.EndsWith("_Result", StringComparison.OrdinalIgnoreCase))
         {
@@ -107,56 +117,88 @@ public sealed partial class ManifestService
             a.Status = "已测试";
         }
 
-        var m = DevNameRegex().Match(stem);
-        if (m.Success)
+        // Explicit RC without a feature must run BEFORE the generic
+        // FreeCam development matcher, otherwise W37 becomes the feature.
+        var match = ReleaseCandidateNameRegex().Match(stem);
+        if (match.Success)
         {
-            a.Base = m.Groups[1].Value;
-            a.Feature = m.Groups[2].Value;
-            a.Stage = CanonicalStage(m.Groups[3].Value);
-            a.BuildType = StageType(a.Stage);
-            if (string.IsNullOrWhiteSpace(a.ArtifactType)) a.ArtifactType = "Runtime";
-            return a;
-        }
-
-        m = GenericDevNameRegex().Match(stem);
-        if (m.Success)
-        {
-            a.Feature = m.Groups[1].Value;
-            a.Stage = CanonicalStage(m.Groups[2].Value);
-            a.BuildType = StageType(a.Stage);
-            if (string.IsNullOrWhiteSpace(a.ArtifactType)) a.ArtifactType = "Runtime";
-            return a;
-        }
-
-        m = ReleaseCandidateNameRegex().Match(stem);
-        if (m.Success)
-        {
-            a.Version = m.Groups[1].Value;
+            a.Project = "FreeCam";
+            a.Version = match.Groups[1].Value;
+            a.Base = a.Version;
             a.BuildName = stem;
             a.Feature = "ReleaseCandidate";
-            a.Stage = m.Groups[2].Value.ToUpperInvariant();
+            a.Stage = "RC" + match.Groups[2].Value[2..];
             a.BuildType = "ReleaseCandidate";
             a.ReleaseState = "release-candidate";
-            if (string.IsNullOrWhiteSpace(a.ArtifactType)) a.ArtifactType = "Runtime";
+            if (a.ArtifactType.Length == 0) a.ArtifactType = "Runtime";
             return a;
         }
 
-        // Result is terminal. A name such as FreeCam_R40.4.1_Result.zip used to
-        // strip _Result and then fall through into the Stable parser, overwriting
-        // ArtifactType=Result with Runtime and creating a stale StableCandidate row.
-        if (!string.Equals(a.ArtifactType, "Result", StringComparison.OrdinalIgnoreCase) &&
+        match = DevNameRegex().Match(stem);
+        if (match.Success)
+        {
+            a.Project = "FreeCam";
+            a.Base = match.Groups[1].Value;
+            a.Version = a.Base;
+            a.Feature = match.Groups[2].Value;
+            a.Stage = CanonicalStage(match.Groups[3].Value);
+            a.BuildType = StageType(a.Stage);
+            if (a.ArtifactType.Length == 0) a.ArtifactType = "Runtime";
+            return a;
+        }
+
+        // WW37_GIBloom_Probe2.39 has a distinct game-version prefix.
+        // WW37 is not a part of the feature name.
+        match = WwDevNameRegex().Match(stem);
+        if (match.Success)
+        {
+            a.Project = "WW底层索引";
+            a.Base = "WW" + match.Groups[1].Value;
+            a.Feature = match.Groups[2].Value;
+            a.Stage = CanonicalStage(match.Groups[3].Value);
+            a.BuildType = StageType(a.Stage);
+            if (a.ArtifactType.Length == 0) a.ArtifactType = "Runtime";
+            return a;
+        }
+
+        match = WwReleaseNameRegex().Match(stem);
+        if (match.Success)
+        {
+            a.Project = "WW底层索引";
+            a.Base = "WW" + match.Groups[1].Value;
+            a.Feature = "IndexLibrary";
+            a.Stage = "Fix" + match.Groups[2].Value;
+            a.BuildType = "Release";
+            if (a.ArtifactType.Length == 0) a.ArtifactType = "Runtime";
+            return a;
+        }
+
+        match = GenericDevNameRegex().Match(stem);
+        if (match.Success)
+        {
+            a.Project = "FreeCam";
+            a.Feature = match.Groups[1].Value;
+            a.Stage = CanonicalStage(match.Groups[2].Value);
+            a.BuildType = StageType(a.Stage);
+            if (a.ArtifactType.Length == 0) a.ArtifactType = "Runtime";
+            return a;
+        }
+
+        // Result is terminal: never let a _Result ZIP become a stable runtime.
+        if (!Eq(a.ArtifactType, "Result") &&
             (TryStable(StableRuntimeRegex(), stem, "Runtime", out var version) ||
              TryStable(StableSourceRegex(), stem, "Source", out version) ||
              TryStable(StableRepoRegex(), stem, "Repo", out version) ||
              TryStable(StableShaRegex(), stem, "SHA256", out version) ||
              TryStable(StableReleaseRegex(), stem, "ReleaseNote", out version)))
         {
+            a.Project = "FreeCam";
             a.Version = version;
-            a.BuildName = version;
+            a.BuildName = stem;
             a.BuildType = "StableCandidate";
             a.ArtifactType = StableArtifactType(stem);
             a.ReleaseState = "Candidate";
-            a.Stage = version;
+            a.Stage = "Stable";
         }
         return a;
     }
@@ -228,10 +270,18 @@ public sealed partial class ManifestService
 
     private static string First(string value, string fallback) => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
+    private static bool Eq(string? a, string b) =>
+        string.Equals(a?.Trim(), b, StringComparison.OrdinalIgnoreCase);
+
+    // A stage is a token, not a free-form description from older scanners.
+    private static bool IsStandardStage(string? stage) =>
+        stage is not null && (StageTokenRegex().IsMatch(stage) ||
+            string.Equals(stage, "Stable", StringComparison.OrdinalIgnoreCase));
+
     private static string CanonicalStage(string value)
     {
         // Preserve RegN as the canonical new-stage token while retaining RegressionN legacy imports.
-        foreach (var kind in new[] { "Test", "Probe", "Experiment", "Regression", "Develop", "Stable", "RC", "Fix", "Reg" })
+        foreach (var kind in new[] { "Regression", "Experiment", "Develop", "Probe", "Test", "Stable", "Fix", "Reg", "RC" })
             if (value.StartsWith(kind, StringComparison.OrdinalIgnoreCase)) return kind + value[kind.Length..];
         return value;
     }
@@ -244,6 +294,7 @@ public sealed partial class ManifestService
         if (stage.StartsWith("Regression", StringComparison.OrdinalIgnoreCase) || stage.StartsWith("Reg", StringComparison.OrdinalIgnoreCase)) return "Regression";
         if (stage.StartsWith("Develop", StringComparison.OrdinalIgnoreCase)) return "Feature";
         if (stage.StartsWith("RC", StringComparison.OrdinalIgnoreCase)) return "ReleaseCandidate";
+        if (stage.StartsWith("Fix", StringComparison.OrdinalIgnoreCase)) return "Release";
         return "";
     }
 
@@ -254,9 +305,23 @@ public sealed partial class ManifestService
         // Stage says Test/Probe/Regression. Preserve the specific stage semantics
         // so classification cannot fall back to Unknown.
         var inferred = StageType(a.Stage ?? "");
-        if (!string.IsNullOrWhiteSpace(inferred)) a.BuildType = inferred;
+        if (string.IsNullOrWhiteSpace(inferred)) return;
+        // buildType=test + stage=ProbeN is legal on FreeCam new packages;
+        // buildType=probe is legal for WW. Both keep their declared meaning.
+        // Old "develop" and unknown types are normalized by stage.
+        if (string.IsNullOrWhiteSpace(a.BuildType)
+            || !new[] { "test", "probe", "regression", "experiment", "feature",
+                         "release", "stable", "stablecandidate", "releasecandidate" }
+                 .Contains(a.BuildType.Trim().ToLowerInvariant()))
+            a.BuildType = inferred;
     }
 
+    [GeneratedRegex(@"^(?:WW底层索引(?:库)?_)?WW([0-9]+)_(.+?)_((?:Test|Probe|Experiment|Regression|Reg|Develop|RC)[0-9]+(?:\.[0-9]+)*)$", RegexOptions.IgnoreCase)]
+    private static partial Regex WwDevNameRegex();
+    [GeneratedRegex(@"^WW底层索引(?:库)?_WW([0-9]+)_Fix([0-9]+)(?:_.+)?$", RegexOptions.IgnoreCase)]
+    private static partial Regex WwReleaseNameRegex();
+    [GeneratedRegex(@"^(?:Probe|Test|Reg|Regression|RC|Experiment|Develop|Fix)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*$", RegexOptions.IgnoreCase)]
+    private static partial Regex StageTokenRegex();
     [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_(.+?)_((?:Test|Probe|Experiment|Regression|Reg|Develop|RC)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
     private static partial Regex DevNameRegex();
     [GeneratedRegex(@"^(.+?)_((?:Test|Probe|Experiment|Regression|Reg|Develop|RC)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
