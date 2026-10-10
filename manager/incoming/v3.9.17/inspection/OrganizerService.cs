@@ -14,7 +14,7 @@ public sealed class OrganizerService(
     public string StableBackup { get; set; } = stableBackup;
     private readonly PathRebaseService pathRebase = new();
 
-    public async Task<Artifact> ProcessAsync(string path, CancellationToken ct = default)
+    public async Task<Artifact> ProcessAsync(string path, CancellationToken ct = default, string testingPath = "")
     {
         EnsureDirs();
         Artifact a;
@@ -52,6 +52,12 @@ public sealed class OrganizerService(
             a.Status = "重复文件";
             a.DuplicateOf = existing.Path;
             library.Upsert(a);
+            if (!string.IsNullOrWhiteSpace(testingPath))
+            {
+                library.SetTestingPath(a.Path, testingPath, Root);
+                a.TestingPath = testingPath;
+                a.TestingRelativePath = PathRebaseService.TryMakeRelative(Root, testingPath);
+            }
             await library.SaveAsync(ct);
             return a;
         }
@@ -63,6 +69,12 @@ public sealed class OrganizerService(
         if (string.IsNullOrWhiteSpace(a.TestStatus) && a.Category is "Feature" or "Experiment") a.TestStatus = "待测试";
         if (a.Category == "StableCandidate") a.Status = "待确认 Stable（稳定版）";
         library.Upsert(a);
+        if (!string.IsNullOrWhiteSpace(testingPath))
+        {
+            library.SetTestingPath(a.Path, testingPath, Root);
+            a.TestingPath = testingPath;
+            a.TestingRelativePath = PathRebaseService.TryMakeRelative(Root, testingPath);
+        }
 
         // Pairing the whole library is O(Result * Build). Avoid doing that for
         // every ordinary inbox import. Only run it when the imported artifact is
