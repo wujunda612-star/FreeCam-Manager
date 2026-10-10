@@ -12,7 +12,7 @@ foreach ($file in @($control, $controlFrom, $policyFrom)) {
     if (-not (Test-Path -LiteralPath $file)) { throw "Missing required file: $file" }
 }
 $original = [IO.File]::ReadAllText($control)
-if (-not ($original.Contains('private const double RevealOffset = 80;') -and $original.Contains('↑ 置顶'))) {
+if (-not ($original.Contains('private const double RevealOffset = 80;') -and $original.Contains('Click += (_, _) => FindScroller(TargetList)?.ScrollToTop();'))) {
     throw 'Official V3.9.17 control does not match the expected baseline'
 }
 Copy-Item -LiteralPath $controlFrom -Destination $control -Force
