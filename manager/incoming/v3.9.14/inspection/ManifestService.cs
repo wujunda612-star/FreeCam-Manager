@@ -13,6 +13,8 @@ public sealed partial class ManifestService
         [JsonPropertyName("SchemaVersion")] public int SchemaVersion { get; set; }
         [JsonPropertyName("Project")] public string Project { get; set; } = "";
         [JsonPropertyName("version")] public string Version { get; set; } = "";
+        [JsonPropertyName("freeCamVersion")] public string FreeCamVersion { get; set; } = "";
+        [JsonPropertyName("gameVersion")] public string GameVersion { get; set; } = "";
         [JsonPropertyName("buildName")] public string BuildName { get; set; } = "";
         [JsonPropertyName("Base")] public string Base { get; set; } = "";
         [JsonPropertyName("Branch")] public string Branch { get; set; } = "";
@@ -66,7 +68,7 @@ public sealed partial class ManifestService
             var a = fallback;
             a.SchemaVersion = raw.SchemaVersion;
             a.Project = First(raw.Project, a.Project);
-            a.Version = First(raw.Version, a.Version);
+            a.Version = First(raw.FreeCamVersion, First(raw.Version, a.Version));
             a.BuildName = First(raw.BuildName, a.BuildName);
             a.Base = First(raw.Base, a.Base);
             a.Branch = First(raw.Branch, a.Branch);
@@ -214,7 +216,7 @@ public sealed partial class ManifestService
     {
         return (role ?? "").Trim().ToLowerInvariant() switch
         {
-            "runtime" => "Runtime",
+            "runtime" or "stable" => "Runtime",
             "source" or "source-full" => "Source",
             "repo" or "repository" => "Repo",
             "sha256" or "checksum" => "SHA256",
@@ -228,10 +230,8 @@ public sealed partial class ManifestService
 
     private static string CanonicalStage(string value)
     {
-        if (value.StartsWith("Reg", StringComparison.OrdinalIgnoreCase)
-            && !value.StartsWith("Regression", StringComparison.OrdinalIgnoreCase))
-            return "Regression" + value[3..];
-        foreach (var kind in new[] { "Test", "Probe", "Experiment", "Regression" })
+        // Preserve RegN as the canonical new-stage token while retaining RegressionN legacy imports.
+        foreach (var kind in new[] { "Test", "Probe", "Experiment", "Regression", "Develop", "Stable", "RC", "Fix", "Reg" })
             if (value.StartsWith(kind, StringComparison.OrdinalIgnoreCase)) return kind + value[kind.Length..];
         return value;
     }
@@ -241,7 +241,9 @@ public sealed partial class ManifestService
         if (stage.StartsWith("Test", StringComparison.OrdinalIgnoreCase)) return "Test";
         if (stage.StartsWith("Probe", StringComparison.OrdinalIgnoreCase)) return "Probe";
         if (stage.StartsWith("Experiment", StringComparison.OrdinalIgnoreCase)) return "Experiment";
-        if (stage.StartsWith("Regression", StringComparison.OrdinalIgnoreCase)) return "Regression";
+        if (stage.StartsWith("Regression", StringComparison.OrdinalIgnoreCase) || stage.StartsWith("Reg", StringComparison.OrdinalIgnoreCase)) return "Regression";
+        if (stage.StartsWith("Develop", StringComparison.OrdinalIgnoreCase)) return "Feature";
+        if (stage.StartsWith("RC", StringComparison.OrdinalIgnoreCase)) return "ReleaseCandidate";
         return "";
     }
 
@@ -255,24 +257,24 @@ public sealed partial class ManifestService
         if (!string.IsNullOrWhiteSpace(inferred)) a.BuildType = inferred;
     }
 
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_(.+?)_((?:Test|Probe|Experiment|Regression|Reg)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_(.+?)_((?:Test|Probe|Experiment|Regression|Reg|Develop|RC)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
     private static partial Regex DevNameRegex();
-    [GeneratedRegex(@"^(.+?)_((?:Test|Probe|Experiment|Regression|Reg)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^(.+?)_((?:Test|Probe|Experiment|Regression|Reg|Develop|RC)[0-9]+(?:\.[0-9]+)*(?:_Fix[0-9]+)*)$", RegexOptions.IgnoreCase)]
     private static partial Regex GenericDevNameRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_(RC[0-9]+(?:\.[0-9]+)*)$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_(RC[0-9]+(?:\.[0-9]+)*)$", RegexOptions.IgnoreCase)]
     private static partial Regex ReleaseCandidateNameRegex();
     [GeneratedRegex(@"_(RC[0-9]+(?:\.[0-9]+)*)$", RegexOptions.IgnoreCase)]
     private static partial Regex RcSuffixRegex();
     [GeneratedRegex(@"\s*\([0-9]+\)$", RegexOptions.CultureInvariant)]
     private static partial Regex DuplicateSuffixRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?$", RegexOptions.IgnoreCase)]
     private static partial Regex StableRuntimeRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_Source$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_Source$", RegexOptions.IgnoreCase)]
     private static partial Regex StableSourceRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_Repo$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_Repo$", RegexOptions.IgnoreCase)]
     private static partial Regex StableRepoRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_SHA256$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_SHA256$", RegexOptions.IgnoreCase)]
     private static partial Regex StableShaRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})_RELEASE_NOTE$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_RELEASE_NOTE$", RegexOptions.IgnoreCase)]
     private static partial Regex StableReleaseRegex();
 }
