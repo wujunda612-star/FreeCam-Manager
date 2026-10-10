@@ -96,16 +96,33 @@ public sealed class HistoryViewModel : ObservableObject
             "星级优先" => query.OrderByDescending(a => a.Rating).ThenByDescending(a => ParseTime(a.ImportedAt, a.BuildDate)),
             _ => query.OrderByDescending(a => ParseTime(a.ImportedAt, a.BuildDate))
         };
-        Items.Clear();
-        foreach (var a in query)
+        // Keep the WPF item containers, scroll position and editor focus intact.
+        // Only changed/new/removed paths should trigger collection notifications.
+        var desired = query.ToList();
+        var wanted = desired.Select(a => a.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        for (var i = Items.Count - 1; i >= 0; i--)
+            if (!wanted.Contains(Items[i].Path)) Items.RemoveAt(i);
+        var indexed = Items.ToDictionary(a => a.Path, StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < desired.Count; i++)
         {
-            var row = new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _statusSink, _refreshAll,
-                () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays,
-                _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
-                () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
-            row.Configuration = _settings;
-            row.SettingsPersistence = _settingsService;
-            Items.Add(row);
+            var a = desired[i];
+            if (!indexed.TryGetValue(a.Path, out var row))
+            {
+                row = new ArtifactRowViewModel(a, _library, _organizer, _classification, _dialogs, _statusSink, _refreshAll,
+                    () => _settings.HideFreeCamPrefix, () => _settings.DiscardAutoDeleteDays,
+                    _filenameAliases.Translate, () => _settings.ShowFilenameAliases,
+                    () => _settings.ShowFeatureAliases, () => _settings.ShowStageAliases);
+                row.Configuration = _settings;
+                row.SettingsPersistence = _settingsService;
+                Items.Insert(i, row);
+                continue;
+            }
+            if (i >= Items.Count || !ReferenceEquals(Items[i], row))
+            {
+                var currentIndex = Items.IndexOf(row);
+                if (currentIndex >= 0 && currentIndex != i) Items.Move(currentIndex, i);
+            }
+            row.RefreshFromArtifact(a);
         }
         SelectedRow = Items.FirstOrDefault(x => string.Equals(x.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
     }
