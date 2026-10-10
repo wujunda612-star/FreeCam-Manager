@@ -115,21 +115,28 @@ public sealed class DevelopmentViewModel : ObservableObject
         // CompactPickerControl, so a background scan used to close/reset an open
         // manual-conclusion picker while the user was choosing a value.
         var desired = query.ToList();
+        // O(n) identity map instead of O(n^2) searching the growing list.
+        // Remove disappeared entries first and reuse the unchanged row objects.
+        var wanted = desired.Select(a => a.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        for (var i = Items.Count - 1; i >= 0; i--)
+            if (!wanted.Contains(Items[i].Path)) Items.RemoveAt(i);
+        var indexed = Items.ToDictionary(a => a.Path, StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < desired.Count; i++)
         {
             var artifact = desired[i];
-            var existing = Items.FirstOrDefault(x => string.Equals(x.Path, artifact.Path, StringComparison.OrdinalIgnoreCase));
-            if (existing is null)
+            if (!indexed.TryGetValue(artifact.Path, out var existing))
             {
                 Items.Insert(i, CreateRow(artifact));
                 continue;
             }
-
+            if (i >= Items.Count || !ReferenceEquals(Items[i], existing))
+            {
+                // Structural moves are uncommon for append-only archive imports.
+                var currentIndex = Items.IndexOf(existing);
+                if (currentIndex >= 0 && currentIndex != i) Items.Move(currentIndex, i);
+            }
             existing.RefreshFromArtifact(artifact);
-            var currentIndex = Items.IndexOf(existing);
-            if (currentIndex != i) Items.Move(currentIndex, i);
         }
-        while (Items.Count > desired.Count) Items.RemoveAt(Items.Count - 1);
 
         SelectedRow = Items.FirstOrDefault(x => string.Equals(x.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
         RaiseCounts();
