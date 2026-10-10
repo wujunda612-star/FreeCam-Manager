@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.16",
-  "displayVersion": "V3.9.16",
-  "sourceRef": "c3bf247ad09f32262ac2cb2c7d34c66c723d3809",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/c3bf247ad09f32262ac2cb2c7d34c66c723d3809/manager/packages/FreeCam_Manager_V3.9.16_Source.zip",
-  "sourceSha256": "76f97559df585ec21820f8977517f1f24325b2e70b89f07d39329106d375fb8b",
-  "publishedAt": "2026-10-10T12:14:29.444901Z",
-  "notes": "V3.9.16: Stable page recovers W37 releases in old SQLite categories, rediscover missing materials, hides externally deleted files in active lists without erasing metadata, and ignores deleted duplicate hashes. Windows release gate passed with 74 tests, 0 failures."
+  "version": "3.9.17",
+  "displayVersion": "V3.9.17",
+  "sourceRef": "b9b23cb52b82debdab283121224bd9d0cecccbfc",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/b9b23cb52b82debdab283121224bd9d0cecccbfc/manager/packages/FreeCam_Manager_V3.9.17_Source.zip",
+  "sourceSha256": "2d1e1101bb5d4f53f04c69b3ba835239d54eb29ec18936217ef340efe617feb0",
+  "publishedAt": "2026-10-10T14:19:12.104342Z",
+  "notes": "V3.9.17: visible-page-only refresh, keyed row reconciliation, WPF list recycling, transactional SQLite delta updates, single-save import, detailed import/UI timing. Rolling backup, quick_check and JSON recovery retained. Windows WPF gate 75/75; SQLite production/migration gate 22/22."
 }
