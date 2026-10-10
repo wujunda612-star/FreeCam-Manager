@@ -26,6 +26,7 @@ var tests = new List<(string Name, Func<Task> Run)>
     ("V3.8 production storage boundary allows Manager data and rejects FreeCam", TestProductionBoundaryAsync),
     ("V3.8 first migration preserves legacy JSON and creates rollback evidence", TestProductionFirstMigrationAsync),
     ("V3.8 production session restores backup and retains newest ten", TestProductionRecoveryAndRetentionAsync),
+    ("V3.9.17 SQLite delta preserves updates, deletes and recovery evidence", TestProductionDeltaSessionAsync),
     ("V3.8 startup survives corrupt DB/backups/recovery/legacy sources", TestProductionAllSourcesCorruptCreatesWritableNewDatabaseAsync),
     ("V3.8 rollback writes latest SQLite snapshot to legacy JSON atomically", TestProductionRollbackAsync),
 };
@@ -419,6 +420,47 @@ static async Task TestProductionRecoveryAndRetentionAsync()
     var recovered = await ProductionManagerSqliteLibrarySession.OpenAsync(paths);
     Equal("SqliteBackup", recovered.RecoverySource, "production backup recovery source");
     True(recovered.Items.Count == 1, "production backup recovery item count");
+}
+
+static async Task TestProductionDeltaSessionAsync()
+{
+    using var env = TestEnvironment.Create();
+    var paths = new ProductionStoragePaths(env.ProductionRoot, env.FreeCamRoot);
+    var session = await ProductionManagerSqliteLibrarySession.OpenAsync(paths);
+
+    var original = SampleArtifact("R40.5.0_W37.zip", "通过", 4, "release manual notes");
+    var removable = SampleArtifact("old-deleted.zip", "已废弃", 1, "preserve until deletion");
+    await session.SaveAsync([original, removable]);
+
+    var added = SampleArtifact("WW37_GIBloom_Probe2.91.zip", "待测试", 0, "new import");
+    await session.SaveAsync([original, removable, added]);
+
+    var updated = original.Clone();
+    updated.ManualStatus = "待复测";
+    updated.Rating = 5;
+    updated.Notes = "edited without loss";
+    var final = new[] { updated, added };
+    await session.SaveAsync(final);
+    // A no-op save must not duplicate backup work or rewrite the DB.
+    var beforeBackups = Directory.EnumerateFiles(paths.SqliteBackupsDirectory, "library-*.db").Count();
+    await session.SaveAsync(final);
+    var afterBackups = Directory.EnumerateFiles(paths.SqliteBackupsDirectory, "library-*.db").Count();
+    Equal(beforeBackups, afterBackups, "no-op save incorrectly created a database backup");
+
+    var reopened = await ProductionManagerSqliteLibrarySession.OpenAsync(paths);
+    var rows = reopened.Items;
+    Equal(2, rows.Count, "SQLite delta count");
+    True(!rows.Any(x => x.Path.Equals(removable.Path, StringComparison.OrdinalIgnoreCase)),
+        "deleted row survived delta");
+    var preserved = rows.Single(x => x.Path.Equals(original.Path, StringComparison.OrdinalIgnoreCase));
+    Equal("待复测", preserved.ManualStatus, "delta manual status");
+    Equal(5, preserved.Rating, "delta rating");
+    Equal("edited without loss", preserved.Notes, "delta notes");
+    Equal(ArtifactSnapshotFingerprint.Compute(final), ArtifactSnapshotFingerprint.Compute(rows),
+        "full snapshot differs from delta output");
+    var json = await new ReadOnlyLibraryJsonReader().ReadAsync(paths.RecoveryExportFile);
+    Equal(ArtifactSnapshotFingerprint.Compute(final), json.SnapshotFingerprint, "delta recovery JSON mismatch");
+    True(beforeBackups >= 2, "rolling backups were lost");
 }
 
 static async Task TestProductionAllSourcesCorruptCreatesWritableNewDatabaseAsync()
