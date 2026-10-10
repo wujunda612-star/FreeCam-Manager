@@ -1,0 +1,36 @@
+name: Verify V3.9.17 SQLite Persistence
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.17/sqlite-verify-trigger.json'
+permissions:
+  contents: read
+jobs:
+  sqlite-regression:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify official package and extract
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $p = Get-Content -Raw 'manager/publish.json' | ConvertFrom-Json
+          if ($p.version -ne '3.9.17') { throw 'Unexpected release version' }
+          $zip = Join-Path $env:GITHUB_WORKSPACE 'manager/packages/FreeCam_Manager_V3.9.17_Source.zip'
+          $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne $p.sourceSha256) { throw 'V3.9.17 source hash mismatch' }
+          $dst = Join-Path $env:RUNNER_TEMP 'sqlite-v3917'
+          Expand-Archive -LiteralPath $zip -DestinationPath $dst -Force
+          "SOURCE_ROOT=$dst" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Run all SQLite migration and production regressions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $project = Join-Path $env:SOURCE_ROOT 'src-wpf/FreeCamManager.SQLiteMigration.Tests/FreeCamManager.SQLiteMigration.Tests.csproj'
+          if (-not (Test-Path -LiteralPath $project)) { throw 'SQLite regression test project missing' }
+          dotnet run --project $project --configuration Release --framework net8.0
+          if ($LASTEXITCODE -ne 0) { throw "SQLite tests failed: $LASTEXITCODE" }
