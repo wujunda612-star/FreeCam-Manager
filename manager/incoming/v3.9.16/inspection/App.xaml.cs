@@ -158,7 +158,8 @@ public partial class App : Application
                 }, cfg => { ApplyRuntimeSettings(cfg); watcher.InvalidateUnrecognizedCache(); }, localTermsState,
                 () => CheckTermsUpdateAndApplyAsync(CancellationToken.None),
                 () => CheckManagerUpdateAsync(CancellationToken.None),
-                manifest => StageAndLaunchManagerUpdateAsync(manifest));
+                manifest => StageAndLaunchManagerUpdateAsync(manifest),
+                () => libraryRebuild.ReconcileAsync(settings.RootDir));
             startupTiming.Mark("VIEWMODEL_READY");
             watcher.StatusChanged += (_, text) => Dispatch(() => _mainViewModel.StatusText = text);
             watcher.LibraryChanged += (_, _) => DispatchAsync(_mainViewModel.RefreshAllAsync);
