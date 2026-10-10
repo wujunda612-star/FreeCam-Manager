@@ -1,9 +1,9 @@
-﻿{
-    "schemaVersion":  1,
-    "version":  "3.9.15",
-    "displayVersion":  "V3.9.15",
-    "packageName":  "FreeCam_Manager_V3.9.15_Source.zip",
-    "sourceSha256":  "7dcda86c5296adae4026918883164ca3d2afd8419a65dab5adc5e58fa35ac267",
-    "notes":  "V3.9.15: fixes FreeCam/WW Manifest and filename classification (legacy GIBloom Probe long stage, Weather Develop, RC1, W37 stable, Result ownership), preserves old files and adds regression tests. Based on V3.9.14.",
-    "publishRevision":  15
+{
+  "schemaVersion": 1,
+  "version": "3.9.15",
+  "displayVersion": "V3.9.15",
+  "packageName": "FreeCam_Manager_V3.9.15_Source.zip",
+  "sourceSha256": "7dcda86c5296adae4026918883164ca3d2afd8419a65dab5adc5e58fa35ac267",
+  "notes": "V3.9.15: fixes FreeCam/WW Manifest and filename classification (legacy GIBloom Probe long stage, Weather Develop, RC1, W37 stable, Result ownership), preserves old files and adds regression tests. Based on V3.9.14. Windows release gate and V3.9.15 regression tests passed.",
+  "publishRevision": 15
 }
