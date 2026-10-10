@@ -278,6 +278,29 @@ public sealed class ArtifactRowViewModel : ObservableObject
         if (!string.Equals(artifact.Path, Path, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("Cannot refresh a row from a different artifact path.", nameof(artifact));
 
+        // Preserve existing WPF containers and picker state. A scan touching an
+        // unrelated file should not emit dozens of PropertyChanged notifications
+        // for each of the hundreds of unchanged visible rows.
+        var old = _artifact;
+        if (old.Name == artifact.Name && old.Base == artifact.Base &&
+            old.Feature == artifact.Feature && old.Stage == artifact.Stage &&
+            old.Category == artifact.Category && old.BuildType == artifact.BuildType &&
+            old.ArtifactType == artifact.ArtifactType && old.Status == artifact.Status &&
+            old.TestStatus == artifact.TestStatus && old.ManualStatus == artifact.ManualStatus &&
+            old.Rating == artifact.Rating && old.Protected == artifact.Protected &&
+            old.Notes == artifact.Notes && old.TestingPath == artifact.TestingPath &&
+            old.ResultPath == artifact.ResultPath && old.LastTestedAt == artifact.LastTestedAt &&
+            old.TestStartedAt == artifact.TestStartedAt && old.BuildId == artifact.BuildId &&
+            old.Commit == artifact.Commit && old.ImportedAt == artifact.ImportedAt &&
+            old.BuildDate == artifact.BuildDate && old.SourceState == artifact.SourceState &&
+            old.ReleaseState == artifact.ReleaseState && old.DuplicateOf == artifact.DuplicateOf &&
+            old.AutoDeleteAt == artifact.AutoDeleteAt && old.Version == artifact.Version &&
+            old.RelativePath == artifact.RelativePath && old.Size == artifact.Size &&
+            old.Sha256 == artifact.Sha256 && old.PairedBuildId == artifact.PairedBuildId &&
+            old.ForBuildId == artifact.ForBuildId && old.ManifestFound == artifact.ManifestFound &&
+            old.Tags.SequenceEqual(artifact.Tags))
+            return;
+
         var manualStatus = string.IsNullOrWhiteSpace(artifact.ManualStatus) ? "未标记" : artifact.ManualStatus;
         var rating = Math.Clamp(artifact.Rating, 0, 5);
         var isProtected = artifact.Protected;
