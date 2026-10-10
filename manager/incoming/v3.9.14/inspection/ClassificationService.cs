@@ -124,7 +124,8 @@ public sealed class ClassificationService
 
     public bool IsManagerArtifact(Artifact a) => (a.Name ?? "").Trim().StartsWith("FreeCam_Manager_", StringComparison.OrdinalIgnoreCase);
 
-    private static bool IsStableLike(Artifact a) => Eq(a.BuildType, "StableCandidate") || Eq(a.BuildType, "Stable") || Eq(a.ReleaseState, "Stable");
+    private static bool IsStableLike(Artifact a) => Eq(a.BuildType, "StableCandidate") || Eq(a.BuildType, "Stable") || Eq(a.ReleaseState, "Stable")
+        || (Eq(a.Stage, "Stable") && (Eq(a.BuildType, "Release") || Eq(a.BuildType, "Feature") || Eq(a.BuildType, "StableCandidate")));
     private static bool IsExperimentType(string value) => new[] { "experiment", "probe", "test", "regression" }.Contains((value ?? "").Trim().ToLowerInvariant());
     private static bool IsExperimentStage(string value)
     {
@@ -133,11 +134,11 @@ public sealed class ClassificationService
             || stage.StartsWith("Probe", StringComparison.OrdinalIgnoreCase)
             || stage.StartsWith("Experiment", StringComparison.OrdinalIgnoreCase)
             || stage.StartsWith("Regression", StringComparison.OrdinalIgnoreCase)
-            || stage.StartsWith("Reg", StringComparison.OrdinalIgnoreCase);
+            || stage.StartsWith("Reg", StringComparison.OrdinalIgnoreCase)
+            || stage.StartsWith("RC", StringComparison.OrdinalIgnoreCase);
     }
-    private static bool IsTest(Artifact a) => Eq(a.BuildType, "Test") || Eq(a.BuildType, "Regression")
-        || (a.Stage ?? "").Trim().StartsWith("Test", StringComparison.OrdinalIgnoreCase)
-        || (a.Stage ?? "").Trim().StartsWith("Regression", StringComparison.OrdinalIgnoreCase);
+    private static bool IsTest(Artifact a) => Eq(a.BuildType, "Test") || Eq(a.BuildType, "Regression") || Eq(a.BuildType, "Probe") || Eq(a.BuildType, "ReleaseCandidate")
+        || new[] { "Test", "Probe", "Regression", "Reg", "RC" }.Any(prefix => (a.Stage ?? "").Trim().StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     private static bool Eq(string a, string b) => string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static string Safe(string value, string fallback)
