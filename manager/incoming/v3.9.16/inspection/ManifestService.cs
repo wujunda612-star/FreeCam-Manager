@@ -332,9 +332,9 @@ public sealed partial class ManifestService
     private static partial Regex RcSuffixRegex();
     [GeneratedRegex(@"\s*\([0-9]+\)$", RegexOptions.CultureInvariant)]
     private static partial Regex DuplicateSuffixRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?(?:_(?:Runtime|Stable))?$", RegexOptions.IgnoreCase)]
     private static partial Regex StableRuntimeRegex();
-    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_Source$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_(?:Source|FullSource|SourceFull)$", RegexOptions.IgnoreCase)]
     private static partial Regex StableSourceRegex();
     [GeneratedRegex(@"^FreeCam_(R[0-9]+(?:\.[0-9]+){0,2})(?:_W[0-9]+)?_Repo$", RegexOptions.IgnoreCase)]
     private static partial Regex StableRepoRegex();
