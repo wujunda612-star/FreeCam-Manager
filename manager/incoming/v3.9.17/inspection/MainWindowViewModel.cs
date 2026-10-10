@@ -87,22 +87,24 @@ public sealed class MainWindowViewModel : ObservableObject
     public object CurrentPage { get => _currentPage; private set => SetProperty(ref _currentPage, value); }
     public string StatusText { get => _statusText; set => SetProperty(ref _statusText, value); }
 
-    private void RefreshFilenameDisplay()
+    // Central refresh entry point: a background import must not recreate
+    // controls on pages that the user cannot see. Each page refreshes on entry.
+    // Keep the existing RefreshAllAsync API for existing command callbacks.
+    private void RefreshFilenameDisplay() => RefreshVisiblePage();
+
+    public Task RefreshAllAsync()
     {
-        Home.Refresh();
-        Development.Refresh();
-        History.Refresh();
-        CustomCategories.Refresh();
+        RefreshVisiblePage();
+        return Task.CompletedTask;
     }
 
-    public async Task RefreshAllAsync()
+    private void RefreshVisiblePage()
     {
-        await Task.Yield();
-        Home.Refresh();
-        Development.Refresh();
-        Stable.Refresh();
-        History.Refresh();
-        CustomCategories.Refresh();
+        if (ReferenceEquals(CurrentPage, Development)) Development.Refresh();
+        else if (ReferenceEquals(CurrentPage, History)) History.Refresh();
+        else if (ReferenceEquals(CurrentPage, CustomCategories)) CustomCategories.Refresh();
+        else if (ReferenceEquals(CurrentPage, Stable)) Stable.Refresh();
+        else if (ReferenceEquals(CurrentPage, Home)) Home.Refresh();
     }
 
     public void NotifyTermsSync(TermsUpdateResult result)
