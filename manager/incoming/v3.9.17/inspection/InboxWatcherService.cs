@@ -175,12 +175,9 @@ public sealed class InboxWatcherService
 
                     _organizer.Root = cfg.RootDir;
                     _organizer.StableBackup = cfg.StableBackupDir;
-                    var processedArtifact = await _organizer.ProcessAsync(path, ct).ConfigureAwait(false);
-                    if (!string.IsNullOrWhiteSpace(testingPath))
-                    {
-                        _library.SetTestingPath(processedArtifact.Path, testingPath, cfg.RootDir);
-                        await _library.SaveAsync(ct).ConfigureAwait(false);
-                    }
+                    // One atomic library save for both the build and the testing
+                    // workspace, rather than two full snapshots per inbox ZIP.
+                    var processedArtifact = await _organizer.ProcessAsync(path, ct, testingPath).ConfigureAwait(false);
                     lock (_gate)
                     {
                         _seen.Remove(path);
