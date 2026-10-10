@@ -26,7 +26,7 @@ jobs:
             for n in z.namelist():
               canonical=n.replace('\\','/')
               b=canonical.split('/')[-1]
-              if b in wanted:
+              if b in wanted or 'sqlite' in b.lower() or 'librarypersist' in b.lower():
                 if b=='Program.cs' and '/FreeCamManager.Tests/' not in canonical: continue
                 fname='FreeCamManager.Tests_Program.cs' if b=='Program.cs' else b
                 (out/fname).write_bytes(z.read(n))
