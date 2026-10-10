@@ -1,5 +1,7 @@
 ﻿using System.IO;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Text.Json;
 using System.Diagnostics;
 using System.Windows.Input;
 using FreeCamManager.Core.Models;
@@ -43,6 +45,9 @@ public sealed class SettingsViewModel : ObservableObject
     private string _managerUpdateStatusText = "GitHub 自动检查：每 30 分钟";
     private ManagerUpdateManifest? _availableManagerUpdate;
     private bool _loading = true;
+    private readonly SemaphoreSlim _settingsWriteGate = new(1, 1);
+    private readonly HashSet<EditableRuleRow> _subscribedRows = [];
+    private CancellationTokenSource? _autoSaveDelay;
     private EditableRuleRow? _selectedLaunchRule;
     private EditableRuleRow? _selectedDragRule;
     private EditableRuleRow? _selectedClassificationRule;
@@ -97,6 +102,9 @@ public sealed class SettingsViewModel : ObservableObject
         _installManagerUpdateCommand = new AsyncRelayCommand(_ => InstallManagerUpdateAsync(), _ => _installManagerUpdate is not null && _availableManagerUpdate is not null);
         InstallManagerUpdateCommand = _installManagerUpdateCommand;
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        foreach (var group in new[] { LaunchRules, DragRules, ClassificationRules })
+            group.CollectionChanged += (_, _) => { SyncRuleSubscriptions(); ScheduleAutoSave(debounce: true); };
+        SyncRuleSubscriptions();
         _loading = false;
     }
 
@@ -106,7 +114,11 @@ public sealed class SettingsViewModel : ObservableObject
     public string InboxDir { get => _inboxDir; set => SetProperty(ref _inboxDir, value); }
     public string StableBackupDir { get => _stableBackupDir; set => SetProperty(ref _stableBackupDir, value); }
     public string LogDir { get => _logDir; set => SetProperty(ref _logDir, value); }
-    public int ScanSeconds { get => _scanSeconds; set => SetProperty(ref _scanSeconds, Math.Clamp(value, 1, 60)); }
+    public int ScanSeconds
+    {
+        get => _scanSeconds;
+        set { if (SetProperty(ref _scanSeconds, Math.Clamp(value, 1, 60))) ScheduleAutoSave(debounce: true); }
+    }
     public string SelectedDiscardDeletePolicy
     {
         get => _selectedDiscardDeletePolicy;
@@ -114,6 +126,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _selectedDiscardDeletePolicy, value)) return;
             _settings.DiscardAutoDeleteDays = PolicyDays(value);
+            ScheduleAutoSave();
         }
     }
     public bool HideFreeCamPrefix
@@ -123,6 +136,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _hideFreeCamPrefix, value)) return;
             _settings.HideFreeCamPrefix = value;
+            ScheduleAutoSave();
             if (!_loading) _onFilenameDisplayChanged?.Invoke();
         }
     }
@@ -133,6 +147,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _showFilenameAliases, value)) return;
             _settings.ShowFilenameAliases = value;
+            ScheduleAutoSave();
             if (!_loading) _onFilenameDisplayChanged?.Invoke();
         }
     }
@@ -143,6 +158,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _showFeatureAliases, value)) return;
             _settings.ShowFeatureAliases = value;
+            ScheduleAutoSave();
             if (!_loading) _onFilenameDisplayChanged?.Invoke();
         }
     }
@@ -153,6 +169,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _showStageAliases, value)) return;
             _settings.ShowStageAliases = value;
+            ScheduleAutoSave();
             if (!_loading) _onFilenameDisplayChanged?.Invoke();
         }
     }
@@ -173,7 +190,7 @@ public sealed class SettingsViewModel : ObservableObject
             if (!SetProperty(ref _managerLoggingEnabled, value)) return;
             if (_loading) return;
             _settings.ManagerLoggingEnabled = value;
-            _ = SaveLoggingToggleAsync();
+            ScheduleAutoSave();
         }
     }
 
@@ -184,6 +201,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             if (!SetProperty(ref _selectedTheme, value)) return;
             _theme.ApplyMode(ThemeMode(value));
+            ScheduleAutoSave();
         }
     }
 
@@ -216,23 +234,38 @@ public sealed class SettingsViewModel : ObservableObject
     public ICommand InstallManagerUpdateCommand { get; }
     public ICommand SaveCommand { get; }
 
+    // Only directory fields require an explicit commit.
+    // Behavioral autosaves never persist text still being edited in a directory field.
     private async Task SaveAsync()
     {
-        var issue = ValidateRules();
-        if (!string.IsNullOrWhiteSpace(issue))
+        _autoSaveDelay?.Cancel();
+        await _settingsWriteGate.WaitAsync();
+        try
         {
-            _statusSink("自定义规则无法保存：" + issue);
-
-            return;
+            _settings.RootDir = RootDir.Trim();
+            _settings.InboxDir = InboxDir.Trim();
+            _settings.StableBackupDir = StableBackupDir.Trim();
+            _settings.LogDir = LogDir.Trim();
+            ApplyBehaviorSettings();
+            await _settingsService.SaveAsync(AppPaths.SettingsFile, SnapshotSettings());
+            _settingsService.EnsureDirectories(_settings);
+            _onSaved?.Invoke(_settings);
+            _statusSink("目录设置已保存");
         }
-        _settings.LaunchRules = LaunchRules.Select(x => x.ToPatternRule()).ToList();
-        _settings.DragRules = DragRules.Select(x => x.ToPatternRule()).ToList();
-        _settings.ClassificationRules = ClassificationRules.Select(x => x.ToClassificationRule()).ToList();
-        RefreshCategoryTagLabels();
-        _settings.RootDir = RootDir.Trim();
-        _settings.InboxDir = InboxDir.Trim();
-        _settings.StableBackupDir = StableBackupDir.Trim();
-        _settings.LogDir = LogDir.Trim();
+        catch (Exception ex) { _statusSink("目录保存失败: " + ex.Message); }
+        finally { _settingsWriteGate.Release(); }
+    }
+
+    private void ApplyBehaviorSettings()
+    {
+        // During incomplete rule edits, preserve the last valid persisted rules.
+        if (ValidateRules() is null)
+        {
+            _settings.LaunchRules = LaunchRules.Select(x => x.ToPatternRule()).ToList();
+            _settings.DragRules = DragRules.Select(x => x.ToPatternRule()).ToList();
+            _settings.ClassificationRules = ClassificationRules.Select(x => x.ToClassificationRule()).ToList();
+            RefreshCategoryTagLabels();
+        }
         _settings.ScanSeconds = Math.Clamp(ScanSeconds, 1, 60);
         _settings.Theme = ThemeMode(SelectedTheme);
         _settings.ManagerLoggingEnabled = ManagerLoggingEnabled;
@@ -241,14 +274,60 @@ public sealed class SettingsViewModel : ObservableObject
         _settings.ShowFilenameAliases = ShowFilenameAliases;
         _settings.ShowFeatureAliases = ShowFeatureAliases;
         _settings.ShowStageAliases = ShowStageAliases;
+    }
+
+    private AppSettings SnapshotSettings()
+        => JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(_settings))
+           ?? throw new InvalidOperationException("Cannot snapshot settings");
+
+    private void SyncRuleSubscriptions()
+    {
+        var current = LaunchRules.Concat(DragRules).Concat(ClassificationRules).ToHashSet();
+        foreach (var removed in _subscribedRows.Where(row => !current.Contains(row)).ToArray())
+        {
+            removed.PropertyChanged -= RuleRow_PropertyChanged;
+            _subscribedRows.Remove(removed);
+        }
+        foreach (var added in current.Where(row => !_subscribedRows.Contains(row)))
+        {
+            added.PropertyChanged += RuleRow_PropertyChanged;
+            _subscribedRows.Add(added);
+        }
+    }
+
+    private void RuleRow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        => ScheduleAutoSave(debounce: true);
+
+    private void ScheduleAutoSave(bool debounce = false)
+    {
+        if (_loading) return;
+        _autoSaveDelay?.Cancel();
+        var next = new CancellationTokenSource();
+        _autoSaveDelay = next;
+        _ = SaveBehaviorAsync(next.Token, debounce);
+    }
+
+    private async Task SaveBehaviorAsync(CancellationToken token, bool debounce)
+    {
         try
         {
-            await _settingsService.SaveAsync(AppPaths.SettingsFile, _settings);
-            _settingsService.EnsureDirectories(_settings);
-            _onSaved?.Invoke(_settings);
-            _statusSink("设置已保存；Manager 日志设置已立即生效");
+            if (debounce) await Task.Delay(350, token);
+            else token.ThrowIfCancellationRequested();
+            if (ValidateRules() is { } issue)
+                _statusSink("规则尚未完成，保留上次有效配置：" + issue);
+            ApplyBehaviorSettings();
+            var snapshot = SnapshotSettings();
+            await _settingsWriteGate.WaitAsync();
+            try
+            {
+                if (token.IsCancellationRequested) return;
+                await _settingsService.SaveAsync(AppPaths.SettingsFile, snapshot);
+                _onSaved?.Invoke(_settings);
+            }
+            finally { _settingsWriteGate.Release(); }
         }
-        catch (Exception ex) { _statusSink("设置保存失败: " + ex.Message); }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { _statusSink("设置自动保存失败：" + ex.Message); }
     }
 
     private void CreateRuleCommands()
@@ -438,19 +517,6 @@ public sealed class SettingsViewModel : ObservableObject
         _installManagerUpdateCommand.RaiseCanExecuteChanged();
     }
 
-    private async Task SaveLoggingToggleAsync()
-    {
-        try
-        {
-            await _settingsService.SaveAsync(AppPaths.SettingsFile, _settings);
-            _onSaved?.Invoke(_settings);
-            _statusSink(ManagerLoggingEnabled ? "Manager 日志记录已开启" : "Manager 日志记录已关闭");
-        }
-        catch (Exception ex)
-        {
-            _statusSink("Manager 日志设置保存失败: " + ex.Message);
-        }
-    }
 
     private static string ThemeLabel(string mode) => mode.ToLowerInvariant() switch
     {
