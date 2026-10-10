@@ -19,7 +19,7 @@
 
             <StackPanel>
                 <TextBlock Text="设置" Style="{StaticResource PageTitleStyle}"/>
-                <TextBlock Text="目录、显示方式和更新设置" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0"/>
+                <TextBlock Text="目录手动应用；其他设置自动保存" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0"/>
             </StackPanel>
 
             <!-- Directory card -->
@@ -35,7 +35,12 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="目录" FontWeight="SemiBold"/>
+                    <Grid>
+                        <TextBlock Text="目录" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource RoundedButtonStyle}"
+                                Background="{DynamicResource AccentSoftBrush}" BorderBrush="{DynamicResource AccentBrush}"
+                                Command="{Binding SaveCommand}" Content="应用目录" Height="32" Padding="12,0"/>
+                    </Grid>
 
                     <Grid Grid.Row="2">
                         <Grid.RowDefinitions>
@@ -97,7 +102,8 @@
                             <TextBlock Text="自动扫描间隔（秒）" Style="{StaticResource FieldLabelStyle}"/>
                             <TextBox x:Name="ScanSecondsTextBox" Text="{Binding ScanSeconds, UpdateSourceTrigger=LostFocus}" Style="{StaticResource ModernTextBoxStyle}" Width="140" HorizontalAlignment="Left" Foreground="{DynamicResource TextPrimaryBrush}" CaretBrush="{DynamicResource TextPrimaryBrush}" TextAlignment="Center"/>
                         </StackPanel>
-                        <Button Grid.Column="2" Style="{StaticResource RoundedButtonStyle}" Background="{DynamicResource AccentSoftBrush}" BorderBrush="{DynamicResource AccentBrush}" Command="{Binding SaveCommand}" Content="保存设置" Height="34" VerticalAlignment="Bottom"/>
+                        <TextBlock Grid.Column="2" Text="自动保存" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="11" VerticalAlignment="Center" TextAlignment="Center"/>
                     </Grid>
                 </Grid>
             </Border>
