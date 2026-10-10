@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using System.Diagnostics;
 using FreeCamManager.Core.Models;
 
 namespace FreeCamManager.Core.Services;
@@ -140,6 +141,7 @@ public sealed class InboxWatcherService
 
                 try
                 {
+                    var importTimer = Stopwatch.StartNew();
                     var info = new FileInfo(path);
                     _log?.Event("SCAN_PROCESS_FILE", ("path", path), ("bytes", info.Exists ? info.Length : 0), ("mode", manual ? "manual" : "auto"));
                     string testingPath = "";
@@ -186,6 +188,9 @@ public sealed class InboxWatcherService
                         _seen.Remove(path);
                         _unrecognized.Remove(path);
                     }
+                    _log?.Event("INBOX_IMPORT_TIMING", ("file", name),
+                        ("elapsed_ms", importTimer.ElapsedMilliseconds),
+                        ("testing_extracted", !string.IsNullOrWhiteSpace(testingPath)));
                     processed++;
                     changed = true;
                     StatusChanged?.Invoke(this, (manual ? "已立即处理: " : "已自动解压/归档: ") + name);
