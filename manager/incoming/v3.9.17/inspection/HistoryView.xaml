@@ -64,6 +64,9 @@
 
                 <ListView x:Name="HistoryList" Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
                           Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          VirtualizingStackPanel.IsVirtualizing="True"
+                          VirtualizingStackPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True"
                           PreviewMouseRightButtonDown="List_PreviewMouseRightButtonDown">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
