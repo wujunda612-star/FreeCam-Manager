@@ -1,0 +1,122 @@
+name: Prepare FreeCam Manager V3.9.18
+
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.18/build-trigger.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: manager-v3.9.18-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify and extract official V3.9.17 source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pkg = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.17_Source.zip'
+          $expected = '2d1e1101bb5d4f53f04c69b3ba835239d54eb29ec18936217ef340efe617feb0'
+          if (-not (Test-Path -LiteralPath $pkg)) { throw 'Baseline missing' }
+          $actual = (Get-FileHash -LiteralPath $pkg -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "V3.9.17 baseline SHA mismatch: $actual" }
+          $root = Join-Path $env:RUNNER_TEMP 'manager-v3918'
+          if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          Expand-Archive -LiteralPath $pkg -DestinationPath $root -Force
+          "SOURCE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Apply V3.9.18 source changes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & '.\manager\incoming\v3.9.18\Apply_V3.9.18.ps1' -SourceRoot $env:SOURCE_ROOT
+
+      - name: Check V3.9.18 compatibility anchors
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          $manifest = Get-Content -Raw (Join-Path $src 'FreeCamManager.Core\Services\ManifestService.cs')
+          $classifier = Get-Content -Raw (Join-Path $src 'FreeCamManager.Core\Services\ClassificationService.cs')
+          $resolver = Get-Content -Raw (Join-Path $src 'FreeCamManager.Core\Services\StableVersionResolver.cs')
+          $settings = Get-Content -Raw (Join-Path $src 'FreeCamManager\ViewModels\SettingsViewModel.cs')
+          foreach ($anchor in @('freeCamVersion', 'gameVersion', '"stable" => "Runtime"', 'Develop', 'ReleaseCandidate')) {
+            if (-not $manifest.Contains($anchor)) { throw "Missing manifest anchor: $anchor" }
+          }
+          foreach ($anchor in @('Stage, "Stable"', 'StartsWith("RC"', 'StartsWith(prefix')) {
+            if (-not $classifier.Contains($anchor)) { throw "Missing classification anchor: $anchor" }
+          }
+          if (-not $resolver.Contains('(?:_W[0-9]+)?')) { throw 'No W version support' }
+          if (-not $settings.Contains('ScheduleAutoSave')) { throw 'No automatic save' }
+          if (-not (Test-Path (Join-Path $src 'FreeCamManager\Controls\ScrollToTopButton.cs'))) { throw 'No back-to-top control' }
+          $tests = Get-Content -Raw (Join-Path $src 'FreeCamManager.Tests\Program.cs')
+          foreach ($token in @('V3915RealManifestContracts', 'V3916StableVisibilityAndDeletedDuplicates', 'V3917OnePersistPerImport', 'V3918BackToTopVisibilityPolicy', 'FreeCam_R40.5.0_W37', 'Fix35')) {
+            if (-not $tests.Contains($token)) { throw "V3.9.18 regression missing: $token" }
+          }
+          $sqliteTests = Get-Content -Raw (Join-Path $src 'FreeCamManager.SQLiteMigration.Tests\Program.cs')
+          if (-not $sqliteTests.Contains('TestProductionDeltaSessionAsync')) { throw 'Missing SQLite delta regression' }
+          $sqliteSession = Get-Content -Raw (Join-Path $src 'FreeCamManager.SQLiteMigration.Core\ProductionManagerSqliteLibrarySession.cs')
+          if (-not $sqliteSession.Contains('ApplyDeltaAsync')) { throw 'SQLite delta writer not installed' }
+          $button = Get-Content -Raw (Join-Path $src 'FreeCamManager\Controls\ScrollToTopButton.cs')
+          if (-not $button.Contains('BackToTopVisibilityPolicy.ShouldShow') -or $button.Contains('RevealOffset = 80')) { throw 'Old scroll threshold' }
+          Write-Host 'V3.9.18 source compatibility anchors PASS'
+
+      - name: Clean and package release source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $env:SOURCE_ROOT 'src-wpf'
+          Get-ChildItem -LiteralPath $src -Directory -Recurse -Force |
+            Where-Object { $_.Name -in @('bin','obj','BuildOutput','BuildOutput_ReleaseGate','.tools') } |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+          $pkg = Join-Path $env:GITHUB_WORKSPACE 'manager\packages\FreeCam_Manager_V3.9.18_Source.zip'
+          Compress-Archive -Path (Join-Path $env:SOURCE_ROOT '*') -DestinationPath $pkg -CompressionLevel Optimal -Force
+          $sha = (Get-FileHash -LiteralPath $pkg -Algorithm SHA256).Hash.ToLowerInvariant()
+          "PACKAGE_PATH=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "PACKAGE_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "PACKAGE SHA256=$sha"
+
+      - name: Final Windows release gate
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & '.\manager\release\Validate_Manager_Source_Package.ps1' `
+            -PackagePath $env:PACKAGE_PATH `
+            -ExpectedSha256 $env:PACKAGE_SHA `
+            -ExpectedVersion '3.9.18'
+          if ($LASTEXITCODE -ne 0) { throw 'Windows Release Gate failed' }
+
+      - name: Publish tested source and release request
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publish = [ordered]@{
+            schemaVersion = 1
+            version = '3.9.18'
+            displayVersion = 'V3.9.18'
+            packageName = 'FreeCam_Manager_V3.9.18_Source.zip'
+            sourceSha256 = $env:PACKAGE_SHA
+            notes = 'V3.9.18: viewport-based Back-to-Top visibility, correct label and no unrelated changes.'
+            publishRevision = 18
+          }
+          $publish | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath 'manager\publish.json' -Encoding UTF8
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'manager/packages/FreeCam_Manager_V3.9.18_Source.zip' 'manager/publish.json'
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'V3.9.18 package was not staged' }
+          git commit -m 'Publish FreeCam Manager V3.9.18 source package'
+          git pull --rebase origin main
+          git push origin HEAD:main
