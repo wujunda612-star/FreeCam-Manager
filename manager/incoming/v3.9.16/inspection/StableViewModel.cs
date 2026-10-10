@@ -45,13 +45,15 @@ public sealed class StableViewModel : ObservableObject
     private StableVersionViewModel? _selected;
     private bool _isBusy;
     private bool _isFreezing;
+    private readonly Func<Task>? _reindex;
+    private bool _firstDiscoveryStarted;
 
-    public StableViewModel(Func<IReadOnlyList<Artifact>> snapshot, OrganizerService organizer, UserDialogService dialogs, Func<Task> refreshAll, Action<string> statusSink)
+    public StableViewModel(Func<IReadOnlyList<Artifact>> snapshot, OrganizerService organizer, UserDialogService dialogs, Func<Task> refreshAll, Action<string> statusSink, Func<Task>? reindex = null)
     {
-        _snapshot = snapshot; _organizer = organizer; _dialogs = dialogs; _refreshAll = refreshAll; _statusSink = statusSink;
+        _snapshot = snapshot; _organizer = organizer; _dialogs = dialogs; _refreshAll = refreshAll; _statusSink = statusSink; _reindex = reindex;
         ConfirmStableCommand = new AsyncRelayCommand(_ => ConfirmStableAsync(), _ => !IsBusy && Selected?.NeedsFreezeCompletion == true);
         SyncBackupCommand = new AsyncRelayCommand(_ => SyncBackupAsync(), _ => !IsBusy);
-        RefreshCommand = new AsyncRelayCommand(_ => _refreshAll(), _ => !IsBusy);
+        RefreshCommand = new AsyncRelayCommand(_ => ReindexAndRefreshAsync(), _ => !IsBusy);
     }
 
     public ObservableCollection<StableVersionViewModel> Versions { get; } = [];
@@ -67,6 +69,32 @@ public sealed class StableViewModel : ObservableObject
     public ICommand ConfirmStableCommand { get; }
     public ICommand SyncBackupCommand { get; }
     public ICommand RefreshCommand { get; }
+
+    // First visit re-discovers physically present managed files without moving
+    // them or rewriting manual status/rating. Startup remains non-blocking.
+    public async Task DiscoverOnFirstVisitAsync()
+    {
+        if (_firstDiscoveryStarted) return;
+        _firstDiscoveryStarted = true;
+        await ReindexAndRefreshAsync();
+    }
+
+    private async Task ReindexAndRefreshAsync()
+    {
+        try
+        {
+            if (_reindex is not null)
+            {
+                _statusSink("正在重新核对稳定版文件索引…");
+                await Task.Run(() => _reindex());
+            }
+            await _refreshAll();
+        }
+        catch (Exception ex)
+        {
+            _statusSink("稳定版索引校验失败：" + ex.Message);
+        }
+    }
 
     public void Refresh()
     {
