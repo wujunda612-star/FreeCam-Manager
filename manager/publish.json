@@ -1,9 +1,9 @@
-{
-  "schemaVersion": 1,
-  "version": "3.9.16",
-  "displayVersion": "V3.9.16",
-  "packageName": "FreeCam_Manager_V3.9.16_Source.zip",
-  "sourceSha256": "76f97559df585ec21820f8977517f1f24325b2e70b89f07d39329106d375fb8b",
-  "notes": "V3.9.16: Stable page recovers W37 releases in old SQLite categories, rediscover missing materials, hides externally deleted files in active lists without erasing metadata, and ignores deleted duplicate hashes. Windows release gate passed with 74 tests, 0 failures.",
-  "publishRevision": 16
+﻿{
+    "schemaVersion":  1,
+    "version":  "3.9.17",
+    "displayVersion":  "V3.9.17",
+    "packageName":  "FreeCam_Manager_V3.9.17_Source.zip",
+    "sourceSha256":  "2d1e1101bb5d4f53f04c69b3ba835239d54eb29ec18936217ef340efe617feb0",
+    "notes":  "V3.9.17: visible-page-only refresh, keyed row reconciliation, WPF list recycling, transactional SQLite delta updates, single-save import, detailed import/UI timing. Rolling backup, quick_check and JSON recovery retained.",
+    "publishRevision":  17
 }
