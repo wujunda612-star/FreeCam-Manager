@@ -26,6 +26,7 @@ internal static class Program
         await Run("Inline metadata persistence", InlineMetadataPersistence);
         await Run("Filename and manifest inspection", FilenameAndManifestInspection);
         await Run("V3.9.15 FreeCam WW real manifest contracts", V3915RealManifestContracts);
+        await Run("V3.9.16 stale Stable rows and missing duplicate cleanup", V3916StableVisibilityAndDeletedDuplicates);
         await Run("Classification and Chinese labels", ClassificationAndLabels);
         await Run("Stable release version beats base", StableReleaseVersionBeatsBase);
         await Run("Stable manifest schema and candidate repair", StableManifestSchemaAndCandidateRepair);
@@ -395,6 +396,74 @@ internal static class Program
             }
             return await parser.InspectAsync(path);
         }
+    }
+
+    private static async Task V3916StableVisibilityAndDeletedDuplicates()
+    {
+        var root = TempDir();
+        var legacyFolder = Path.Combine(root, "30_Experiment", "Weather", "Probe");
+        Directory.CreateDirectory(legacyFolder);
+        var runtime = Path.Combine(legacyFolder, "FreeCam_R40.5.0_W37.zip");
+        var source = Path.Combine(legacyFolder, "FreeCam_R40.5.0_W37_Source.zip");
+        await File.WriteAllBytesAsync(runtime, Encoding.UTF8.GetBytes("runtime 40.5.0"));
+        await File.WriteAllBytesAsync(source, Encoding.UTF8.GetBytes("source 40.5.0"));
+
+        // Historical V3.9.13 / V3.9.14 SQLite rows can have a perfectly
+        // valid release file but the wrong Category or even the wrong role.
+        var rows = new[]
+        {
+            new Artifact { Path = runtime, Name = Path.GetFileName(runtime),
+                Category = "Experiment", ArtifactType = "Runtime",
+                BuildType = "test", Stage = "Probe3", ManualStatus = "通过",
+                Rating = 4, Notes = "keep legacy review" },
+            new Artifact { Path = source, Name = Path.GetFileName(source),
+                Category = "Feature", ArtifactType = "Runtime",
+                BuildType = "develop", Stage = "Develop1",
+                ManualStatus = "待复测", Rating = 3 }
+        };
+        var library = LibraryService.CreateInMemory(rows);
+        var indexed = library.Snapshot();
+        Assert(indexed.All(StableVersionResolver.IsStableMaterial), "Wrong-category Stable material is invisible");
+        Assert(indexed.Any(x => StableVersionResolver.MaterialKind(x) == "Source"), "Old Source role not repaired by filename");
+        Assert(indexed.All(x => StableVersionResolver.Resolve(x) == "R40.5.0"), "Stable version grouping failed");
+
+        var organizer = new OrganizerService(root, "", library, new ManifestService(), new ClassificationService(), new HashService());
+        var frozen = await organizer.ConfirmStableAsync("R40.5.0");
+        Assert(frozen.Count(x => x.ArtifactType == "Runtime") == 1 &&
+               frozen.Count(x => x.ArtifactType == "Source") == 1, "Legacy Stable pair could not freeze");
+        Assert(frozen.Any(x => x.ArtifactType == "SHA256"), "Frozen Stable has no checksum");
+        Assert(frozen.All(x => x.Category == "Stable"), "Wrong-category sources were not promoted");
+        var preserved = library.Snapshot().Single(x => x.ArtifactType == "Runtime");
+        Assert(preserved.ManualStatus == "通过" && preserved.Rating == 4 &&
+               preserved.Notes == "keep legacy review", "Old manual review metadata was overwritten");
+
+        Assert(!StableVersionResolver.IsStableMaterial(new Artifact {
+            Name = "WW底层索引_WW37_Fix35.zip", Project = "WW底层索引", Category = "Stable",
+            Version = "R40.5.0", ArtifactType = "Runtime"
+        }), "WW index Fix incorrectly appeared in FreeCam Stable");
+        Assert(!StableVersionResolver.IsStableMaterial(new Artifact {
+            Name = "FreeCam_R40.5.0_W37_Result.zip", Category = "StableCandidate",
+            Version = "R40.5.0", ArtifactType = "Result"
+        }), "Result incorrectly appeared as Stable");
+
+        // Deleting a duplicate in Explorer must not prevent importing the same
+        // SHA256 under a new name. Missing history remains in the database.
+        var inbox = Path.Combine(root, "00_Downloa");
+        Directory.CreateDirectory(inbox);
+        var original = Path.Combine(root, "80_Archive", "Duplicates", "old.zip");
+        Directory.CreateDirectory(Path.GetDirectoryName(original)!);
+        var candidate = Path.Combine(inbox, "WW37_GIBloom_Probe2.78.zip");
+        await File.WriteAllBytesAsync(candidate, Encoding.UTF8.GetBytes("identical bytes"));
+        var hash = await new HashService().FileSha256Async(candidate);
+        library.Upsert(new Artifact { Path = original, Name = "old.zip", Category = "Duplicate", Sha256 = hash });
+        Assert(library.ByHash(hash) is null, "Deleted duplicate incorrectly participates in ByHash");
+        var incoming = await organizer.ProcessAsync(candidate);
+        Assert(incoming.Category != "Duplicate", "Re-imported file was incorrectly treated as duplicate");
+        Assert(library.ByPath(original) is not null, "Historical deleted-file row was destructively purged");
+
+        // UI snapshot visibility: physical file missing, history is preserved.
+        var active = library.Snapshot().Where(x => File.Exists(x.Path)).ToList();
+        Assert(!active.Any(x => x.Path == original), "Deleted file remained visible in live snapshot");
     }
 
     private static async Task FilenameAndManifestInspection()
