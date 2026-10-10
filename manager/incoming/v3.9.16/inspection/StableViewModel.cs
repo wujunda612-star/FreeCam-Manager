@@ -71,7 +71,7 @@ public sealed class StableViewModel : ObservableObject
     public void Refresh()
     {
         var selectedVersion = Selected?.Version;
-        var groups = _snapshot().Where(a => a.Category is "Stable" or "StableCandidate")
+        var groups = _snapshot().Where(StableVersionResolver.IsStableMaterial)
             .Where(a => !IsResultLikeArtifact(a))
             .GroupBy(StableVersionResolver.Resolve, StringComparer.OrdinalIgnoreCase)
             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
@@ -81,11 +81,11 @@ public sealed class StableViewModel : ObservableObject
         foreach (var g in groups)
         {
             var list = g.ToList();
-            var hasRuntime = list.Any(a => Eq(a.ArtifactType, "Runtime") && File.Exists(a.Path));
-            var hasSource = list.Any(a => Eq(a.ArtifactType, "Source") && File.Exists(a.Path));
-            var hasRepo = list.Any(a => Eq(a.ArtifactType, "Repo") && File.Exists(a.Path));
-            var hasSha256 = list.Any(a => Eq(a.ArtifactType, "SHA256") && File.Exists(a.Path));
-            var isCandidate = list.Any(a => a.Category == "StableCandidate" && File.Exists(a.Path));
+            var hasRuntime = list.Any(a => Eq(StableVersionResolver.MaterialKind(a), "Runtime") && File.Exists(a.Path));
+            var hasSource = list.Any(a => Eq(StableVersionResolver.MaterialKind(a), "Source") && File.Exists(a.Path));
+            var hasRepo = list.Any(a => Eq(StableVersionResolver.MaterialKind(a), "Repo") && File.Exists(a.Path));
+            var hasSha256 = list.Any(a => Eq(StableVersionResolver.MaterialKind(a), "SHA256") && File.Exists(a.Path));
+            var isCandidate = list.Any(a => a.Category != "Stable" && File.Exists(a.Path));
             var isStable = list.Any(a => a.Category == "Stable" && File.Exists(a.Path));
 
             // Stable state is historical state, not a live completeness calculation.
