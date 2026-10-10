@@ -1,0 +1,46 @@
+name: Inspect V3.9.14 baseline
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.14/inspect-trigger.json'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract selected source files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import hashlib
+          source=Path('manager/packages/FreeCam_Manager_V3.9.13_Source.zip')
+          assert hashlib.sha256(source.read_bytes()).hexdigest()=='b85a1035021067f4477064c8873f9c15e705099537c95cbca415fd3d40f3f875'
+          wanted={'SettingsViewModel.cs','SettingsView.xaml','DevelopmentView.xaml','DevelopmentView.xaml.cs',
+                  'HistoryView.xaml','HistoryView.xaml.cs','CustomCategoryView.xaml','CustomCategoryView.xaml.cs',
+                  'StableView.xaml','StableView.xaml.cs','MainWindow.xaml',
+                  'ManifestService.cs','ClassificationService.cs','StableVersionResolver.cs',
+                  'AppSettings.cs','SettingsService.cs','CustomRules.cs','RuleEditorView.xaml','RuleEditorView.xaml.cs',
+                  'EditableRuleRow.cs','CompactPickerControl.xaml.cs','App.xaml.cs','FreeCamManager.csproj'}
+          dest=Path('manager/incoming/v3.9.14/inspection')
+          dest.mkdir(parents=True, exist_ok=True)
+          with ZipFile(source) as z:
+            for n in z.namelist():
+              filename=n.replace('\\','/').split('/')[-1]
+              if filename in wanted:
+                p=dest/filename
+                if p.exists(): p=dest/(n.replace('\\','/').split('/')[-2]+'-'+filename)
+                p.write_bytes(z.read(n))
+          print('Extracted',len(list(dest.iterdir())),'files')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manager/incoming/v3.9.14/inspection
+          if ! git diff --cached --quiet; then
+            git commit -m 'Stage V3.9.14 baseline inspection files [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
