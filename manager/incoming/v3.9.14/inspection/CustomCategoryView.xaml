@@ -100,6 +100,7 @@
             </ContextMenu>
           </ListView.ContextMenu>
         </ListView>
+                 <controls:ScrollToTopButton Grid.Row="1" TargetList="{Binding ElementName=CustomList}" Panel.ZIndex="20"/>
 
         <TextBlock Grid.Row="1"
                    Text="尚未创建自定义分类，可在 设置 → 自定义规则 → 自动分类 中新增"
