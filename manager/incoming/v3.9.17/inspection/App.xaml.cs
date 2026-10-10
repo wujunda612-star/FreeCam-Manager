@@ -162,7 +162,14 @@ public partial class App : Application
                 () => libraryRebuild.ReconcileAsync(settings.RootDir));
             startupTiming.Mark("VIEWMODEL_READY");
             watcher.StatusChanged += (_, text) => Dispatch(() => _mainViewModel.StatusText = text);
-            watcher.LibraryChanged += (_, _) => DispatchAsync(_mainViewModel.RefreshAllAsync);
+            watcher.LibraryChanged += (_, _) => DispatchAsync(async () =>
+            {
+                var refreshTimer = Stopwatch.StartNew();
+                await _mainViewModel.RefreshAllAsync();
+                _log?.Event("UI_REFRESH_DONE",
+                    ("page", _mainViewModel.CurrentPage.GetType().Name),
+                    ("elapsed_ms", refreshTimer.ElapsedMilliseconds));
+            });
             await _mainViewModel.RefreshAllAsync();
             startupTiming.Mark("REFRESH_ALL_DONE");
 
