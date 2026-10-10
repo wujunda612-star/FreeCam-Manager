@@ -106,7 +106,11 @@ public sealed class LibraryService
     public Artifact? ByHash(string sha256)
     {
         if (string.IsNullOrWhiteSpace(sha256)) return null;
-        lock (_gate) return _items.FirstOrDefault(x => string.Equals(x.Sha256, sha256, StringComparison.OrdinalIgnoreCase))?.Clone();
+        // A deleted duplicate must not make a newly imported copy look
+        // duplicate forever. Preserve missing historical rows in SQLite.
+        lock (_gate) return _items.FirstOrDefault(x =>
+            string.Equals(x.Sha256, sha256, StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(x.Path))?.Clone();
     }
 
     public void Upsert(Artifact incoming)
