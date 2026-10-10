@@ -29,7 +29,8 @@ public sealed class MainWindowViewModel : ObservableObject
         TermsLocalState? localTermsState = null,
         Func<Task<TermsUpdateResult>>? checkTermsUpdate = null,
         Func<Task<ManagerUpdateCheckResult>>? checkManagerUpdate = null,
-        Func<ManagerUpdateManifest, Task<bool>>? installManagerUpdate = null)
+        Func<ManagerUpdateManifest, Task<bool>>? installManagerUpdate = null,
+        Func<Task>? reconcileLibrary = null)
     {
         // A file removed in Explorer must vanish from the active UI, even if
         // its SQLite history is retained. Never delete the database record.
@@ -49,7 +50,7 @@ public sealed class MainWindowViewModel : ObservableObject
         Development = new DevelopmentViewModel(snapshot, library, organizer, classification, dialogs, workspace, results, refresh,
             () => settings.RootDir, () => SettingsService.TestingRoot(settings), () => SettingsService.ResultRoot(settings), status,
             settings, settingsService, filenameAliases, scanInboxNow);
-        Stable = new StableViewModel(snapshot, organizer, dialogs, refresh, status);
+        Stable = new StableViewModel(snapshot, organizer, dialogs, refresh, status, reconcileLibrary);
         CustomCategories = new CustomCategoryViewModel(snapshot, settings, settingsService, library,
             organizer, classification, dialogs, workspace, results, filenameAliases, refresh, status);
         History = new HistoryViewModel(snapshot, library, organizer, classification, dialogs, refresh, status, settings, settingsService, filenameAliases);
@@ -125,6 +126,18 @@ public sealed class MainWindowViewModel : ObservableObject
             "设置" => Settings,
             _ => Home
         };
+        // Every navigation observes physical deletion without erasing SQLite
+        // metadata; the Stable page also performs a one-time non-blocking
+        // rediscovery of unindexed materials under managed directories.
+        if (ReferenceEquals(CurrentPage, Stable))
+        {
+            Stable.Refresh();
+            _ = Stable.DiscoverOnFirstVisitAsync();
+        }
+        else if (ReferenceEquals(CurrentPage, Development)) Development.Refresh();
+        else if (ReferenceEquals(CurrentPage, History)) History.Refresh();
+        else if (ReferenceEquals(CurrentPage, CustomCategories)) CustomCategories.Refresh();
+        else if (ReferenceEquals(CurrentPage, Home)) Home.Refresh();
     }
 
 }
