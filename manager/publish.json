@@ -1,9 +1,9 @@
-﻿{
-    "schemaVersion":  1,
-    "version":  "3.9.14",
-    "displayVersion":  "V3.9.14",
-    "packageName":  "FreeCam_Manager_V3.9.14_Source.zip",
-    "sourceSha256":  "bef52dfb813ea757943ad35f2feeb69c8b47324964afb995b70b17fdd57c3cd1",
-    "notes":  "V3.9.14: W37/W40 stable identification, updated manifest classification including Develop, automatic persistence of non-directory settings, and floating scroll-to-top buttons in long lists. Chinese terms expanded.",
-    "publishRevision":  14
+{
+  "schemaVersion": 1,
+  "version": "3.9.14",
+  "displayVersion": "V3.9.14",
+  "packageName": "FreeCam_Manager_V3.9.14_Source.zip",
+  "sourceSha256": "bef52dfb813ea757943ad35f2feeb69c8b47324964afb995b70b17fdd57c3cd1",
+  "notes": "V3.9.14: W37/W40 stable identification, updated manifest classification including Develop, automatic persistence of non-directory settings, and floating scroll-to-top buttons in long lists. Chinese terms expanded. Windows release gate passed.",
+  "publishRevision": 14
 }
