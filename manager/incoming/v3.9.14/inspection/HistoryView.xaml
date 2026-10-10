@@ -135,6 +135,7 @@
                         </ContextMenu>
                     </ListView.ContextMenu>
                 </ListView>
+                 <controls:ScrollToTopButton Grid.Row="1" TargetList="{Binding ElementName=HistoryList}" Panel.ZIndex="20"/>
 
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Items.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
