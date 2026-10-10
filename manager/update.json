@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.15",
-  "displayVersion": "V3.9.15",
-  "sourceRef": "288d5cc74fc945b4f7a3524089732eb334bac8c8",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/288d5cc74fc945b4f7a3524089732eb334bac8c8/manager/packages/FreeCam_Manager_V3.9.15_Source.zip",
-  "sourceSha256": "7dcda86c5296adae4026918883164ca3d2afd8419a65dab5adc5e58fa35ac267",
-  "publishedAt": "2026-10-10T11:23:19.921658Z",
-  "notes": "V3.9.15: fixes FreeCam/WW Manifest and filename classification (legacy GIBloom Probe long stage, Weather Develop, RC1, W37 stable, Result ownership), preserves old files and adds regression tests. Based on V3.9.14. Windows release gate and V3.9.15 regression tests passed."
+  "version": "3.9.16",
+  "displayVersion": "V3.9.16",
+  "sourceRef": "c3bf247ad09f32262ac2cb2c7d34c66c723d3809",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/c3bf247ad09f32262ac2cb2c7d34c66c723d3809/manager/packages/FreeCam_Manager_V3.9.16_Source.zip",
+  "sourceSha256": "76f97559df585ec21820f8977517f1f24325b2e70b89f07d39329106d375fb8b",
+  "publishedAt": "2026-10-10T12:14:29.444901Z",
+  "notes": "V3.9.16: Stable page recovers W37 releases in old SQLite categories, rediscover missing materials, hides externally deleted files in active lists without erasing metadata, and ignores deleted duplicate hashes. Windows release gate passed with 74 tests, 0 failures."
 }
