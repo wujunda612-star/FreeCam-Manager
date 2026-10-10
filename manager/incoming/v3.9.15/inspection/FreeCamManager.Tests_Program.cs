@@ -25,6 +25,7 @@ internal static class Program
         await Run("Log directory fallback does not block startup", LogDirectoryFallbackDoesNotBlockStartup);
         await Run("Inline metadata persistence", InlineMetadataPersistence);
         await Run("Filename and manifest inspection", FilenameAndManifestInspection);
+        await Run("V3.9.15 FreeCam WW real manifest contracts", V3915RealManifestContracts);
         await Run("Classification and Chinese labels", ClassificationAndLabels);
         await Run("Stable release version beats base", StableReleaseVersionBeatsBase);
         await Run("Stable manifest schema and candidate repair", StableManifestSchemaAndCandidateRepair);
@@ -267,6 +268,133 @@ internal static class Program
         Assert(got.Tags.Count == 2 && got.Notes == "镜头抖动", "tags/notes not persisted");
         Assert(loaded.SetRating(path, 0), "rating zero failed");
         Assert(loaded.ByPath(path)!.Rating == 0, "rating zero not applied");
+    }
+
+    private static async Task V3915RealManifestContracts()
+    {
+        var parser = new ManifestService();
+        var classifier = new ClassificationService();
+
+        // Historical WW37 GIBloom package (2026-10-08):
+        // The actual package stored a long scanner description in "stage"
+        // and omitted "feature". Recover both from its standard buildName.
+        var ww = await Inspect("WW37_GIBloom_Probe2.39(1).zip", new Dictionary<string, object?>
+        {
+            ["schemaVersion"] = 1, ["project"] = "WW底层索引",
+            ["gameVersion"] = "3.7", ["buildName"] = "WW37_GIBloom_Probe2.39",
+            ["buildId"] = "WW37-GIBLOOM-P2.39-20261008-001",
+            ["packageRole"] = "probe", ["buildType"] = "probe",
+            ["stage"] = "GI_Bloom_Runtime_Consumer_P2.39_PostProcessBlockProvenance",
+            ["branch"] = "ww37/history-open/gi-bloom-consumer"
+        });
+        Assert(ww.ManifestFound && ww.Project == "WW底层索引", "WW root manifest missing or wrong project");
+        Assert(ww.Feature == "GIBloom" && ww.Stage == "Probe2.39", "WW historical long stage or feature not recovered");
+        Assert(ww.BuildType == "probe" && ww.ArtifactType == "Runtime", "WW Probe machine metadata changed");
+        Assert(classifier.Plan(ww).Category == "Experiment", "WW Probe must retain existing Experiment location");
+
+        var wwFilename = parser.InspectFilename("WW37_GIBloom_Probe2.78.zip");
+        Assert(wwFilename.Project == "WW底层索引" && wwFilename.Feature == "GIBloom" &&
+               wwFilename.Stage == "Probe2.78", "WW standalone fallback misidentifies feature");
+
+        // Historical FreeCam Weather Develop1 root Manifest:
+        // packageRole=development, releaseStage=develop and no stage/feature.
+        var weather = await Inspect("FreeCam_R40.4.2_W37_Weather_Develop1(1).zip", new Dictionary<string, object?>
+        {
+            ["schemaVersion"] = 1, ["project"] = "FreeCam",
+            ["version"] = "R40.4.2",
+            ["buildName"] = "FreeCam_R40.4.2_W37_Weather_Develop1",
+            ["buildId"] = "FC-20261008-R4042-W37-WEATHER-DEV1-001",
+            ["buildType"] = "develop", ["stable"] = false,
+            ["base"] = "R40.4.2", ["branch"] = "develop",
+            ["releaseStage"] = "develop", ["gameVersion"] = "3.7",
+            ["packageRole"] = "development"
+        }, nestedManifest: true);
+        Assert(weather.ManifestName == "BUILD_MANIFEST.json", "Nested source manifest displaced root");
+        Assert(weather.Feature == "Weather" && weather.Stage == "Develop1", "Weather Develop1 missing stage or feature");
+        Assert(weather.BuildType == "Feature" && weather.ArtifactType == "Runtime", "Legacy develop type not normalized");
+        Assert(classifier.Plan(weather).Category == "Feature", "Weather Develop1 did not reach formal development");
+
+        // New FreeCam Probe schema can use buildType=test while
+        // historical WW Probe uses buildType=probe. Neither may get lost.
+        var probe = await Inspect("FreeCam_R40.4.2_W37_Weather_Probe2.39.zip", new Dictionary<string, object?>
+        {
+            ["project"] = "FreeCam", ["freeCamVersion"] = "R40.4.2",
+            ["feature"] = "Weather", ["stage"] = "Probe2.39",
+            ["buildType"] = "test", ["packageRole"] = "probe"
+        });
+        Assert(probe.BuildType == "test" && probe.Stage == "Probe2.39", "Standard test build type was overwritten");
+        Assert(classifier.Plan(probe).Category == "Experiment", "Probe must remain in test/experiment list");
+
+        var rc = parser.InspectFilename("FreeCam_R40.4.2_W37_RC1.zip");
+        Assert(rc.Feature == "ReleaseCandidate" && rc.Stage == "RC1" &&
+               rc.BuildType == "ReleaseCandidate", "RC1 consumed game-version tag as feature");
+        Assert(classifier.Plan(rc).Category == "Feature", "RC1 is not an active development candidate");
+
+        // Result remains a distinct artifact and uses forBuildId.
+        var result = await Inspect("WW37_GIBloom_Probe2.39_Result.zip", new Dictionary<string, object?>
+        {
+            ["project"] = "WW底层索引", ["buildName"] = "WW37_GIBloom_Probe2.39_Result",
+            ["feature"] = "GIBloom", ["stage"] = "Probe2.39",
+            ["buildType"] = "probe", ["packageRole"] = "result",
+            ["forBuildId"] = "WW37-GIBLOOM-P2.39-20261008-001"
+        });
+        Assert(result.ArtifactType == "Result" && result.ForBuildId == ww.BuildId, "Result ownership missing");
+        Assert(classifier.Plan(result).Category == "Result", "Result imported as a runtime build");
+
+        // WW official FixN is IndexLibrary, NOT a FreeCam StableCandidate.
+        var index = await Inspect("WW底层索引_WW37_Fix35.zip", new Dictionary<string, object?>
+        {
+            ["project"] = "WW底层索引", ["buildName"] = "WW底层索引_WW37_Fix35",
+            ["stage"] = "Fix35", ["buildType"] = "release",
+            ["packageRole"] = "release", ["stable"] = true
+        });
+        Assert(index.Stage == "Fix35" && classifier.Plan(index).Category == "IndexLibrary",
+               "WW official Fix misrouted into Stable Candidate");
+
+        // Stable V40.5.0 W37 runtime + full source ZIP are distinct materials.
+        var stable = await Inspect("FreeCam_R40.5.0_W37.zip", new Dictionary<string, object?>
+        {
+            ["project"] = "FreeCam", ["buildName"] = "FreeCam_R40.5.0_W37",
+            ["freeCamVersion"] = "R40.5.0", ["stage"] = "Stable",
+            ["buildType"] = "release", ["packageRole"] = "stable"
+        });
+        var source = await Inspect("FreeCam_R40.5.0_W37_Source.zip", new Dictionary<string, object?>
+        {
+            ["project"] = "FreeCam", ["buildName"] = "FreeCam_R40.5.0_W37",
+            ["freeCamVersion"] = "R40.5.0", ["stage"] = "Stable",
+            ["buildType"] = "release", ["packageRole"] = "source"
+        });
+        Assert(stable.ArtifactType == "Runtime" && source.ArtifactType == "Source",
+               "Stable material roles failed");
+        Assert(classifier.Plan(stable).Category == "StableCandidate" &&
+               classifier.Plan(source).Category == "StableCandidate", "Stable freeze gate bypassed");
+        Assert(StableVersionResolver.Resolve(stable) == "R40.5.0" &&
+               StableVersionResolver.Resolve(source) == "R40.5.0",
+               "Stable Runtime/Source did not resolve to the same release version");
+
+        var ordinary = parser.InspectFilename("gradle-8.9-bin.zip");
+        Assert(classifier.Plan(ordinary).Category == "Unknown", "Unrelated archives must remain in inbox");
+
+        async Task<Artifact> Inspect(string filename, Dictionary<string, object?> manifest, bool nestedManifest = false)
+        {
+            var path = Path.Combine(TempDir(), filename);
+            using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
+            {
+                var entry = archive.CreateEntry("BUILD_MANIFEST.json");
+                await using (var output = entry.Open()) await JsonSerializer.SerializeAsync(output, manifest);
+                if (nestedManifest)
+                {
+                    var nested = archive.CreateEntry("Source/BUILD_MANIFEST.json");
+                    await using var output = nested.Open();
+                    await JsonSerializer.SerializeAsync(output, new Dictionary<string, object?>
+                    {
+                        ["feature"] = "WrongSourceFeature", ["stage"] = "Test999",
+                        ["packageRole"] = "source"
+                    });
+                }
+            }
+            return await parser.InspectAsync(path);
+        }
     }
 
     private static async Task FilenameAndManifestInspection()
