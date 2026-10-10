@@ -40,6 +40,10 @@ public static partial class StableVersionResolver
         if (stem.EndsWith("_Result", StringComparison.OrdinalIgnoreCase) ||
             System.Text.RegularExpressions.Regex.IsMatch(stem, @"_Result\([0-9]+\)$", RegexOptions.IgnoreCase))
             return false;
+        if (name.StartsWith("WW", StringComparison.OrdinalIgnoreCase) ||
+            name.StartsWith("WW底层索引", StringComparison.OrdinalIgnoreCase) ||
+            (item.Project ?? "").StartsWith("WW", StringComparison.OrdinalIgnoreCase))
+            return false;
         if (item.Category is "Stable" or "StableCandidate") return true;
         if (string.IsNullOrWhiteSpace(Resolve(item))) return false;
         if (!name.StartsWith("FreeCam_R", StringComparison.OrdinalIgnoreCase)
@@ -64,11 +68,9 @@ public static partial class StableVersionResolver
             return "Repo";
         if (n.EndsWith("_sha256")) return "SHA256";
         if (n.EndsWith("_release_note")) return "ReleaseNote";
-        if (StableNameRegex().IsMatch(item.Name ?? "") &&
-            !n.EndsWith("_source") && !n.EndsWith("_fullsource") && !n.EndsWith("_sourcefull"))
-            return string.IsNullOrWhiteSpace(item.ArtifactType) ||
-                   string.Equals(item.ArtifactType, "Runtime", StringComparison.OrdinalIgnoreCase)
-                ? "Runtime" : item.ArtifactType;
+        if ((item.Name ?? "").EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+            StableNameRegex().IsMatch(item.Name ?? ""))
+            return "Runtime";
         return item.ArtifactType ?? "";
     }
 
