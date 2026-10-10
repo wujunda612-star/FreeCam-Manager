@@ -27,6 +27,7 @@ internal static class Program
         await Run("Filename and manifest inspection", FilenameAndManifestInspection);
         await Run("V3.9.15 FreeCam WW real manifest contracts", V3915RealManifestContracts);
         await Run("V3.9.16 stale Stable rows and missing duplicate cleanup", V3916StableVisibilityAndDeletedDuplicates);
+        await Run("V3.9.17 inbox import persists build and test folder once", V3917OnePersistPerImport);
         await Run("Classification and Chinese labels", ClassificationAndLabels);
         await Run("Stable release version beats base", StableReleaseVersionBeatsBase);
         await Run("Stable manifest schema and candidate repair", StableManifestSchemaAndCandidateRepair);
@@ -467,6 +468,42 @@ internal static class Program
         // UI snapshot visibility: physical file missing, history is preserved.
         var active = library.Snapshot().Where(x => File.Exists(x.Path)).ToList();
         Assert(!active.Any(x => x.Path == original), "Deleted file remained visible in live snapshot");
+    }
+
+    private static async Task V3917OnePersistPerImport()
+    {
+        var root = TempDir();
+        var inbox = Path.Combine(root, "00_Downloa");
+        var testing = Path.Combine(root, "01_Testing", "FreeCam_R40.5.0_W37_NativeWeather_Probe3");
+        Directory.CreateDirectory(inbox);
+        Directory.CreateDirectory(testing);
+        var incoming = Path.Combine(inbox, "FreeCam_R40.5.0_W37_NativeWeather_Probe3.zip");
+        using (var archive = ZipFile.Open(incoming, ZipArchiveMode.Create))
+        {
+            var manifest = archive.CreateEntry("BUILD_MANIFEST.json");
+            await using var writer = manifest.Open();
+            await JsonSerializer.SerializeAsync(writer, new Dictionary<string, object?>
+            {
+                ["project"] = "FreeCam", ["buildName"] = "FreeCam_R40.5.0_W37_NativeWeather_Probe3",
+                ["feature"] = "NativeWeather", ["stage"] = "Probe3",
+                ["buildType"] = "test", ["packageRole"] = "probe",
+                ["buildId"] = "FC-R4050-W37-NATIVEWEATHER-P3"
+            });
+        }
+
+        var saves = 0;
+        var library = LibraryService.CreatePersistent([], (snapshot, ct) =>
+        {
+            saves++;
+            return Task.CompletedTask;
+        });
+        var organizer = new OrganizerService(root, "", library,
+            new ManifestService(), new ClassificationService(), new HashService());
+        var result = await organizer.ProcessAsync(incoming, default, testing);
+        Assert(saves == 1, "an extracted inbox ZIP must trigger exactly one persistent save");
+        var row = library.ByPath(result.Path);
+        Assert(row is not null && row.TestingPath == testing, "testing folder was not saved atomically with build");
+        Assert(row!.ManualStatus is "" or "未标记", "fresh import unexpectedly changed manual conclusion");
     }
 
     private static async Task FilenameAndManifestInspection()
