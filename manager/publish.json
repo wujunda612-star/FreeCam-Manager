@@ -1,9 +1,9 @@
-﻿{
-    "schemaVersion":  1,
-    "version":  "3.9.18",
-    "displayVersion":  "V3.9.18",
-    "packageName":  "FreeCam_Manager_V3.9.18_Source.zip",
-    "sourceSha256":  "691da5c7f37541a504d9adbfe76b716dd1833ae8c2de4cc5ecbca2e3a08390ae",
-    "notes":  "V3.9.18: viewport-based Back-to-Top visibility, correct label and no unrelated changes.",
-    "publishRevision":  18
+{
+  "schemaVersion": 1,
+  "version": "3.9.18",
+  "displayVersion": "V3.9.18",
+  "packageName": "FreeCam_Manager_V3.9.18_Source.zip",
+  "sourceSha256": "691da5c7f37541a504d9adbfe76b716dd1833ae8c2de4cc5ecbca2e3a08390ae",
+  "notes": "V3.9.18: viewport-based Back-to-Top visibility, correct label and no unrelated changes. Windows release gate 76/76 passed, 0 failures.",
+  "publishRevision": 18
 }
