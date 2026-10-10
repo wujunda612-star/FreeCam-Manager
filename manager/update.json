@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "3.9.14",
-  "displayVersion": "V3.9.14",
-  "sourceRef": "428f71183999b9e1b6089de001651d29ab30f17b",
-  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/428f71183999b9e1b6089de001651d29ab30f17b/manager/packages/FreeCam_Manager_V3.9.14_Source.zip",
-  "sourceSha256": "bef52dfb813ea757943ad35f2feeb69c8b47324964afb995b70b17fdd57c3cd1",
-  "publishedAt": "2026-10-10T10:45:28.826177Z",
-  "notes": "V3.9.14: W37/W40 stable identification, updated manifest classification including Develop, automatic persistence of non-directory settings, and floating scroll-to-top buttons in long lists. Chinese terms expanded. Windows release gate passed."
+  "version": "3.9.15",
+  "displayVersion": "V3.9.15",
+  "sourceRef": "288d5cc74fc945b4f7a3524089732eb334bac8c8",
+  "sourceArchiveUrl": "https://raw.githubusercontent.com/wujunda612-star/FreeCam-Manager/288d5cc74fc945b4f7a3524089732eb334bac8c8/manager/packages/FreeCam_Manager_V3.9.15_Source.zip",
+  "sourceSha256": "7dcda86c5296adae4026918883164ca3d2afd8419a65dab5adc5e58fa35ac267",
+  "publishedAt": "2026-10-10T11:23:19.921658Z",
+  "notes": "V3.9.15: fixes FreeCam/WW Manifest and filename classification (legacy GIBloom Probe long stage, Weather Develop, RC1, W37 stable, Result ownership), preserves old files and adds regression tests. Based on V3.9.14. Windows release gate and V3.9.15 regression tests passed."
 }
