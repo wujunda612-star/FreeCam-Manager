@@ -31,7 +31,16 @@ public sealed class MainWindowViewModel : ObservableObject
         Func<Task<ManagerUpdateCheckResult>>? checkManagerUpdate = null,
         Func<ManagerUpdateManifest, Task<bool>>? installManagerUpdate = null)
     {
-        Func<IReadOnlyList<Artifact>> snapshot = library.Snapshot;
+        // A file removed in Explorer must vanish from the active UI, even if
+        // its SQLite history is retained. Never delete the database record.
+        // When the whole FreeCam drive is disconnected, keep its cached list
+        // instead of treating an unavailable volume as mass deletion.
+        Func<IReadOnlyList<Artifact>> snapshot = () =>
+        {
+            var items = library.Snapshot();
+            if (!Directory.Exists(settings.RootDir)) return items;
+            return items.Where(a => !string.IsNullOrWhiteSpace(a.Path) && File.Exists(a.Path)).ToList();
+        };
         Action<string> status = value => StatusText = value;
         Func<Task> refresh = RefreshAllAsync;
 
