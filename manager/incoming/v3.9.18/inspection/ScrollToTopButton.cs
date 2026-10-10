@@ -1,4 +1,5 @@
 using System.Windows;
+using FreeCamManager.Core.Services;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,8 +13,6 @@ namespace FreeCamManager.Controls;
 /// </summary>
 public sealed class ScrollToTopButton : Button
 {
-    private const double RevealOffset = 80;
-
     public static readonly DependencyProperty TargetListProperty = DependencyProperty.Register(
         nameof(TargetList), typeof(ListView), typeof(ScrollToTopButton),
         new PropertyMetadata(null, OnTargetChanged));
@@ -26,7 +25,7 @@ public sealed class ScrollToTopButton : Button
 
     public ScrollToTopButton()
     {
-        Content = "↑ 置顶";
+        Content = "↑ 顶部";
         Width = 74;
         Height = 32;
         Padding = new Thickness(9, 0, 9, 0);
@@ -37,7 +36,7 @@ public sealed class ScrollToTopButton : Button
         BorderThickness = new Thickness(1);
         Visibility = Visibility.Collapsed;
         Focusable = false;
-        ToolTip = "回到当前列表顶部";
+        ToolTip = "回到列表顶部";
         SetResourceReference(StyleProperty, "RoundedButtonStyle");
         SetResourceReference(BackgroundProperty, "AccentSoftBrush");
         SetResourceReference(BorderBrushProperty, "AccentBrush");
@@ -73,8 +72,12 @@ public sealed class ScrollToTopButton : Button
     private void UpdateButton()
     {
         var viewer = FindScroller(TargetList);
-        Visibility = viewer is { ScrollableHeight: > RevealOffset, VerticalOffset: > RevealOffset }
-            ? Visibility.Visible : Visibility.Collapsed;
+        // Offset and viewport use the same units, whether the virtualized ListView
+        // scrolls in items or pixels. Hysteresis avoids flashing near the threshold.
+        var shouldShow = viewer is not null && BackToTopVisibilityPolicy.ShouldShow(
+            viewer.VerticalOffset, viewer.ViewportHeight, viewer.ScrollableHeight,
+            Visibility == Visibility.Visible);
+        Visibility = shouldShow ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static ScrollViewer? FindScroller(DependencyObject? root)
