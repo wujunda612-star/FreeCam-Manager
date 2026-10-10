@@ -1,0 +1,43 @@
+name: Inspect FreeCam Manager V3.9.15
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.15/inspect-trigger.json'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract source files for classification audit
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import hashlib
+          pkg=Path('manager/packages/FreeCam_Manager_V3.9.14_Source.zip')
+          assert hashlib.sha256(pkg.read_bytes()).hexdigest()=='bef52dfb813ea757943ad35f2feeb69c8b47324964afb995b70b17fdd57c3cd1'
+          wanted={'ManifestService.cs','ClassificationService.cs','StableVersionResolver.cs','LibraryRebuildService.cs',
+             'LibraryService.cs','OrganizerService.cs','Artifact.cs','CustomRules.cs','TestResultService.cs',
+             'DevelopmentViewModel.cs','StableViewModel.cs','App.xaml.cs','Program.cs',
+             'FreeCamManager.Tests.csproj','FreeCamManager.RC1.Tests.csproj','FreeCamManager.csproj'}
+          out=Path('manager/incoming/v3.9.15/inspection')
+          out.mkdir(parents=True,exist_ok=True)
+          with ZipFile(pkg) as z:
+            for name in z.namelist():
+              n=name.replace('\\','/').split('/')[-1]
+              if n in wanted or name.endswith('FreeCamManager.Tests\\Program.cs') or name.endswith('FreeCamManager.RC1.Tests\\Program.cs'):
+                target=out / ((name.replace('\\','/').split('/')[-2]+'_'+n) if n=='Program.cs' else n)
+                target.write_bytes(z.read(name))
+          print('Staged', len(list(out.iterdir())), 'files')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manager/incoming/v3.9.15/inspection
+          if ! git diff --cached --quiet; then
+            git commit -m 'Inspect V3.9.15 source and tests [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
