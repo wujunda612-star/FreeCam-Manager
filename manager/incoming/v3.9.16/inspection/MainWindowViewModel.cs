@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Input;
 using FreeCamManager.Core.Models;
 using FreeCamManager.Core.Services;
