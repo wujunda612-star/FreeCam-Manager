@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify and extract official V3.9.13 source
+      - name: Verify and extract official V3.9.14 source
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -61,7 +61,7 @@ jobs:
           if (-not $settings.Contains('ScheduleAutoSave')) { throw 'No automatic save' }
           if (-not (Test-Path (Join-Path $src 'FreeCamManager\Controls\ScrollToTopButton.cs'))) { throw 'No back-to-top control' }
           $tests = Get-Content -Raw (Join-Path $src 'FreeCamManager.Tests\Program.cs')
-          foreach ($token in @('V3915RealManifestContracts', 'WW37_GIBloom_Probe2.39', 'FreeCam_R40.4.2_W37_Weather_Develop1', 'FreeCam_R40.5.0_W37', 'WW底层索引_WW37_Fix35')) {
+          foreach ($token in @('V3915RealManifestContracts', 'WW37_GIBloom_Probe2.39', 'FreeCam_R40.4.2_W37_Weather_Develop1', 'FreeCam_R40.5.0_W37', 'Fix35')) {
             if (-not $tests.Contains($token)) { throw "V3.9.15 regression missing: $token" }
           }
           Write-Host 'V3.9.15 source compatibility anchors PASS'
