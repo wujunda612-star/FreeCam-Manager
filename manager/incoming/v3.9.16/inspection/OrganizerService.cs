@@ -91,7 +91,7 @@ public sealed class OrganizerService(
         // V3.9.8 could misclassify *_Result.zip as StableCandidate Runtime after stripping
         // the _Result suffix. Those rows must never participate in Stable completeness.
         var indexed = library.Snapshot()
-            .Where(a => (a.Category is "StableCandidate" or "Stable")
+            .Where(a => StableVersionResolver.IsStableMaterial(a)
                 && string.Equals(StableVersionResolver.Resolve(a), version, StringComparison.OrdinalIgnoreCase))
             .ToList();
         if (indexed.Count == 0) throw new InvalidOperationException($"no Stable material for {version}");
@@ -134,14 +134,14 @@ public sealed class OrganizerService(
 
         // Re-read after repair so path collisions/adoptions are resolved by LibraryService.
         var materials = library.Snapshot()
-            .Where(a => (a.Category is "StableCandidate" or "Stable")
+            .Where(a => StableVersionResolver.IsStableMaterial(a)
                 && string.Equals(StableVersionResolver.Resolve(a), version, StringComparison.OrdinalIgnoreCase)
                 && !IsResultLikeArtifact(a)
                 && File.Exists(a.Path))
             .ToList();
 
-        var hasRuntime = materials.Any(a => Eq(a.ArtifactType, "Runtime"));
-        var hasSource = materials.Any(a => Eq(a.ArtifactType, "Source"));
+        var hasRuntime = materials.Any(a => Eq(StableVersionResolver.MaterialKind(a), "Runtime"));
+        var hasSource = materials.Any(a => Eq(StableVersionResolver.MaterialKind(a), "Source"));
         if (!hasRuntime || !hasSource)
             throw new InvalidOperationException("Stable 冻结至少需要运行包 + 完整源码。Repo.bundle（Git 仓库备份）可选，SHA256（校验文件）会在确认后自动生成。");
 
@@ -153,7 +153,7 @@ public sealed class OrganizerService(
             var oldPath = a.Path;
             string dst;
 
-            if (a.Category == "StableCandidate")
+            if (a.Category != "Stable")
             {
                 dst = await MoveIntoStableIdempotentAsync(oldPath, stableDir, ct);
                 a.Path = dst;
@@ -166,6 +166,7 @@ public sealed class OrganizerService(
             }
 
             a.Category = "Stable";
+            a.ArtifactType = StableVersionResolver.MaterialKind(a);
             a.BuildType = "Stable";
             a.ReleaseState = "Stable";
             a.Status = "已冻结";
