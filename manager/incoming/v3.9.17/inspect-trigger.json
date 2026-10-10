@@ -1,1 +1,1 @@
-{"version":"3.9.17","base":"3.9.16","scope":"UI refresh latency and sqlite persistence","attempt":2}
+{"version":"3.9.17","base":"3.9.16","scope":"UI performance and SQLite transactional delta","attempt":3}
