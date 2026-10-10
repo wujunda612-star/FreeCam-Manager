@@ -426,6 +426,9 @@ internal static class Program
         Assert(indexed.All(StableVersionResolver.IsStableMaterial), "Wrong-category Stable material is invisible");
         Assert(indexed.Any(x => StableVersionResolver.MaterialKind(x) == "Source"), "Old Source role not repaired by filename");
         Assert(indexed.All(x => StableVersionResolver.Resolve(x) == "R40.5.0"), "Stable version grouping failed");
+        var stableSuffix = new ManifestService().InspectFilename("FreeCam_R40.5.0_W37_Stable.zip");
+        Assert(stableSuffix.BuildType == "StableCandidate" &&
+               stableSuffix.ArtifactType == "Runtime", "Stable-suffixed package not recognized");
 
         var organizer = new OrganizerService(root, "", library, new ManifestService(), new ClassificationService(), new HashService());
         var frozen = await organizer.ConfirmStableAsync("R40.5.0");
