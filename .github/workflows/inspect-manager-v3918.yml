@@ -1,0 +1,38 @@
+name: Inspect Manager V3.9.18 Back-to-Top
+on:
+  push:
+    paths:
+      - 'manager/incoming/v3.9.18/inspect-trigger.json'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage scroll-to-top control from verified V3.9.17 source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          import hashlib
+          pkg=Path('manager/packages/FreeCam_Manager_V3.9.17_Source.zip')
+          assert hashlib.sha256(pkg.read_bytes()).hexdigest()=='2d1e1101bb5d4f53f04c69b3ba835239d54eb29ec18936217ef340efe617feb0'
+          out=Path('manager/incoming/v3.9.18/inspection')
+          out.mkdir(parents=True, exist_ok=True)
+          with ZipFile(pkg) as z:
+              matches=[n for n in z.namelist() if n.replace('\\','/').endswith('src-wpf/FreeCamManager/Controls/ScrollToTopButton.cs')]
+              assert len(matches)==1,matches
+              content=z.read(matches[0])
+              (out/'ScrollToTopButton.cs').write_bytes(content)
+              print('staged control bytes',len(content),'SHA256',hashlib.sha256(content).hexdigest())
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manager/incoming/v3.9.18/inspection/ScrollToTopButton.cs
+          if ! git diff --cached --quiet; then
+            git commit -m 'Stage V3.9.17 Back-to-Top control for V3.9.18 [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
