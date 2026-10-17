@@ -966,5 +966,2177 @@
   {
     "from": "Bone",
     "to": "骨骼"
+  },
+  {
+    "from": "NativeWeather",
+    "to": "常规天气"
+  },
+  {
+    "from": "PlotWeather",
+    "to": "剧情天气"
+  },
+  {
+    "from": "StoryWeather",
+    "to": "剧情天气"
+  },
+  {
+    "from": "WeatherGroupId",
+    "to": "天气组编号"
+  },
+  {
+    "from": "WeatherGroup",
+    "to": "天气组"
+  },
+  {
+    "from": "WeatherDataAsset",
+    "to": "天气数据资源"
+  },
+  {
+    "from": "AreaInfo",
+    "to": "区域信息"
+  },
+  {
+    "from": "AreaId",
+    "to": "区域编号"
+  },
+  {
+    "from": "AreaMapping",
+    "to": "区域映射"
+  },
+  {
+    "from": "WeatherMapping",
+    "to": "天气映射"
+  },
+  {
+    "from": "WeatherTransition",
+    "to": "天气过渡"
+  },
+  {
+    "from": "WeatherBlend",
+    "to": "天气混合"
+  },
+  {
+    "from": "WeatherRestore",
+    "to": "天气恢复"
+  },
+  {
+    "from": "WeatherOverride",
+    "to": "天气覆盖"
+  },
+  {
+    "from": "WeatherOccupancy",
+    "to": "天气占用"
+  },
+  {
+    "from": "CloudOcclusion",
+    "to": "云层遮挡"
+  },
+  {
+    "from": "LightShaft",
+    "to": "光束"
+  },
+  {
+    "from": "LightBeam",
+    "to": "光束"
+  },
+  {
+    "from": "Jinzhou",
+    "to": "今州"
+  },
+  {
+    "from": "BlackShores",
+    "to": "黑海岸"
+  },
+  {
+    "from": "RaymarchCloud",
+    "to": "光线步进云层"
+  },
+  {
+    "from": "GlobalGI",
+    "to": "全局光照入口"
+  },
+  {
+    "from": "KuroPostProcess",
+    "to": "库洛后处理"
+  },
+  {
+    "from": "KuroPostProcessComponent",
+    "to": "库洛后处理组件"
+  },
+  {
+    "from": "ToonBaseFFTPost",
+    "to": "卡通后处理基础层"
+  },
+  {
+    "from": "CharacterLighting",
+    "to": "角色打灯"
+  },
+  {
+    "from": "CustomLighting",
+    "to": "自定义打灯"
+  },
+  {
+    "from": "CustomCharacterLighting",
+    "to": "自定义角色灯光"
+  },
+  {
+    "from": "CharacterSetting",
+    "to": "角色灯光设置"
+  },
+  {
+    "from": "GISetting",
+    "to": "全局光照设置"
+  },
+  {
+    "from": "LightHorizontalAngle",
+    "to": "灯光水平角度"
+  },
+  {
+    "from": "CharacterMainLightColor",
+    "to": "角色主光颜色"
+  },
+  {
+    "from": "CharacterAmbientColor",
+    "to": "角色环境光颜色"
+  },
+  {
+    "from": "CharacterRimColor",
+    "to": "角色轮廓光颜色"
+  },
+  {
+    "from": "CustomCharacterLightingIntensity",
+    "to": "自定义角色光照强度"
+  },
+  {
+    "from": "MainLight",
+    "to": "主光"
+  },
+  {
+    "from": "AmbientLight",
+    "to": "环境光"
+  },
+  {
+    "from": "RimLight",
+    "to": "轮廓光"
+  },
+  {
+    "from": "Photolight",
+    "to": "拍照灯光"
+  },
+  {
+    "from": "PhotoNew",
+    "to": "新版拍照模式"
+  },
+  {
+    "from": "HSV",
+    "to": "色相饱和度明度"
+  },
+  {
+    "from": "Highlight",
+    "to": "高光"
+  },
+  {
+    "from": "Shadow",
+    "to": "阴影"
+  },
+  {
+    "from": "Direction",
+    "to": "方向"
+  },
+  {
+    "from": "LightIntensity",
+    "to": "灯光强度"
+  },
+  {
+    "from": "LightDirection",
+    "to": "灯光方向"
+  },
+  {
+    "from": "LightColor",
+    "to": "灯光颜色"
+  },
+  {
+    "from": "LightRig",
+    "to": "布光系统"
+  },
+  {
+    "from": "WorldLighting",
+    "to": "世界灯光"
+  },
+  {
+    "from": "CharacterLight",
+    "to": "角色灯光"
+  },
+  {
+    "from": "PhotoLighting",
+    "to": "拍照打灯"
+  },
+  {
+    "from": "BP_CameraEffect",
+    "to": "相机效果蓝图"
+  },
+  {
+    "from": "AnamorphicRatio",
+    "to": "变形倍率"
+  },
+  {
+    "from": "AnamorphicScale",
+    "to": "变形倍率"
+  },
+  {
+    "from": "AnamorphicWide",
+    "to": "变形宽银幕"
+  },
+  {
+    "from": "AnamorphicWidescreen",
+    "to": "变形宽银幕"
+  },
+  {
+    "from": "AspectRatio",
+    "to": "画面宽高比"
+  },
+  {
+    "from": "FrameAspect",
+    "to": "画幅比例"
+  },
+  {
+    "from": "CinematicMode",
+    "to": "电影模式"
+  },
+  {
+    "from": "CinematicCamera",
+    "to": "电影相机"
+  },
+  {
+    "from": "FreeCamera",
+    "to": "自由相机"
+  },
+  {
+    "from": "FreeCamCore",
+    "to": "自由相机核心"
+  },
+  {
+    "from": "FreeCamController",
+    "to": "自由相机控制器"
+  },
+  {
+    "from": "FocalLength",
+    "to": "镜头焦距"
+  },
+  {
+    "from": "FOV",
+    "to": "视角"
+  },
+  {
+    "from": "FieldOfView",
+    "to": "视场角"
+  },
+  {
+    "from": "CameraPosition",
+    "to": "相机位置"
+  },
+  {
+    "from": "CameraRotation",
+    "to": "相机旋转"
+  },
+  {
+    "from": "CameraTransform",
+    "to": "相机变换"
+  },
+  {
+    "from": "CameraSubmitHook",
+    "to": "相机提交钩子"
+  },
+  {
+    "from": "CameraEffect",
+    "to": "相机效果"
+  },
+  {
+    "from": "CameraCollision",
+    "to": "相机碰撞"
+  },
+  {
+    "from": "PhotoCapture",
+    "to": "拍照采集"
+  },
+  {
+    "from": "Screenshot",
+    "to": "屏幕截图"
+  },
+  {
+    "from": "HUD",
+    "to": "界面信息叠层"
+  },
+  {
+    "from": "Overlay",
+    "to": "悬浮覆盖层"
+  },
+  {
+    "from": "ClientRect",
+    "to": "客户区矩形"
+  },
+  {
+    "from": "UIHidden",
+    "to": "隐藏界面"
+  },
+  {
+    "from": "UICapture",
+    "to": "界面采集"
+  },
+  {
+    "from": "FocusTarget",
+    "to": "对焦目标"
+  },
+  {
+    "from": "FocusTracking",
+    "to": "对焦跟踪"
+  },
+  {
+    "from": "AutoFocus",
+    "to": "自动对焦"
+  },
+  {
+    "from": "DepthOfField",
+    "to": "景深"
+  },
+  {
+    "from": "DepthBlur",
+    "to": "景深虚化"
+  },
+  {
+    "from": "Bokeh",
+    "to": "焦外散景"
+  },
+  {
+    "from": "SightLockNode",
+    "to": "视线锁定节点"
+  },
+  {
+    "from": "EyeOnlyAF",
+    "to": "仅眼睛自动对焦"
+  },
+  {
+    "from": "EyeTracking",
+    "to": "眼球跟踪"
+  },
+  {
+    "from": "HeadTracking",
+    "to": "头部跟踪"
+  },
+  {
+    "from": "Bip001Head",
+    "to": "头部骨骼"
+  },
+  {
+    "from": "FAnimNode_SightLock",
+    "to": "视线锁定动画节点"
+  },
+  {
+    "from": "WorldStopControl",
+    "to": "世界暂停控制"
+  },
+  {
+    "from": "FreezeFrame",
+    "to": "画面冻结"
+  },
+  {
+    "from": "TimeFreeze",
+    "to": "时间冻结"
+  },
+  {
+    "from": "TimeDilation",
+    "to": "时间膨胀"
+  },
+  {
+    "from": "TimeLink",
+    "to": "时间联动"
+  },
+  {
+    "from": "TimeLinkRelease",
+    "to": "时间联动释放"
+  },
+  {
+    "from": "RestoreState",
+    "to": "恢复状态"
+  },
+  {
+    "from": "CleanupPASS",
+    "to": "清理通过"
+  },
+  {
+    "from": "CleanupFail",
+    "to": "清理失败"
+  },
+  {
+    "from": "Cleanup",
+    "to": "清理"
+  },
+  {
+    "from": "BuildId",
+    "to": "构建标识"
+  },
+  {
+    "from": "ForBuildId",
+    "to": "关联构建标识"
+  },
+  {
+    "from": "BuildIdentity",
+    "to": "构建身份"
+  },
+  {
+    "from": "BuildManifestJson",
+    "to": "构建清单文件"
+  },
+  {
+    "from": "BUILD_MANIFEST",
+    "to": "构建清单"
+  },
+  {
+    "from": "FullRuntime",
+    "to": "完整运行包"
+  },
+  {
+    "from": "FullSourceCode",
+    "to": "完整源代码"
+  },
+  {
+    "from": "SourcePackage",
+    "to": "源码包"
+  },
+  {
+    "from": "RuntimePackage",
+    "to": "运行包"
+  },
+  {
+    "from": "ResultPackage",
+    "to": "结果包"
+  },
+  {
+    "from": "TestPackage",
+    "to": "测试包"
+  },
+  {
+    "from": "ManifestCheck",
+    "to": "清单校验"
+  },
+  {
+    "from": "PackageValidation",
+    "to": "安装包验证"
+  },
+  {
+    "from": "Compatibility",
+    "to": "兼容性"
+  },
+  {
+    "from": "HotUpdateCompatibility",
+    "to": "热更新兼容"
+  },
+  {
+    "from": "HotUpdate",
+    "to": "热更新"
+  },
+  {
+    "from": "CurrentBuild",
+    "to": "当前游戏构建"
+  },
+  {
+    "from": "CurrentVersion",
+    "to": "当前版本"
+  },
+  {
+    "from": "VersionDiff",
+    "to": "版本差分"
+  },
+  {
+    "from": "BinaryDiff",
+    "to": "二进制差分"
+  },
+  {
+    "from": "StaticAnchor",
+    "to": "静态锚点"
+  },
+  {
+    "from": "DynamicAnchor",
+    "to": "动态锚点"
+  },
+  {
+    "from": "RuntimeAnchor",
+    "to": "运行时锚点"
+  },
+  {
+    "from": "AddressMigration",
+    "to": "地址迁移"
+  },
+  {
+    "from": "AnchorMigration",
+    "to": "锚点迁移"
+  },
+  {
+    "from": "OffsetMigration",
+    "to": "偏移迁移"
+  },
+  {
+    "from": "OfflineScanner",
+    "to": "离线扫描器"
+  },
+  {
+    "from": "SignatureScan",
+    "to": "特征码扫描"
+  },
+  {
+    "from": "PatternScan",
+    "to": "模式扫描"
+  },
+  {
+    "from": "MemoryDump",
+    "to": "内存转储"
+  },
+  {
+    "from": "GUObjectArray",
+    "to": "全局对象数组"
+  },
+  {
+    "from": "FNamePool",
+    "to": "名称池"
+  },
+  {
+    "from": "NamePool",
+    "to": "名称池"
+  },
+  {
+    "from": "UObject",
+    "to": "引擎对象"
+  },
+  {
+    "from": "ObjectArray",
+    "to": "对象数组"
+  },
+  {
+    "from": "ReflectionChain",
+    "to": "反射链"
+  },
+  {
+    "from": "FunctionLookup",
+    "to": "函数查找"
+  },
+  {
+    "from": "ObjectLookup",
+    "to": "对象查找"
+  },
+  {
+    "from": "TypeLayout",
+    "to": "类型布局"
+  },
+  {
+    "from": "StructLayout",
+    "to": "结构布局"
+  },
+  {
+    "from": "FunctionOffset",
+    "to": "函数偏移"
+  },
+  {
+    "from": "PropertyOffset",
+    "to": "属性偏移"
+  },
+  {
+    "from": "FunctionPointer",
+    "to": "函数指针"
+  },
+  {
+    "from": "VTable",
+    "to": "虚函数表"
+  },
+  {
+    "from": "ModuleBase",
+    "to": "模块基址"
+  },
+  {
+    "from": "EntryPoint",
+    "to": "程序入口点"
+  },
+  {
+    "from": "InternalDLL",
+    "to": "内部动态库"
+  },
+  {
+    "from": "ExternalDLL",
+    "to": "外部动态库"
+  },
+  {
+    "from": "CharacterLightingProbe",
+    "to": "角色灯光探针"
+  },
+  {
+    "from": "ProcessAttach",
+    "to": "进程附加"
+  },
+  {
+    "from": "ProcessLaunch",
+    "to": "进程启动"
+  },
+  {
+    "from": "ProcessOwnership",
+    "to": "进程所有权"
+  },
+  {
+    "from": "ProcessCleanup",
+    "to": "进程清理"
+  },
+  {
+    "from": "ErrorRecovery",
+    "to": "异常恢复"
+  },
+  {
+    "from": "ErrorLog",
+    "to": "错误日志"
+  },
+  {
+    "from": "CrashLog",
+    "to": "崩溃日志"
+  },
+  {
+    "from": "AutoClose",
+    "to": "自动关闭"
+  },
+  {
+    "from": "ExitOnSuccess",
+    "to": "成功后退出"
+  },
+  {
+    "from": "KeepOnFailure",
+    "to": "失败时保留"
+  },
+  {
+    "from": "StrongPass",
+    "to": "强证据通过"
+  },
+  {
+    "from": "WeakPass",
+    "to": "弱证据通过"
+  },
+  {
+    "from": "VerificationGate",
+    "to": "验证门禁"
+  },
+  {
+    "from": "PassGate",
+    "to": "通过门禁"
+  },
+  {
+    "from": "Predicate",
+    "to": "判定条件"
+  },
+  {
+    "from": "Record",
+    "to": "记录"
+  },
+  {
+    "from": "RuntimeValidation",
+    "to": "运行时验证"
+  },
+  {
+    "from": "GPUValidation",
+    "to": "显卡验证"
+  },
+  {
+    "from": "GPUBinding",
+    "to": "显卡资源绑定"
+  },
+  {
+    "from": "Binding",
+    "to": "绑定"
+  },
+  {
+    "from": "RecordManager",
+    "to": "记录管理器"
+  },
+  {
+    "from": "ManagerService",
+    "to": "管理服务"
+  },
+  {
+    "from": "GIBloomManager",
+    "to": "全局光照泛光管理器"
+  },
+  {
+    "from": "GIBloomRecord",
+    "to": "全局光照泛光记录"
+  },
+  {
+    "from": "GIBloomBinding",
+    "to": "全局光照泛光绑定"
+  },
+  {
+    "from": "FrameCapture",
+    "to": "帧采集"
+  },
+  {
+    "from": "CaptureResult",
+    "to": "采集结果"
+  },
+  {
+    "from": "CaptureSession",
+    "to": "采集会话"
+  },
+  {
+    "from": "SampleCount",
+    "to": "采样数量"
+  },
+  {
+    "from": "EvidenceLevel",
+    "to": "证据等级"
+  },
+  {
+    "from": "EvidenceChain",
+    "to": "证据链"
+  },
+  {
+    "from": "CrossValidation",
+    "to": "交叉验证"
+  },
+  {
+    "from": "BaselineComparison",
+    "to": "基线对比"
+  },
+  {
+    "from": "RegressionCheck",
+    "to": "回归检查"
+  },
+  {
+    "from": "RCCheck",
+    "to": "候选版检查"
+  },
+  {
+    "from": "Hotfix",
+    "to": "紧急修复"
+  },
+  {
+    "from": "ProbeReady",
+    "to": "探针就绪"
+  },
+  {
+    "from": "WorldReady",
+    "to": "大世界就绪"
+  },
+  {
+    "from": "WORLD_READY",
+    "to": "大世界就绪"
+  },
+  {
+    "from": "AutoWorld",
+    "to": "自动进入大世界"
+  },
+  {
+    "from": "QueueLab",
+    "to": "队列实验室"
+  },
+  {
+    "from": "TaskQueue",
+    "to": "任务队列"
+  },
+  {
+    "from": "AutoQueue",
+    "to": "自动队列"
+  },
+  {
+    "from": "AutoTest",
+    "to": "自动测试"
+  },
+  {
+    "from": "QueueManager",
+    "to": "队列管理器"
+  },
+  {
+    "from": "FIFO",
+    "to": "先进先出"
+  },
+  {
+    "from": "QueuePaused",
+    "to": "队列已暂停"
+  },
+  {
+    "from": "QueueRunning",
+    "to": "队列运行中"
+  },
+  {
+    "from": "QueueResume",
+    "to": "恢复队列"
+  },
+  {
+    "from": "ManualReview",
+    "to": "人工审阅"
+  },
+  {
+    "from": "ManualConfirm",
+    "to": "人工确认"
+  },
+  {
+    "from": "ResultGate",
+    "to": "结果验收门禁"
+  },
+  {
+    "from": "ResultBinding",
+    "to": "结果关联"
+  },
+  {
+    "from": "ResultValidation",
+    "to": "结果校验"
+  },
+  {
+    "from": "ResultMatching",
+    "to": "结果匹配"
+  },
+  {
+    "from": "InboxWatcher",
+    "to": "收件箱监控"
+  },
+  {
+    "from": "InboxWatcherService",
+    "to": "收件箱监控服务"
+  },
+  {
+    "from": "TestResultService",
+    "to": "测试结果服务"
+  },
+  {
+    "from": "TestingRoot",
+    "to": "测试根目录"
+  },
+  {
+    "from": "ResultRoot",
+    "to": "结果根目录"
+  },
+  {
+    "from": "DownloadInbox",
+    "to": "下载收件箱"
+  },
+  {
+    "from": "ImportQueue",
+    "to": "导入队列"
+  },
+  {
+    "from": "QueueStatus",
+    "to": "队列状态"
+  },
+  {
+    "from": "TaskStatus",
+    "to": "任务状态"
+  },
+  {
+    "from": "TaskPending",
+    "to": "任务待执行"
+  },
+  {
+    "from": "TaskFailed",
+    "to": "任务失败"
+  },
+  {
+    "from": "TaskCompleted",
+    "to": "任务完成"
+  },
+  {
+    "from": "WorldCapture",
+    "to": "大世界画面采集"
+  },
+  {
+    "from": "LoginCapture",
+    "to": "登录画面采集"
+  },
+  {
+    "from": "LoginAttempt",
+    "to": "尝试登录"
+  },
+  {
+    "from": "ScreenshotMatch",
+    "to": "截图匹配"
+  },
+  {
+    "from": "TemplateMatching",
+    "to": "模板匹配"
+  },
+  {
+    "from": "OpenCV",
+    "to": "视觉识别库"
+  },
+  {
+    "from": "WindowMessage",
+    "to": "窗口消息"
+  },
+  {
+    "from": "PostMessage",
+    "to": "投递窗口消息"
+  },
+  {
+    "from": "SendInput",
+    "to": "发送输入"
+  },
+  {
+    "from": "UAC",
+    "to": "管理员权限确认"
+  },
+  {
+    "from": "QueueAudit",
+    "to": "队列审计"
+  },
+  {
+    "from": "SQLite",
+    "to": "轻量数据库"
+  },
+  {
+    "from": "SQLiteBackup",
+    "to": "数据库备份"
+  },
+  {
+    "from": "DatabaseMigration",
+    "to": "数据库迁移"
+  },
+  {
+    "from": "DatabaseRecovery",
+    "to": "数据库恢复"
+  },
+  {
+    "from": "DataSnapshot",
+    "to": "数据快照"
+  },
+  {
+    "from": "DataIntegrity",
+    "to": "数据完整性"
+  },
+  {
+    "from": "PathRebase",
+    "to": "路径重定位"
+  },
+  {
+    "from": "AutoCleanup",
+    "to": "自动清理"
+  },
+  {
+    "from": "SafeCleanup",
+    "to": "安全清理"
+  },
+  {
+    "from": "CleanupPreview",
+    "to": "清理预览"
+  },
+  {
+    "from": "ProtectedFile",
+    "to": "受保护文件"
+  },
+  {
+    "from": "RetentionPolicy",
+    "to": "保留策略"
+  },
+  {
+    "from": "RetentionDays",
+    "to": "保留天数"
+  },
+  {
+    "from": "DiscardCleanup",
+    "to": "已废弃版本清理"
+  },
+  {
+    "from": "BuildMatrix",
+    "to": "构建矩阵"
+  },
+  {
+    "from": "SelfTest",
+    "to": "自测"
+  },
+  {
+    "from": "SmokeTest",
+    "to": "冒烟测试"
+  },
+  {
+    "from": "SanityCheck",
+    "to": "基本合理性检查"
+  },
+  {
+    "from": "DryRun",
+    "to": "模拟运行"
+  },
+  {
+    "from": "Readiness",
+    "to": "就绪检查"
+  },
+  {
+    "from": "StartEntry",
+    "to": "启动入口"
+  },
+  {
+    "from": "LaunchEntry",
+    "to": "启动入口"
+  },
+  {
+    "from": "StartupGate",
+    "to": "启动门禁"
+  },
+  {
+    "from": "ManagedBuild",
+    "to": "受管构建"
+  },
+  {
+    "from": "Canonical",
+    "to": "权威基准"
+  },
+  {
+    "from": "CanonicalMap",
+    "to": "权威映射"
+  },
+  {
+    "from": "ProjectBaseline",
+    "to": "项目基线"
+  },
+  {
+    "from": "IndexLibrary",
+    "to": "索引库"
+  },
+  {
+    "from": "IndexFix",
+    "to": "索引修订"
+  },
+  {
+    "from": "WWIndex",
+    "to": "鸣潮索引"
+  },
+  {
+    "from": "DiffProbe",
+    "to": "差分探针"
+  },
+  {
+    "from": "WorldStopProbe",
+    "to": "世界暂停探针"
+  },
+  {
+    "from": "NativeWeatherProbe",
+    "to": "常规天气探针"
+  },
+  {
+    "from": "PlotWeatherProbe",
+    "to": "剧情天气探针"
+  },
+  {
+    "from": "CharacterLightingTest",
+    "to": "角色打灯测试"
+  },
+  {
+    "from": "CameraPath",
+    "to": "相机轨迹"
+  },
+  {
+    "from": "CameraRail",
+    "to": "相机轨道"
+  },
+  {
+    "from": "CameraShake",
+    "to": "相机抖动"
+  },
+  {
+    "from": "CameraSmoothing",
+    "to": "相机平滑"
+  },
+  {
+    "from": "CameraInterpolation",
+    "to": "相机插值"
+  },
+  {
+    "from": "CameraBlend",
+    "to": "相机混合"
+  },
+  {
+    "from": "CameraCut",
+    "to": "镜头切换"
+  },
+  {
+    "from": "CameraSwitch",
+    "to": "相机切换"
+  },
+  {
+    "from": "CameraBookmark",
+    "to": "相机书签"
+  },
+  {
+    "from": "CameraPreset",
+    "to": "相机预设"
+  },
+  {
+    "from": "CameraRig",
+    "to": "相机系统"
+  },
+  {
+    "from": "CameraKeyframe",
+    "to": "相机关键帧"
+  },
+  {
+    "from": "CameraTarget",
+    "to": "相机目标"
+  },
+  {
+    "from": "CameraDolly",
+    "to": "相机推拉"
+  },
+  {
+    "from": "CameraCrane",
+    "to": "摇臂相机"
+  },
+  {
+    "from": "CameraSpline",
+    "to": "相机样条"
+  },
+  {
+    "from": "CameraFollow",
+    "to": "相机跟随"
+  },
+  {
+    "from": "CameraLock",
+    "to": "相机锁定"
+  },
+  {
+    "from": "CameraReset",
+    "to": "相机复位"
+  },
+  {
+    "from": "CameraStack",
+    "to": "相机堆栈"
+  },
+  {
+    "from": "CameraReplay",
+    "to": "相机回放"
+  },
+  {
+    "from": "DollyZoom",
+    "to": "滑动变焦"
+  },
+  {
+    "from": "OrbitCamera",
+    "to": "环绕相机"
+  },
+  {
+    "from": "DroneCamera",
+    "to": "无人机相机"
+  },
+  {
+    "from": "DroneMode",
+    "to": "无人机模式"
+  },
+  {
+    "from": "FreeLook",
+    "to": "自由观察"
+  },
+  {
+    "from": "FocalPlane",
+    "to": "焦平面"
+  },
+  {
+    "from": "FocalShift",
+    "to": "焦点偏移"
+  },
+  {
+    "from": "LensDistortion",
+    "to": "镜头畸变"
+  },
+  {
+    "from": "LensProfile",
+    "to": "镜头配置"
+  },
+  {
+    "from": "LensBreathing",
+    "to": "呼吸效应"
+  },
+  {
+    "from": "LensFlare",
+    "to": "镜头光晕"
+  },
+  {
+    "from": "LensVignette",
+    "to": "镜头暗角"
+  },
+  {
+    "from": "Aperture",
+    "to": "光圈"
+  },
+  {
+    "from": "ShutterSpeed",
+    "to": "快门速度"
+  },
+  {
+    "from": "ISOControl",
+    "to": "感光度控制"
+  },
+  {
+    "from": "ZoomSpeed",
+    "to": "变焦速度"
+  },
+  {
+    "from": "FocusSpeed",
+    "to": "对焦速度"
+  },
+  {
+    "from": "FocusStacking",
+    "to": "焦点堆栈"
+  },
+  {
+    "from": "FocusTransition",
+    "to": "焦点过渡"
+  },
+  {
+    "from": "RackFocus",
+    "to": "转移焦点"
+  },
+  {
+    "from": "FollowFocus",
+    "to": "跟焦"
+  },
+  {
+    "from": "AutofocusLock",
+    "to": "自动对焦锁定"
+  },
+  {
+    "from": "ManualFocus",
+    "to": "手动对焦"
+  },
+  {
+    "from": "DepthMap",
+    "to": "深度图"
+  },
+  {
+    "from": "DepthBuffer",
+    "to": "深度缓冲"
+  },
+  {
+    "from": "DepthMask",
+    "to": "深度遮罩"
+  },
+  {
+    "from": "DepthCapture",
+    "to": "深度采集"
+  },
+  {
+    "from": "FilmGrain",
+    "to": "胶片颗粒"
+  },
+  {
+    "from": "ChromaticAberration",
+    "to": "色差"
+  },
+  {
+    "from": "Vignette",
+    "to": "暗角"
+  },
+  {
+    "from": "Letterbox",
+    "to": "宽银幕黑边"
+  },
+  {
+    "from": "SafeFrame",
+    "to": "安全画幅"
+  },
+  {
+    "from": "CompositionGuide",
+    "to": "构图辅助线"
+  },
+  {
+    "from": "GridOverlay",
+    "to": "构图网格"
+  },
+  {
+    "from": "RuleOfThirds",
+    "to": "三分构图"
+  },
+  {
+    "from": "GoldenRatio",
+    "to": "黄金分割"
+  },
+  {
+    "from": "ImageStabilization",
+    "to": "画面稳定"
+  },
+  {
+    "from": "MotionTracking",
+    "to": "运动跟踪"
+  },
+  {
+    "from": "SubjectTracking",
+    "to": "主体跟踪"
+  },
+  {
+    "from": "FaceTracking",
+    "to": "人脸跟踪"
+  },
+  {
+    "from": "EyeContact",
+    "to": "眼神接触"
+  },
+  {
+    "from": "HeadPose",
+    "to": "头部姿态"
+  },
+  {
+    "from": "PoseTracking",
+    "to": "姿态跟踪"
+  },
+  {
+    "from": "AnimationFreeze",
+    "to": "动画冻结"
+  },
+  {
+    "from": "AnimationSpeed",
+    "to": "动画速度"
+  },
+  {
+    "from": "CharacterPose",
+    "to": "角色姿势"
+  },
+  {
+    "from": "CharacterExpression",
+    "to": "角色表情"
+  },
+  {
+    "from": "ExpressionControl",
+    "to": "表情控制"
+  },
+  {
+    "from": "ExpressionPreset",
+    "to": "表情预设"
+  },
+  {
+    "from": "PosePreset",
+    "to": "姿势预设"
+  },
+  {
+    "from": "EmoteControl",
+    "to": "动作表情控制"
+  },
+  {
+    "from": "ModelVisibility",
+    "to": "模型可见性"
+  },
+  {
+    "from": "CharacterVisibility",
+    "to": "角色可见性"
+  },
+  {
+    "from": "NPCVisibility",
+    "to": "非玩家角色可见性"
+  },
+  {
+    "from": "CharacterOverride",
+    "to": "角色参数覆盖"
+  },
+  {
+    "from": "SkinMaterial",
+    "to": "皮肤材质"
+  },
+  {
+    "from": "HairPhysics",
+    "to": "头发物理"
+  },
+  {
+    "from": "ClothPhysics",
+    "to": "布料物理"
+  },
+  {
+    "from": "WindControl",
+    "to": "风力控制"
+  },
+  {
+    "from": "WindDirection",
+    "to": "风向"
+  },
+  {
+    "from": "WindStrength",
+    "to": "风力强度"
+  },
+  {
+    "from": "WaterControl",
+    "to": "水面控制"
+  },
+  {
+    "from": "WaterReflection",
+    "to": "水面反射"
+  },
+  {
+    "from": "Wetness",
+    "to": "湿润程度"
+  },
+  {
+    "from": "RaindropEffect",
+    "to": "雨滴效果"
+  },
+  {
+    "from": "Snowfall",
+    "to": "降雪"
+  },
+  {
+    "from": "Lightning",
+    "to": "闪电"
+  },
+  {
+    "from": "StormControl",
+    "to": "风暴控制"
+  },
+  {
+    "from": "CloudDensity",
+    "to": "云层密度"
+  },
+  {
+    "from": "CloudCoverage",
+    "to": "云量"
+  },
+  {
+    "from": "CloudShadow",
+    "to": "云影"
+  },
+  {
+    "from": "SkyLight",
+    "to": "天光"
+  },
+  {
+    "from": "SunLight",
+    "to": "日光"
+  },
+  {
+    "from": "MoonLight",
+    "to": "月光"
+  },
+  {
+    "from": "SunPosition",
+    "to": "太阳位置"
+  },
+  {
+    "from": "MoonPosition",
+    "to": "月亮位置"
+  },
+  {
+    "from": "Sunset",
+    "to": "日落"
+  },
+  {
+    "from": "Sunrise",
+    "to": "日出"
+  },
+  {
+    "from": "DayNightCycle",
+    "to": "昼夜循环"
+  },
+  {
+    "from": "TimeFreezeControl",
+    "to": "时间冻结控制"
+  },
+  {
+    "from": "EnvironmentPreset",
+    "to": "环境预设"
+  },
+  {
+    "from": "EnvironmentCapture",
+    "to": "环境采集"
+  },
+  {
+    "from": "EnvironmentOverride",
+    "to": "环境覆盖"
+  },
+  {
+    "from": "EnvironmentProfile",
+    "to": "环境配置"
+  },
+  {
+    "from": "AtmosphereControl",
+    "to": "大气控制"
+  },
+  {
+    "from": "SkyAtmosphere",
+    "to": "天空大气"
+  },
+  {
+    "from": "VolumetricCloud",
+    "to": "体积云"
+  },
+  {
+    "from": "VolumetricFog",
+    "to": "体积雾"
+  },
+  {
+    "from": "HeightFog",
+    "to": "高度雾"
+  },
+  {
+    "from": "FogDensity",
+    "to": "雾浓度"
+  },
+  {
+    "from": "FogColor",
+    "to": "雾颜色"
+  },
+  {
+    "from": "GodRay",
+    "to": "丁达尔光束"
+  },
+  {
+    "from": "GodRays",
+    "to": "丁达尔光束"
+  },
+  {
+    "from": "SunShaft",
+    "to": "太阳光束"
+  },
+  {
+    "from": "SunShafts",
+    "to": "太阳光束"
+  },
+  {
+    "from": "GlobalIllumination",
+    "to": "全局光照"
+  },
+  {
+    "from": "IndirectLighting",
+    "to": "间接光照"
+  },
+  {
+    "from": "IndirectLight",
+    "to": "间接光"
+  },
+  {
+    "from": "LightProbe",
+    "to": "光照探针"
+  },
+  {
+    "from": "LightVolume",
+    "to": "光照体积"
+  },
+  {
+    "from": "LightFalloff",
+    "to": "光照衰减"
+  },
+  {
+    "from": "LightTemperature",
+    "to": "色温"
+  },
+  {
+    "from": "ColorTemperature",
+    "to": "色温"
+  },
+  {
+    "from": "WhiteBalance",
+    "to": "白平衡"
+  },
+  {
+    "from": "Exposure",
+    "to": "曝光"
+  },
+  {
+    "from": "AutoExposure",
+    "to": "自动曝光"
+  },
+  {
+    "from": "ExposureCompensation",
+    "to": "曝光补偿"
+  },
+  {
+    "from": "ToneMapping",
+    "to": "色调映射"
+  },
+  {
+    "from": "ColorGrading",
+    "to": "色彩分级"
+  },
+  {
+    "from": "ColorCorrection",
+    "to": "颜色校正"
+  },
+  {
+    "from": "Contrast",
+    "to": "对比度"
+  },
+  {
+    "from": "Saturation",
+    "to": "饱和度"
+  },
+  {
+    "from": "Gamma",
+    "to": "伽马"
+  },
+  {
+    "from": "LUT",
+    "to": "颜色查找表"
+  },
+  {
+    "from": "BloomThreshold",
+    "to": "泛光阈值"
+  },
+  {
+    "from": "BloomIntensity",
+    "to": "泛光强度"
+  },
+  {
+    "from": "BloomRadius",
+    "to": "泛光半径"
+  },
+  {
+    "from": "BloomSettings",
+    "to": "泛光设置"
+  },
+  {
+    "from": "ReflectionCapture",
+    "to": "反射采集"
+  },
+  {
+    "from": "ScreenSpaceReflection",
+    "to": "屏幕空间反射"
+  },
+  {
+    "from": "RayTracing",
+    "to": "光线追踪"
+  },
+  {
+    "from": "RayTracedReflection",
+    "to": "光线追踪反射"
+  },
+  {
+    "from": "AmbientOcclusion",
+    "to": "环境光遮蔽"
+  },
+  {
+    "from": "SSAO",
+    "to": "屏幕空间环境光遮蔽"
+  },
+  {
+    "from": "SSGI",
+    "to": "屏幕空间全局光照"
+  },
+  {
+    "from": "SSR",
+    "to": "屏幕空间反射"
+  },
+  {
+    "from": "TAA",
+    "to": "时间抗锯齿"
+  },
+  {
+    "from": "TSR",
+    "to": "时间超分辨率"
+  },
+  {
+    "from": "DLSS",
+    "to": "深度学习超采样"
+  },
+  {
+    "from": "FSR",
+    "to": "超分辨率重建"
+  },
+  {
+    "from": "RenderPass",
+    "to": "渲染通道"
+  },
+  {
+    "from": "RenderTarget",
+    "to": "渲染目标"
+  },
+  {
+    "from": "RenderGraph",
+    "to": "渲染图"
+  },
+  {
+    "from": "FrameGraph",
+    "to": "帧图"
+  },
+  {
+    "from": "RenderPipeline",
+    "to": "渲染管线"
+  },
+  {
+    "from": "PostProcessVolume",
+    "to": "后处理体积"
+  },
+  {
+    "from": "PostProcessMaterial",
+    "to": "后处理材质"
+  },
+  {
+    "from": "MaterialParameter",
+    "to": "材质参数"
+  },
+  {
+    "from": "MaterialInstance",
+    "to": "材质实例"
+  },
+  {
+    "from": "ShaderParameter",
+    "to": "着色器参数"
+  },
+  {
+    "from": "ShaderPermutation",
+    "to": "着色器变体"
+  },
+  {
+    "from": "ShaderCompilation",
+    "to": "着色器编译"
+  },
+  {
+    "from": "GPUResource",
+    "to": "显卡资源"
+  },
+  {
+    "from": "GPUBuffer",
+    "to": "显卡缓冲"
+  },
+  {
+    "from": "GPUTexture",
+    "to": "显卡纹理"
+  },
+  {
+    "from": "TextureStreaming",
+    "to": "纹理流送"
+  },
+  {
+    "from": "ResourceBinding",
+    "to": "资源绑定"
+  },
+  {
+    "from": "RuntimeBinding",
+    "to": "运行时绑定"
+  },
+  {
+    "from": "PassPredicate",
+    "to": "通道判定条件"
+  },
+  {
+    "from": "PipelineState",
+    "to": "管线状态"
+  },
+  {
+    "from": "DrawCall",
+    "to": "绘制调用"
+  },
+  {
+    "from": "CommandBuffer",
+    "to": "命令缓冲"
+  },
+  {
+    "from": "FrameTiming",
+    "to": "帧耗时"
+  },
+  {
+    "from": "FramePacing",
+    "to": "帧节奏"
+  },
+  {
+    "from": "FrameRate",
+    "to": "帧率"
+  },
+  {
+    "from": "FrameRateLimit",
+    "to": "帧率限制"
+  },
+  {
+    "from": "PerformanceMonitor",
+    "to": "性能监控"
+  },
+  {
+    "from": "PerformanceProfile",
+    "to": "性能配置"
+  },
+  {
+    "from": "MemoryUsage",
+    "to": "内存占用"
+  },
+  {
+    "from": "MemoryLeak",
+    "to": "内存泄漏"
+  },
+  {
+    "from": "CrashRecovery",
+    "to": "崩溃恢复"
+  },
+  {
+    "from": "CrashReporter",
+    "to": "崩溃报告器"
+  },
+  {
+    "from": "Heartbeat",
+    "to": "心跳检测"
+  },
+  {
+    "from": "HealthCheck",
+    "to": "健康检查"
+  },
+  {
+    "from": "RetryPolicy",
+    "to": "重试策略"
+  },
+  {
+    "from": "TimeoutPolicy",
+    "to": "超时策略"
+  },
+  {
+    "from": "Backoff",
+    "to": "退避策略"
+  },
+  {
+    "from": "FailSafe",
+    "to": "故障安全"
+  },
+  {
+    "from": "SafeMode",
+    "to": "安全模式"
+  },
+  {
+    "from": "DryRunMode",
+    "to": "模拟运行模式"
+  },
+  {
+    "from": "RestorePoint",
+    "to": "恢复点"
+  },
+  {
+    "from": "Rollback",
+    "to": "回滚"
+  },
+  {
+    "from": "RollbackPlan",
+    "to": "回滚方案"
+  },
+  {
+    "from": "VersionPin",
+    "to": "版本固定"
+  },
+  {
+    "from": "VersionLock",
+    "to": "版本锁定"
+  },
+  {
+    "from": "VersionMigration",
+    "to": "版本迁移"
+  },
+  {
+    "from": "CompatibilityLayer",
+    "to": "兼容层"
+  },
+  {
+    "from": "MigrationReport",
+    "to": "迁移报告"
+  },
+  {
+    "from": "ReleaseGate",
+    "to": "发布门禁"
+  },
+  {
+    "from": "ReleaseBuild",
+    "to": "发布构建"
+  },
+  {
+    "from": "ReleaseNotes",
+    "to": "发布说明"
+  },
+  {
+    "from": "ChangeLog",
+    "to": "变更日志"
+  },
+  {
+    "from": "BuildPipeline",
+    "to": "构建流水线"
+  },
+  {
+    "from": "BuildVerification",
+    "to": "构建验证"
+  },
+  {
+    "from": "SourceAudit",
+    "to": "源码审计"
+  },
+  {
+    "from": "SignatureDatabase",
+    "to": "特征码数据库"
+  },
+  {
+    "from": "OffsetDatabase",
+    "to": "偏移数据库"
+  },
+  {
+    "from": "PatternDatabase",
+    "to": "模式数据库"
+  },
+  {
+    "from": "SymbolResolver",
+    "to": "符号解析器"
+  },
+  {
+    "from": "ObjectResolver",
+    "to": "对象解析器"
+  },
+  {
+    "from": "PropertyResolver",
+    "to": "属性解析器"
+  },
+  {
+    "from": "FunctionResolver",
+    "to": "函数解析器"
+  },
+  {
+    "from": "SDKGenerator",
+    "to": "SDK生成器"
+  },
+  {
+    "from": "SDKExport",
+    "to": "SDK导出"
+  },
+  {
+    "from": "SDKDiff",
+    "to": "SDK差分"
+  },
+  {
+    "from": "ReflectionDump",
+    "to": "反射转储"
+  },
+  {
+    "from": "ObjectDump",
+    "to": "对象转储"
+  },
+  {
+    "from": "ActorDump",
+    "to": "Actor对象转储"
+  },
+  {
+    "from": "ComponentDump",
+    "to": "组件转储"
+  },
+  {
+    "from": "StaticAnalysis",
+    "to": "静态分析"
+  },
+  {
+    "from": "DynamicAnalysis",
+    "to": "动态分析"
+  },
+  {
+    "from": "RuntimeTrace",
+    "to": "运行时追踪"
+  },
+  {
+    "from": "TraceRecorder",
+    "to": "追踪记录器"
+  },
+  {
+    "from": "TraceReplay",
+    "to": "追踪回放"
+  },
+  {
+    "from": "ProbeScheduler",
+    "to": "探针调度器"
+  },
+  {
+    "from": "TaskScheduler",
+    "to": "任务调度器"
+  },
+  {
+    "from": "QueueScheduler",
+    "to": "队列调度器"
+  },
+  {
+    "from": "TaskRunner",
+    "to": "任务执行器"
+  },
+  {
+    "from": "AutoRunner",
+    "to": "自动执行器"
+  },
+  {
+    "from": "AutoImporter",
+    "to": "自动导入器"
+  },
+  {
+    "from": "ImportWatcher",
+    "to": "导入监控器"
+  },
+  {
+    "from": "ImportEvent",
+    "to": "导入事件"
+  },
+  {
+    "from": "QueueRecovery",
+    "to": "队列恢复"
+  },
+  {
+    "from": "QueueSnapshot",
+    "to": "队列快照"
+  },
+  {
+    "from": "QueuePersistence",
+    "to": "队列持久化"
+  },
+  {
+    "from": "QueueHistory",
+    "to": "队列历史"
+  },
+  {
+    "from": "QueueDetail",
+    "to": "队列详情"
+  },
+  {
+    "from": "TaskRetry",
+    "to": "任务重试"
+  },
+  {
+    "from": "TaskTimeout",
+    "to": "任务超时"
+  },
+  {
+    "from": "TaskCancelled",
+    "to": "任务已取消"
+  },
+  {
+    "from": "TaskSkipped",
+    "to": "任务已跳过"
+  },
+  {
+    "from": "TaskDeferred",
+    "to": "任务已暂缓"
+  },
+  {
+    "from": "TaskResume",
+    "to": "恢复任务"
+  },
+  {
+    "from": "ManualOverride",
+    "to": "人工覆盖"
+  },
+  {
+    "from": "ManualApproval",
+    "to": "人工批准"
+  },
+  {
+    "from": "ResultArchive",
+    "to": "结果归档"
+  },
+  {
+    "from": "ResultEvidence",
+    "to": "结果证据"
+  },
+  {
+    "from": "ResultReview",
+    "to": "结果审阅"
+  },
+  {
+    "from": "ResultCollector",
+    "to": "结果收集器"
+  },
+  {
+    "from": "ResultWatcher",
+    "to": "结果监控器"
+  },
+  {
+    "from": "ResultTimeout",
+    "to": "结果超时"
+  },
+  {
+    "from": "ResultIntegrity",
+    "to": "结果完整性"
+  },
+  {
+    "from": "ResultSignature",
+    "to": "结果特征"
+  },
+  {
+    "from": "ResultConflict",
+    "to": "结果冲突"
+  },
+  {
+    "from": "ArtifactCleanup",
+    "to": "产物清理"
+  },
+  {
+    "from": "ArtifactRetention",
+    "to": "产物保留"
+  },
+  {
+    "from": "ArtifactFingerprint",
+    "to": "产物指纹"
+  },
+  {
+    "from": "ArchivePolicy",
+    "to": "归档策略"
+  },
+  {
+    "from": "ArchivePreview",
+    "to": "归档预览"
+  },
+  {
+    "from": "StorageCleanup",
+    "to": "存储清理"
+  },
+  {
+    "from": "StorageUsage",
+    "to": "存储占用"
+  },
+  {
+    "from": "DiskUsage",
+    "to": "磁盘占用"
+  },
+  {
+    "from": "StorageQuota",
+    "to": "存储配额"
+  },
+  {
+    "from": "FileRetention",
+    "to": "文件保留"
+  },
+  {
+    "from": "FileProtection",
+    "to": "文件保护"
+  },
+  {
+    "from": "StarredFile",
+    "to": "标星文件"
+  },
+  {
+    "from": "AnnotatedFile",
+    "to": "已备注文件"
+  },
+  {
+    "from": "SourceRetention",
+    "to": "源码保留"
+  },
+  {
+    "from": "LogRetention",
+    "to": "日志保留"
+  },
+  {
+    "from": "MetadataArchive",
+    "to": "元数据归档"
+  },
+  {
+    "from": "HistoryRecord",
+    "to": "历史记录"
+  },
+  {
+    "from": "SQLiteIntegrity",
+    "to": "数据库完整性"
+  },
+  {
+    "from": "WALCheckpoint",
+    "to": "预写日志检查点"
+  },
+  {
+    "from": "BackupRotation",
+    "to": "备份轮换"
+  },
+  {
+    "from": "BackupRestore",
+    "to": "备份恢复"
+  },
+  {
+    "from": "DataMigration",
+    "to": "数据迁移"
+  },
+  {
+    "from": "DataRebuild",
+    "to": "数据重建"
+  },
+  {
+    "from": "SafeDelete",
+    "to": "安全删除"
+  },
+  {
+    "from": "RecycleBin",
+    "to": "回收站"
   }
 ]
