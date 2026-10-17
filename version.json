@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "2026.10.10.1",
-  "updatedAt": "2026-10-10T10:51:22.618Z",
-  "termCount": 242,
-  "sha256": "4ad1461a75527b3520f15ccefc39e825ed8a041ca6501955d02c59202985cc2a",
+  "version": "2026.10.17.1",
+  "updatedAt": "2026-10-17T14:00:00Z",
+  "termCount": 785,
+  "sha256": "a1bc7624293e36ec52a8fe603af740118aad8e3508f2598d2e873bdbf13fc8c7",
   "termsFile": "FilenameTerms.json"
 }
