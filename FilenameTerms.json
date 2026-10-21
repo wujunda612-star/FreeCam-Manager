@@ -3138,5 +3138,273 @@
   {
     "from": "RecycleBin",
     "to": "回收站"
+  },
+  {
+    "from": "RuntimeResolver",
+    "to": "运行时解析器"
+  },
+  {
+    "from": "SemanticRuntimeGate",
+    "to": "语义运行时门禁"
+  },
+  {
+    "from": "RuntimeGate",
+    "to": "运行时门禁"
+  },
+  {
+    "from": "DynamicPrimary",
+    "to": "动态主路径"
+  },
+  {
+    "from": "DynamicPrimaryRoot",
+    "to": "动态主根节点"
+  },
+  {
+    "from": "FixedRVA",
+    "to": "固定RVA地址"
+  },
+  {
+    "from": "FixedRVAFallback",
+    "to": "固定RVA回退"
+  },
+  {
+    "from": "ExactPEGate",
+    "to": "精确PE门禁"
+  },
+  {
+    "from": "ExactPE",
+    "to": "精确PE匹配"
+  },
+  {
+    "from": "FailClosed",
+    "to": "失败闭锁"
+  },
+  {
+    "from": "FailClosedGate",
+    "to": "失败闭锁门禁"
+  },
+  {
+    "from": "GEngine",
+    "to": "游戏引擎全局指针"
+  },
+  {
+    "from": "GWorld",
+    "to": "世界全局指针"
+  },
+  {
+    "from": "RuntimeRoot",
+    "to": "运行时根节点"
+  },
+  {
+    "from": "RuntimeRoots",
+    "to": "运行时根节点组"
+  },
+  {
+    "from": "RootResolver",
+    "to": "根节点解析器"
+  },
+  {
+    "from": "RootBinding",
+    "to": "根节点绑定"
+  },
+  {
+    "from": "RootValidation",
+    "to": "根节点验证"
+  },
+  {
+    "from": "PrimaryRoot",
+    "to": "主根节点"
+  },
+  {
+    "from": "SemanticResolver",
+    "to": "语义解析器"
+  },
+  {
+    "from": "ContextBridge",
+    "to": "上下文桥接"
+  },
+  {
+    "from": "InitialOwner",
+    "to": "初始所有者"
+  },
+  {
+    "from": "StartupBind",
+    "to": "启动绑定"
+  },
+  {
+    "from": "StartupBinding",
+    "to": "启动绑定"
+  },
+  {
+    "from": "StartupOwner",
+    "to": "启动所有者"
+  },
+  {
+    "from": "StartupGateRoots",
+    "to": "启动门禁根节点"
+  },
+  {
+    "from": "OwnerLifecycle",
+    "to": "所有者生命周期"
+  },
+  {
+    "from": "OwnerProbe",
+    "to": "所有者探针"
+  },
+  {
+    "from": "WorldOwner",
+    "to": "世界所有者"
+  },
+  {
+    "from": "WorldOwnerBind",
+    "to": "世界所有者绑定"
+  },
+  {
+    "from": "WorldBind",
+    "to": "世界绑定"
+  },
+  {
+    "from": "WorldBinding",
+    "to": "世界绑定"
+  },
+  {
+    "from": "WorldRecovery",
+    "to": "世界恢复"
+  },
+  {
+    "from": "WorldRebind",
+    "to": "世界重新绑定"
+  },
+  {
+    "from": "WorldLifecycle",
+    "to": "世界生命周期"
+  },
+  {
+    "from": "WorldTransition",
+    "to": "世界切换"
+  },
+  {
+    "from": "WorldSwitch",
+    "to": "世界切换"
+  },
+  {
+    "from": "WorldCleanup",
+    "to": "世界清理"
+  },
+  {
+    "from": "CameraShutdown",
+    "to": "相机关闭"
+  },
+  {
+    "from": "CameraShutdownNames",
+    "to": "相机关闭名称"
+  },
+  {
+    "from": "CameraReuse",
+    "to": "相机复用"
+  },
+  {
+    "from": "CameraLayers",
+    "to": "相机层级"
+  },
+  {
+    "from": "CameraLayer",
+    "to": "相机层"
+  },
+  {
+    "from": "CameraWorldLifecycle",
+    "to": "相机世界生命周期"
+  },
+  {
+    "from": "EKeysIdentity",
+    "to": "按键枚举身份识别"
+  },
+  {
+    "from": "EKeys",
+    "to": "按键枚举"
+  },
+  {
+    "from": "KeyIdentity",
+    "to": "按键身份识别"
+  },
+  {
+    "from": "ProcessIdentity",
+    "to": "进程身份识别"
+  },
+  {
+    "from": "PEFingerprint",
+    "to": "PE指纹"
+  },
+  {
+    "from": "PEImage",
+    "to": "PE映像"
+  },
+  {
+    "from": "PEValidation",
+    "to": "PE验证"
+  },
+  {
+    "from": "AddressFallback",
+    "to": "地址回退"
+  },
+  {
+    "from": "Rebind",
+    "to": "重新绑定"
+  },
+  {
+    "from": "Lifecycle",
+    "to": "生命周期"
+  },
+  {
+    "from": "SessionLifecycle",
+    "to": "会话生命周期"
+  },
+  {
+    "from": "StartupLifecycle",
+    "to": "启动生命周期"
+  },
+  {
+    "from": "ShutdownLifecycle",
+    "to": "关闭生命周期"
+  },
+  {
+    "from": "ManualLaunch",
+    "to": "手动启动"
+  },
+  {
+    "from": "StartupRecovery",
+    "to": "启动恢复"
+  },
+  {
+    "from": "NativeWeatherRecovery",
+    "to": "常规天气恢复"
+  },
+  {
+    "from": "WeatherRecovery",
+    "to": "天气恢复"
+  },
+  {
+    "from": "WeatherRebind",
+    "to": "天气重新绑定"
+  },
+  {
+    "from": "SidecarCleanup",
+    "to": "辅助文件清理"
+  },
+  {
+    "from": "SQLiteSidecar",
+    "to": "SQLite辅助文件"
+  },
+  {
+    "from": "WALSidecar",
+    "to": "WAL辅助文件"
+  },
+  {
+    "from": "SHMSidecar",
+    "to": "SHM辅助文件"
+  },
+  {
+    "from": "JournalSidecar",
+    "to": "Journal辅助文件"
   }
 ]
