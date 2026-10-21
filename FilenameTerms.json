@@ -3406,5 +3406,393 @@
   {
     "from": "JournalSidecar",
     "to": "Journal辅助文件"
+  },
+  {
+    "from": "LiveOwner",
+    "to": "实时所有者"
+  },
+  {
+    "from": "WorldContext",
+    "to": "世界上下文"
+  },
+  {
+    "from": "WorldEngine",
+    "to": "世界引擎"
+  },
+  {
+    "from": "InitialOwnerAcquisition",
+    "to": "初始所有者获取"
+  },
+  {
+    "from": "PostBindHealth",
+    "to": "绑定后健康检查"
+  },
+  {
+    "from": "OwnerBind",
+    "to": "所有者绑定"
+  },
+  {
+    "from": "OwnerRequest",
+    "to": "所有者请求"
+  },
+  {
+    "from": "OwnerHealth",
+    "to": "所有者健康检查"
+  },
+  {
+    "from": "OwnerIdentity",
+    "to": "所有者身份"
+  },
+  {
+    "from": "ShadowMode",
+    "to": "影子模式"
+  },
+  {
+    "from": "RuntimeResolverPrimary",
+    "to": "主运行时解析器"
+  },
+  {
+    "from": "SemanticDiscovery",
+    "to": "语义发现"
+  },
+  {
+    "from": "ExactBuildIdentityGate",
+    "to": "精确构建身份门禁"
+  },
+  {
+    "from": "SemanticMatch",
+    "to": "语义匹配"
+  },
+  {
+    "from": "StructureValidation",
+    "to": "结构验证"
+  },
+  {
+    "from": "ObjectValidation",
+    "to": "对象验证"
+  },
+  {
+    "from": "RuntimeSanityCheck",
+    "to": "运行时合理性检查"
+  },
+  {
+    "from": "DynamicRoute",
+    "to": "动态路径"
+  },
+  {
+    "from": "ObjectTraversal",
+    "to": "对象遍历"
+  },
+  {
+    "from": "ValidationFailure",
+    "to": "验证失败"
+  },
+  {
+    "from": "ReadOnlyProbe",
+    "to": "只读探针"
+  },
+  {
+    "from": "ReadOnlySemanticDiscovery",
+    "to": "只读语义发现"
+  },
+  {
+    "from": "IdentityPath",
+    "to": "身份路径"
+  },
+  {
+    "from": "ExactBuild",
+    "to": "精确构建"
+  },
+  {
+    "from": "RuntimeIdentity",
+    "to": "运行时身份"
+  },
+  {
+    "from": "WorldChange",
+    "to": "世界切换"
+  },
+  {
+    "from": "WorldScopedRoute",
+    "to": "世界作用域路径"
+  },
+  {
+    "from": "WorldOwnedDiscovery",
+    "to": "世界所属发现状态"
+  },
+  {
+    "from": "RecoveryTimeout",
+    "to": "恢复超时"
+  },
+  {
+    "from": "RebindFailure",
+    "to": "重新绑定失败"
+  },
+  {
+    "from": "NaturalSoft",
+    "to": "自然柔光"
+  },
+  {
+    "from": "WarmCoolCinematic",
+    "to": "冷暖电影感"
+  },
+  {
+    "from": "GlobalShadow",
+    "to": "全局阴影"
+  },
+  {
+    "from": "SSS",
+    "to": "次表面散射"
+  },
+  {
+    "from": "RimAmount",
+    "to": "轮廓光强度"
+  },
+  {
+    "from": "HDRMultiplier",
+    "to": "HDR倍率"
+  },
+  {
+    "from": "CharacterDirectionMixIntensity",
+    "to": "角色方向混合强度"
+  },
+  {
+    "from": "MixCharacterLightingIntensity",
+    "to": "角色灯光混合强度"
+  },
+  {
+    "from": "Prewarm",
+    "to": "预热"
+  },
+  {
+    "from": "RoutePrewarm",
+    "to": "路径预热"
+  },
+  {
+    "from": "PrewarmMetrics",
+    "to": "预热指标"
+  },
+  {
+    "from": "RouteDiscovery",
+    "to": "路径发现"
+  },
+  {
+    "from": "BoundedIncrementalScan",
+    "to": "有界增量扫描"
+  },
+  {
+    "from": "IncrementalScan",
+    "to": "增量扫描"
+  },
+  {
+    "from": "TailOnlyScan",
+    "to": "仅尾部扫描"
+  },
+  {
+    "from": "MonolithicScan",
+    "to": "整段全量扫描"
+  },
+  {
+    "from": "LiveGlobalGIInstance",
+    "to": "实时全局光照实例"
+  },
+  {
+    "from": "GlobalGIInstance",
+    "to": "全局光照实例"
+  },
+  {
+    "from": "KuroGISetting",
+    "to": "库洛全局光照设置"
+  },
+  {
+    "from": "ScriptStruct",
+    "to": "脚本结构体"
+  },
+  {
+    "from": "GlobalGIActor",
+    "to": "全局光照Actor"
+  },
+  {
+    "from": "OwnerQuietGate",
+    "to": "所有者静默门禁"
+  },
+  {
+    "from": "WorldToken",
+    "to": "世界令牌"
+  },
+  {
+    "from": "WorldOwnedState",
+    "to": "世界所属状态"
+  },
+  {
+    "from": "ExactRestore",
+    "to": "精确恢复"
+  },
+  {
+    "from": "Isolation",
+    "to": "隔离"
+  },
+  {
+    "from": "WritableSanity",
+    "to": "可写性合理性检查"
+  },
+  {
+    "from": "SanityBind",
+    "to": "合理性绑定"
+  },
+  {
+    "from": "EarlyBootstrap",
+    "to": "提前引导"
+  },
+  {
+    "from": "ProtectionRuntimeRestore",
+    "to": "保护层运行时恢复"
+  },
+  {
+    "from": "RuntimeLocator",
+    "to": "运行时定位器"
+  },
+  {
+    "from": "CameraActor",
+    "to": "相机Actor"
+  },
+  {
+    "from": "RenderOwner",
+    "to": "渲染所有者"
+  },
+  {
+    "from": "BoundedDeferredExecution",
+    "to": "有界延迟执行"
+  },
+  {
+    "from": "PlayerController",
+    "to": "玩家控制器"
+  },
+  {
+    "from": "PlayerCharacter",
+    "to": "玩家角色"
+  },
+  {
+    "from": "Pawn",
+    "to": "Pawn角色"
+  },
+  {
+    "from": "FullCompat",
+    "to": "完整兼容"
+  },
+  {
+    "from": "WorldFallback",
+    "to": "世界回退"
+  },
+  {
+    "from": "CoreValidated",
+    "to": "核心已验证"
+  },
+  {
+    "from": "OwnerBridge",
+    "to": "所有者桥接"
+  },
+  {
+    "from": "RecordStride",
+    "to": "记录步长"
+  },
+  {
+    "from": "FFTBloomSetting",
+    "to": "FFT泛光设置"
+  },
+  {
+    "from": "BloomRenderer",
+    "to": "泛光渲染器"
+  },
+  {
+    "from": "NodeHandle",
+    "to": "节点句柄"
+  },
+  {
+    "from": "SchemaQuery",
+    "to": "架构查询"
+  },
+  {
+    "from": "Map16",
+    "to": "16字节映射"
+  },
+  {
+    "from": "Aux16",
+    "to": "16字节辅助块"
+  },
+  {
+    "from": "CPUCopyDescriptor",
+    "to": "CPU拷贝描述符"
+  },
+  {
+    "from": "Descriptor",
+    "to": "描述符"
+  },
+  {
+    "from": "Orientation",
+    "to": "方向"
+  },
+  {
+    "from": "StaticCallback",
+    "to": "静态回调"
+  },
+  {
+    "from": "CurrentRuntime",
+    "to": "当前运行时"
+  },
+  {
+    "from": "SystemFollow",
+    "to": "跟随系统"
+  },
+  {
+    "from": "FollowGame",
+    "to": "跟随游戏"
+  },
+  {
+    "from": "WeatherManager",
+    "to": "天气管理器"
+  },
+  {
+    "from": "ResourceHandle",
+    "to": "资源句柄"
+  },
+  {
+    "from": "WorldRebuild",
+    "to": "世界重建"
+  },
+  {
+    "from": "AreaModel",
+    "to": "区域模型"
+  },
+  {
+    "from": "LoadedLevels",
+    "to": "已加载关卡"
+  },
+  {
+    "from": "CodeRefs",
+    "to": "代码引用"
+  },
+  {
+    "from": "StaticScan",
+    "to": "静态扫描"
+  },
+  {
+    "from": "RuntimeProof",
+    "to": "运行时证据"
+  },
+  {
+    "from": "OwnerCache",
+    "to": "所有者缓存"
+  },
+  {
+    "from": "WorldAlias",
+    "to": "世界别名"
+  },
+  {
+    "from": "CodeAnchor",
+    "to": "代码锚点"
+  },
+  {
+    "from": "StructuralFallback",
+    "to": "结构回退"
   }
 ]
