@@ -4358,5 +4358,201 @@
   {
     "from": "LineCap",
     "to": "线段端点"
+  },
+  {
+    "from": "ProjectionMatrix",
+    "to": "投影矩阵"
+  },
+  {
+    "from": "AnamorphicGodRayResidualScatter",
+    "to": "变形宽光束残留散射"
+  },
+  {
+    "from": "AnamorphicGodRayResidualLongFocalDiff",
+    "to": "变形宽光束残留长焦差异"
+  },
+  {
+    "from": "AnamorphicGodRay_Residual_LongFocalDiff",
+    "to": "变形宽光束残留长焦差异"
+  },
+  {
+    "from": "AnamorphicGodRay_Residual",
+    "to": "变形宽光束残留"
+  },
+  {
+    "from": "UIFramework",
+    "to": "界面框架"
+  },
+  {
+    "from": "UIImplementation",
+    "to": "界面实现"
+  },
+  {
+    "from": "UI_Implementation",
+    "to": "界面实现"
+  },
+  {
+    "from": "FreeCamUIImplementation",
+    "to": "FreeCam界面实现"
+  },
+  {
+    "from": "FreeCam_UI_Implementation",
+    "to": "FreeCam界面实现"
+  },
+  {
+    "from": "UIShell",
+    "to": "界面外壳"
+  },
+  {
+    "from": "UI_Shell",
+    "to": "界面外壳"
+  },
+  {
+    "from": "MotionShell",
+    "to": "运镜界面外壳"
+  },
+  {
+    "from": "ImGuiMotionShell",
+    "to": "ImGui运镜界面外壳"
+  },
+  {
+    "from": "ImGui_MotionShell",
+    "to": "ImGui运镜界面外壳"
+  },
+  {
+    "from": "RuntimeTemplate",
+    "to": "运行时模板"
+  },
+  {
+    "from": "AutoBuild",
+    "to": "自动构建"
+  },
+  {
+    "from": "DevelopmentKit",
+    "to": "开发套件"
+  },
+  {
+    "from": "DevKit",
+    "to": "开发套件"
+  },
+  {
+    "from": "DirectWriteFont",
+    "to": "DirectWrite字体"
+  },
+  {
+    "from": "UIRuntime",
+    "to": "界面运行时"
+  },
+  {
+    "from": "RuntimeUI",
+    "to": "运行时界面"
+  },
+  {
+    "from": "UISource",
+    "to": "界面源码"
+  },
+  {
+    "from": "UI",
+    "to": "界面"
+  },
+  {
+    "from": "Matrix",
+    "to": "矩阵"
+  },
+  {
+    "from": "Framework",
+    "to": "框架"
+  },
+  {
+    "from": "Implementation",
+    "to": "实现"
+  },
+  {
+    "from": "Shell",
+    "to": "外壳"
+  },
+  {
+    "from": "Sharpness",
+    "to": "锐度"
+  },
+  {
+    "from": "Features",
+    "to": "功能"
+  },
+  {
+    "from": "Functionality",
+    "to": "功能"
+  },
+  {
+    "from": "Functional",
+    "to": "功能性"
+  },
+  {
+    "from": "Module",
+    "to": "模块"
+  },
+  {
+    "from": "Modules",
+    "to": "模块"
+  },
+  {
+    "from": "Capability",
+    "to": "能力"
+  },
+  {
+    "from": "Capabilities",
+    "to": "能力"
+  },
+  {
+    "from": "Option",
+    "to": "选项"
+  },
+  {
+    "from": "Options",
+    "to": "选项"
+  },
+  {
+    "from": "Component",
+    "to": "组件"
+  },
+  {
+    "from": "Components",
+    "to": "组件"
+  },
+  {
+    "from": "Tool",
+    "to": "工具"
+  },
+  {
+    "from": "Tools",
+    "to": "工具"
+  },
+  {
+    "from": "System",
+    "to": "系统"
+  },
+  {
+    "from": "Systems",
+    "to": "系统"
+  },
+  {
+    "from": "Frontend",
+    "to": "前端"
+  },
+  {
+    "from": "Backend",
+    "to": "后端"
+  },
+  {
+    "from": "Interface",
+    "to": "界面"
+  },
+  {
+    "from": "Visualization",
+    "to": "可视化"
+  },
+  {
+    "from": "VisualManager",
+    "to": "可视化管理器"
   }
 ]
