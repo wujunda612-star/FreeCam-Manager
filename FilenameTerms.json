@@ -3794,5 +3794,569 @@
   {
     "from": "StructuralFallback",
     "to": "结构回退"
+  },
+  {
+    "from": "AnamorphicGodRay",
+    "to": "变形宽光束"
+  },
+  {
+    "from": "ResidualLongFocalDiff",
+    "to": "残留长焦差异"
+  },
+  {
+    "from": "LongFocalDiff",
+    "to": "长焦差异"
+  },
+  {
+    "from": "ResidualScatter",
+    "to": "残留散射"
+  },
+  {
+    "from": "PlotWeatherGodRay",
+    "to": "剧情天气光束"
+  },
+  {
+    "from": "ScreenSpace",
+    "to": "屏幕空间"
+  },
+  {
+    "from": "ShaderType",
+    "to": "着色器类型"
+  },
+  {
+    "from": "ShaderTypeStaticRegistration",
+    "to": "着色器类型静态注册"
+  },
+  {
+    "from": "VolumetricLightScattering",
+    "to": "体积光散射"
+  },
+  {
+    "from": "FKuroVolumetricLightScatteringPS",
+    "to": "库洛体积光散射像素着色器"
+  },
+  {
+    "from": "KuroVolumeGodRaySkyWorldCameraOrigin",
+    "to": "库洛体积光束天空世界相机原点"
+  },
+  {
+    "from": "KuroVolumeGodRayWorldToClip",
+    "to": "库洛体积光束世界到裁剪矩阵"
+  },
+  {
+    "from": "KuroGodRayMVPMatrix",
+    "to": "库洛光束MVP矩阵"
+  },
+  {
+    "from": "SourcePointer",
+    "to": "源指针"
+  },
+  {
+    "from": "SharedOwner",
+    "to": "共享所有者"
+  },
+  {
+    "from": "OwnerChain",
+    "to": "所有者链"
+  },
+  {
+    "from": "FixedCamera",
+    "to": "固定机位"
+  },
+  {
+    "from": "CompositeRender",
+    "to": "合成渲染"
+  },
+  {
+    "from": "TotalFOV",
+    "to": "总视场角"
+  },
+  {
+    "from": "LensTargetFOV",
+    "to": "镜头目标视场角"
+  },
+  {
+    "from": "LongFocalProjection",
+    "to": "长焦投影"
+  },
+  {
+    "from": "FullAxis",
+    "to": "完整轴"
+  },
+  {
+    "from": "ClipSpaceAxis",
+    "to": "裁剪空间轴"
+  },
+  {
+    "from": "FinalProjection",
+    "to": "最终投影"
+  },
+  {
+    "from": "ProjectionTelemetry",
+    "to": "投影遥测"
+  },
+  {
+    "from": "TelemetryTiming",
+    "to": "遥测时序"
+  },
+  {
+    "from": "MainProjection",
+    "to": "主投影"
+  },
+  {
+    "from": "Residual",
+    "to": "残留"
+  },
+  {
+    "from": "LongFocal",
+    "to": "长焦"
+  },
+  {
+    "from": "Scatter",
+    "to": "散射"
+  },
+  {
+    "from": "Dispatcher",
+    "to": "调度器"
+  },
+  {
+    "from": "DispatcherVPtr",
+    "to": "调度器虚表指针"
+  },
+  {
+    "from": "DispatcherRuntimeIdentity",
+    "to": "调度器运行时身份"
+  },
+  {
+    "from": "ReceiverRoot",
+    "to": "接收器根节点"
+  },
+  {
+    "from": "ReceiverRootFactory",
+    "to": "接收器根节点工厂"
+  },
+  {
+    "from": "ReceiverRootVTable",
+    "to": "接收器根节点虚表"
+  },
+  {
+    "from": "ReceiverVPtr",
+    "to": "接收器虚表指针"
+  },
+  {
+    "from": "RecordContainer",
+    "to": "记录容器"
+  },
+  {
+    "from": "RecordArray",
+    "to": "记录数组"
+  },
+  {
+    "from": "RecordSparseContainer",
+    "to": "记录稀疏容器"
+  },
+  {
+    "from": "RecordVPtr",
+    "to": "记录虚表指针"
+  },
+  {
+    "from": "PhysicalSlot",
+    "to": "物理槽位"
+  },
+  {
+    "from": "PhysicalSlotLayout",
+    "to": "物理槽位布局"
+  },
+  {
+    "from": "LiveElement",
+    "to": "实时元素"
+  },
+  {
+    "from": "LiveContainer",
+    "to": "实时容器"
+  },
+  {
+    "from": "LivePopulatedContainer",
+    "to": "已填充实时容器"
+  },
+  {
+    "from": "CapacityScan",
+    "to": "容量扫描"
+  },
+  {
+    "from": "FullCapacityScan",
+    "to": "完整容量扫描"
+  },
+  {
+    "from": "SlotEnumeration",
+    "to": "槽位枚举"
+  },
+  {
+    "from": "RuntimeClosure",
+    "to": "运行时闭环"
+  },
+  {
+    "from": "RuntimeReceiverIdentity",
+    "to": "运行时接收器身份"
+  },
+  {
+    "from": "ReceiverIdentity",
+    "to": "接收器身份"
+  },
+  {
+    "from": "ConcreteDynamicObjectIdentity",
+    "to": "具体动态对象身份"
+  },
+  {
+    "from": "ConcreteObjectFamily",
+    "to": "具体对象族"
+  },
+  {
+    "from": "RuntimeRecordIdentitySource",
+    "to": "运行时记录身份来源"
+  },
+  {
+    "from": "RuntimeRecord",
+    "to": "运行时记录"
+  },
+  {
+    "from": "ReceiverRootOwned",
+    "to": "接收器根节点所属"
+  },
+  {
+    "from": "NonDispatcherHits",
+    "to": "非调度器命中"
+  },
+  {
+    "from": "SetterRuntimeExecution",
+    "to": "设置器运行时执行"
+  },
+  {
+    "from": "GPUVAMapping",
+    "to": "GPU虚拟地址映射"
+  },
+  {
+    "from": "GPUMatrixConsumer",
+    "to": "GPU矩阵消费端"
+  },
+  {
+    "from": "CanonicalProjectionMatrix",
+    "to": "标准投影矩阵"
+  },
+  {
+    "from": "CanonicalProjectionConsumer",
+    "to": "标准投影消费端"
+  },
+  {
+    "from": "PersistentView",
+    "to": "持久视图"
+  },
+  {
+    "from": "PerViewCopy",
+    "to": "逐视图拷贝"
+  },
+  {
+    "from": "InProcessTelemetry",
+    "to": "进程内遥测"
+  },
+  {
+    "from": "Witness",
+    "to": "见证"
+  },
+  {
+    "from": "BaselineWitness",
+    "to": "基线见证"
+  },
+  {
+    "from": "SparseContainer",
+    "to": "稀疏容器"
+  },
+  {
+    "from": "HashContainer",
+    "to": "哈希容器"
+  },
+  {
+    "from": "Backlink",
+    "to": "反向链接"
+  },
+  {
+    "from": "HarnessFailure",
+    "to": "测试框架失败"
+  },
+  {
+    "from": "TechnicalNegative",
+    "to": "技术阴性"
+  },
+  {
+    "from": "FrozenStableCore",
+    "to": "冻结稳定核心"
+  },
+  {
+    "from": "ActionRequired",
+    "to": "需要操作"
+  },
+  {
+    "from": "WWInProcessReady",
+    "to": "WW进程内就绪"
+  },
+  {
+    "from": "RuntimeHook",
+    "to": "运行时钩子"
+  },
+  {
+    "from": "CVarToggle",
+    "to": "控制变量开关"
+  },
+  {
+    "from": "RenderLayerDisable",
+    "to": "渲染层禁用"
+  },
+  {
+    "from": "TemporalJitter",
+    "to": "时间抖动"
+  },
+  {
+    "from": "StatusWriteComplete",
+    "to": "状态写入完成"
+  },
+  {
+    "from": "PassOwner",
+    "to": "渲染通道所有者"
+  },
+  {
+    "from": "ParameterLayout",
+    "to": "参数布局"
+  },
+  {
+    "from": "RuntimeReference",
+    "to": "运行时引用"
+  },
+  {
+    "from": "StaticRegistration",
+    "to": "静态注册"
+  },
+  {
+    "from": "RuntimeReferenceTrace",
+    "to": "运行时引用追踪"
+  },
+  {
+    "from": "ImGui",
+    "to": "ImGui界面框架"
+  },
+  {
+    "from": "DearImGui",
+    "to": "Dear ImGui界面框架"
+  },
+  {
+    "from": "Win32GDI",
+    "to": "Win32加GDI"
+  },
+  {
+    "from": "Win32DX11",
+    "to": "Win32加DX11"
+  },
+  {
+    "from": "DirectX11",
+    "to": "DirectX 11"
+  },
+  {
+    "from": "DX11",
+    "to": "DirectX 11"
+  },
+  {
+    "from": "UIBridge",
+    "to": "界面桥接"
+  },
+  {
+    "from": "IPCProtocol",
+    "to": "进程间通信协议"
+  },
+  {
+    "from": "ParameterStateSnapshot",
+    "to": "参数状态快照"
+  },
+  {
+    "from": "CommandDispatch",
+    "to": "命令分发"
+  },
+  {
+    "from": "HiddenCommandWindow",
+    "to": "隐藏命令窗口"
+  },
+  {
+    "from": "CommandReceivingWindow",
+    "to": "命令接收窗口"
+  },
+  {
+    "from": "IndependentWin32Window",
+    "to": "独立Win32窗口"
+  },
+  {
+    "from": "IndependentWindow",
+    "to": "独立窗口"
+  },
+  {
+    "from": "InputFocusArchitecture",
+    "to": "输入焦点架构"
+  },
+  {
+    "from": "FocusArchitecture",
+    "to": "焦点架构"
+  },
+  {
+    "from": "FocusReturn",
+    "to": "焦点返回"
+  },
+  {
+    "from": "MouseCapture",
+    "to": "鼠标捕获"
+  },
+  {
+    "from": "RawInput",
+    "to": "原始输入"
+  },
+  {
+    "from": "MouseLock",
+    "to": "鼠标锁定"
+  },
+  {
+    "from": "CameraControl",
+    "to": "相机控制"
+  },
+  {
+    "from": "UISynchronization",
+    "to": "界面同步"
+  },
+  {
+    "from": "StateSync",
+    "to": "状态同步"
+  },
+  {
+    "from": "RefreshRate",
+    "to": "刷新率"
+  },
+  {
+    "from": "StatePolling",
+    "to": "状态轮询"
+  },
+  {
+    "from": "MessageSynchronization",
+    "to": "消息同步"
+  },
+  {
+    "from": "NoActivate",
+    "to": "不激活窗口"
+  },
+  {
+    "from": "ClickThrough",
+    "to": "鼠标穿透"
+  },
+  {
+    "from": "WindowLifecycle",
+    "to": "窗口生命周期"
+  },
+  {
+    "from": "DeviceCreation",
+    "to": "设备创建"
+  },
+  {
+    "from": "DPIScaling",
+    "to": "DPI缩放"
+  },
+  {
+    "from": "UIInteractionMode",
+    "to": "界面交互模式"
+  },
+  {
+    "from": "CoreUIBridge",
+    "to": "核心界面桥接"
+  },
+  {
+    "from": "GDIRendering",
+    "to": "GDI渲染"
+  },
+  {
+    "from": "ImGuiWindow",
+    "to": "ImGui窗口"
+  },
+  {
+    "from": "DX11Window",
+    "to": "DX11窗口"
+  },
+  {
+    "from": "DirectWrite",
+    "to": "DirectWrite文字渲染"
+  },
+  {
+    "from": "Direct2D",
+    "to": "Direct2D二维渲染"
+  },
+  {
+    "from": "PerMonitorDPI",
+    "to": "每显示器DPI"
+  },
+  {
+    "from": "DPIContext",
+    "to": "DPI上下文"
+  },
+  {
+    "from": "GrayscaleAA",
+    "to": "灰度抗锯齿"
+  },
+  {
+    "from": "AntiAliasing",
+    "to": "抗锯齿"
+  },
+  {
+    "from": "DrawTextW",
+    "to": "文本绘制"
+  },
+  {
+    "from": "FluentIcons",
+    "to": "Fluent图标"
+  },
+  {
+    "from": "HybridRendering",
+    "to": "混合渲染"
+  },
+  {
+    "from": "FontSharpness",
+    "to": "字体锐度"
+  },
+  {
+    "from": "Dashboard",
+    "to": "仪表盘"
+  },
+  {
+    "from": "TestHistory",
+    "to": "测试历史"
+  },
+  {
+    "from": "StatusDistribution",
+    "to": "状态分布"
+  },
+  {
+    "from": "TestTrend",
+    "to": "测试趋势"
+  },
+  {
+    "from": "ResultDistribution",
+    "to": "结果分布"
+  },
+  {
+    "from": "CategoryDistribution",
+    "to": "分类分布"
+  },
+  {
+    "from": "PassRate",
+    "to": "通过率"
+  },
+  {
+    "from": "SegmentGap",
+    "to": "分段间隙"
+  },
+  {
+    "from": "LineCap",
+    "to": "线段端点"
   }
 ]
