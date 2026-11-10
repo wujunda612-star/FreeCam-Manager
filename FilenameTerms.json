@@ -4554,5 +4554,365 @@
   {
     "from": "VisualManager",
     "to": "可视化管理器"
+  },
+  {
+    "from": "ABCharacterCenter",
+    "to": "AB角色中心点"
+  },
+  {
+    "from": "ABCharacterFacing",
+    "to": "AB角色朝向"
+  },
+  {
+    "from": "ABDollyZoom",
+    "to": "AB希区柯克变焦"
+  },
+  {
+    "from": "ABFOVLink",
+    "to": "AB视场角联动"
+  },
+  {
+    "from": "ABPathArc",
+    "to": "AB弧线路径"
+  },
+  {
+    "from": "CameraCharacterControl",
+    "to": "相机角色控制"
+  },
+  {
+    "from": "CharacterFacing",
+    "to": "角色朝向"
+  },
+  {
+    "from": "CharacterFrame",
+    "to": "角色构图"
+  },
+  {
+    "from": "Director3DVisual",
+    "to": "导演台3D可视化"
+  },
+  {
+    "from": "DirectorStudioData",
+    "to": "导演台数据"
+  },
+  {
+    "from": "DirectorSystem",
+    "to": "导演系统"
+  },
+  {
+    "from": "DirectorUI",
+    "to": "导演台界面"
+  },
+  {
+    "from": "LayerManager",
+    "to": "层级管理器"
+  },
+  {
+    "from": "MotionRecording",
+    "to": "运镜录制"
+  },
+  {
+    "from": "MotionWorkflow",
+    "to": "运镜流程"
+  },
+  {
+    "from": "MultiPointMotion",
+    "to": "多点运镜"
+  },
+  {
+    "from": "NativeImmersive",
+    "to": "原生沉浸模式"
+  },
+  {
+    "from": "OrientationBinding",
+    "to": "朝向绑定"
+  },
+  {
+    "from": "SDKVerify",
+    "to": "SDK验证"
+  },
+  {
+    "from": "WeatherUX",
+    "to": "天气交互体验"
+  },
+  {
+    "from": "UICursorAFGuard",
+    "to": "界面光标焦点保护"
+  },
+  {
+    "from": "LookAtHandoffBlend",
+    "to": "看镜头交接混合"
+  },
+  {
+    "from": "LookAtInputFlush",
+    "to": "看镜头输入清空"
+  },
+  {
+    "from": "LookAtNativeAlphaHandoff",
+    "to": "看镜头原生Alpha交接"
+  },
+  {
+    "from": "LookAtNativeBehavior",
+    "to": "看镜头原生行为"
+  },
+  {
+    "from": "LookAtNativeWitness",
+    "to": "看镜头原生见证"
+  },
+  {
+    "from": "LookAtFocusDiff",
+    "to": "看镜头焦点差分"
+  },
+  {
+    "from": "LookAtFocusHandoff",
+    "to": "看镜头焦点交接"
+  },
+  {
+    "from": "LookAtFocusIsolation",
+    "to": "看镜头焦点隔离"
+  },
+  {
+    "from": "LookAtGameThreadHandoff",
+    "to": "看镜头游戏线程交接"
+  },
+  {
+    "from": "LookAtOffTrace",
+    "to": "看镜头关闭追踪"
+  },
+  {
+    "from": "LookAtPoseDiff",
+    "to": "看镜头姿态差分"
+  },
+  {
+    "from": "LegacyUiCleanup",
+    "to": "旧版界面清理"
+  },
+  {
+    "from": "LookAtHeadPin",
+    "to": "看镜头头部固定"
+  },
+  {
+    "from": "LookAtRange",
+    "to": "看镜头范围"
+  },
+  {
+    "from": "LookAtActionResume",
+    "to": "看镜头动作恢复"
+  },
+  {
+    "from": "LookAtActionResumeBlend",
+    "to": "看镜头动作恢复混合"
+  },
+  {
+    "from": "LookAtActionResumeGuard",
+    "to": "看镜头动作恢复保护"
+  },
+  {
+    "from": "LookAtActionAlphaEdgeRearm",
+    "to": "看镜头动作Alpha边沿重触发"
+  },
+  {
+    "from": "LookAtActionAlphaEdgeRearmTune",
+    "to": "看镜头动作Alpha边沿重触发调校"
+  },
+  {
+    "from": "LookAtActionComponentPoseLinkTrace",
+    "to": "看镜头动作组件姿态链路追踪"
+  },
+  {
+    "from": "LookAtActionFeedbackRotateLinkTrace",
+    "to": "看镜头动作反馈旋转链路追踪"
+  },
+  {
+    "from": "LookAtActionKuroCacheBonesLinkTrace",
+    "to": "看镜头动作库洛缓存骨骼链路追踪"
+  },
+  {
+    "from": "LookAtActionKuroHumanIKExactStructReflect",
+    "to": "看镜头动作库洛HumanIK精确结构反射"
+  },
+  {
+    "from": "LookAtActionKuroHumanIKFullTrace",
+    "to": "看镜头动作库洛HumanIK完整追踪"
+  },
+  {
+    "from": "LookAtActionKuroHumanIKStructReflect",
+    "to": "看镜头动作库洛HumanIK结构反射"
+  },
+  {
+    "from": "LookAtActionLayerTrace",
+    "to": "看镜头动作层追踪"
+  },
+  {
+    "from": "LookAtActionModifyBoneLinkTrace",
+    "to": "看镜头动作修改骨骼链路追踪"
+  },
+  {
+    "from": "LookAtActionNodeTrace",
+    "to": "看镜头动作节点追踪"
+  },
+  {
+    "from": "LookAtActionSightLockAlphaInputResume",
+    "to": "看镜头动作视线锁定Alpha输入恢复"
+  },
+  {
+    "from": "LookAtActionSightLockAlphaResume",
+    "to": "看镜头动作视线锁定Alpha恢复"
+  },
+  {
+    "from": "LookAtActionSightLockAlphaSourceTrace",
+    "to": "看镜头动作视线锁定Alpha来源追踪"
+  },
+  {
+    "from": "LookAtActionSightLockLateTickResume",
+    "to": "看镜头动作视线锁定后置Tick恢复"
+  },
+  {
+    "from": "LookAtActionSightLockPhaseSnapshot",
+    "to": "看镜头动作视线锁定阶段快照"
+  },
+  {
+    "from": "LookAtActionSightLockPhaseTrace",
+    "to": "看镜头动作视线锁定阶段追踪"
+  },
+  {
+    "from": "LookAtActionSightLockPhaseValueTrace",
+    "to": "看镜头动作视线锁定阶段值追踪"
+  },
+  {
+    "from": "LookAtActionSightLockRuntimeTrace",
+    "to": "看镜头动作视线锁定运行时追踪"
+  },
+  {
+    "from": "LookAtActionSightLockStructReflect",
+    "to": "看镜头动作视线锁定结构反射"
+  },
+  {
+    "from": "LookAtActionSightLockTrace",
+    "to": "看镜头动作视线锁定追踪"
+  },
+  {
+    "from": "LookAtActionSlotRebind",
+    "to": "看镜头动作槽位重新绑定"
+  },
+  {
+    "from": "LookAtActionSlotResumeBlend",
+    "to": "看镜头动作槽位恢复混合"
+  },
+  {
+    "from": "LookAtActionSlotTargetVectorTrace",
+    "to": "看镜头动作槽位目标向量追踪"
+  },
+  {
+    "from": "LookAtActionSlotVectorNormalize",
+    "to": "看镜头动作槽位向量归一化"
+  },
+  {
+    "from": "LookAtActionCombineCurvesLayout",
+    "to": "看镜头动作曲线合并布局"
+  },
+  {
+    "from": "LookAtActionCombineCurvesTrace",
+    "to": "看镜头动作曲线合并追踪"
+  },
+  {
+    "from": "LookAtActionFeedbackModifyBoneLinkTrace",
+    "to": "看镜头动作反馈修改骨骼链路追踪"
+  },
+  {
+    "from": "LookAtActionLinkedAnimLayerArrayFingerprint",
+    "to": "看镜头动作链接动画层数组指纹"
+  },
+  {
+    "from": "LookAtActionLinkedAnimLayerCandidateTrace",
+    "to": "看镜头动作链接动画层候选追踪"
+  },
+  {
+    "from": "LookAtActionLinkedAnimLayerLayout",
+    "to": "看镜头动作链接动画层布局"
+  },
+  {
+    "from": "LookAtActionLinkedInputPoseCandidateTrace",
+    "to": "看镜头动作链接输入姿态候选追踪"
+  },
+  {
+    "from": "LookAtActionLinkedInputPoseLayout",
+    "to": "看镜头动作链接输入姿态布局"
+  },
+  {
+    "from": "LookAtActionLinkedInputPoseLinkTrace",
+    "to": "看镜头动作链接输入姿态链路追踪"
+  },
+  {
+    "from": "LookAtActionLinkedRootLinkTrace",
+    "to": "看镜头动作链接根节点链路追踪"
+  },
+  {
+    "from": "LookAtActionLocalToComponentSpaceLinkTrace",
+    "to": "看镜头动作局部到组件空间链路追踪"
+  },
+  {
+    "from": "LookAtActionPosePhaseCorrelation",
+    "to": "看镜头动作姿态阶段关联"
+  },
+  {
+    "from": "LookAtActionSequencePlayerTrace",
+    "to": "看镜头动作序列播放器追踪"
+  },
+  {
+    "from": "LookAtActionThirdModifyBoneLinkTrace",
+    "to": "看镜头动作第三修改骨骼链路追踪"
+  },
+  {
+    "from": "Director",
+    "to": "导演台"
+  },
+  {
+    "from": "Handoff",
+    "to": "交接"
+  },
+  {
+    "from": "Rearm",
+    "to": "重触发"
+  },
+  {
+    "from": "Guard",
+    "to": "保护"
+  },
+  {
+    "from": "Facing",
+    "to": "朝向"
+  },
+  {
+    "from": "Recording",
+    "to": "录制"
+  },
+  {
+    "from": "Workflow",
+    "to": "流程"
+  },
+  {
+    "from": "Flush",
+    "to": "清空"
+  },
+  {
+    "from": "Range",
+    "to": "范围"
+  },
+  {
+    "from": "AlphaEdge",
+    "to": "Alpha边沿"
+  },
+  {
+    "from": "HeadPin",
+    "to": "头部固定"
+  },
+  {
+    "from": "Normalize",
+    "to": "归一化"
+  },
+  {
+    "from": "PhaseSnapshot",
+    "to": "阶段快照"
   }
 ]
